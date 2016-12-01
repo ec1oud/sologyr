@@ -1,5 +1,5 @@
 {
-  "name": "sologyr",
+  "name": "SolOgYr",
   "author": "ecloud",
   "version": "0.1.0",
   "keywords": ["pebble-app"],
@@ -23,7 +23,24 @@
       "dummy"
     ],
     "resources": {
-      "media": []
+      "media": [
+      {
+        "type": "png",
+        "name": "IMAGE_CHARGING",
+        "file": "img/charging.png"
+      },
+      {
+        "type": "png",
+        "name": "IMAGE_BLUETOOTH",
+        "file": "img/bluetooth.png"
+      },
+      {
+        "type": "png",
+        "name": "IMAGE_ICON",
+        "file": "img/icon.png",
+        "menuIcon": true
+      }
+    ]
     }
   }
 }
