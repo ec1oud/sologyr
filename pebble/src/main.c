@@ -2,11 +2,13 @@
 
 static Window *window;
 static TextLayer *text_time_layer;
+static TextLayer *dateLayer;
 static BitmapLayer *bluetooth_layer;
 static BitmapLayer *charging_layer;
 static Layer *batteryGraphLayer;
 static int batteryPct = 0;
 static int fontSize = 0;
+struct tm *currentTime;
 static uint8_t sunriseHour = 8;
 static uint8_t sunriseMinute = 50;
 static uint8_t sunsetHour = 15;
@@ -23,13 +25,34 @@ static int min(int one, int other)
 	return (one < other ? one : other);
 }
 
-static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
+void dateLayerUpdate()
 {
-	static char time_text[] = "00:00:00";
-	static const char *time_format = "%H:%M:%S";
-	strftime(time_text, sizeof(time_text), time_format, tick_time);
+	static char date_text[24];
+	static const char *date_format = "%a %e %b";
+	strftime(date_text, sizeof(date_text), date_format, currentTime);
+	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "tick %s", time_text);
+	text_layer_set_text(dateLayer, date_text);
+}
+
+void timeLayerUpdate()
+{
+	static char time_text[] = "00:00";
+	static const char *time_format = "%H:%M";  //:%S";
+	strftime(time_text, sizeof(time_text), time_format, currentTime);
 	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "tick %s", time_text);
 	text_layer_set_text(text_time_layer, time_text);
+}
+
+static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
+{
+	*currentTime = *tick_time;
+	if (units_changed & MINUTE_UNIT) {
+		timeLayerUpdate();
+	}
+	if (units_changed & DAY_UNIT) {
+		dateLayerUpdate();
+		layer_mark_dirty(window_get_root_layer(window));
+	}
 }
 
 static void updateCircleLayer(Layer *layer, GContext* ctx)
@@ -100,19 +123,12 @@ static void window_window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_bounds(window_layer);
 
-	text_time_layer = text_layer_create(GRect(3, -10, 72, 28));
-	text_layer_set_text_color(text_time_layer, GColorWhite);
-	text_layer_set_background_color(text_time_layer, GColorClear);
-	text_layer_set_font(text_time_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-	//~ text_layer_set_text_alignment(text_time_layer, GTextAlignmentRight);
-	layer_add_child(window_layer, text_layer_get_layer(text_time_layer));
-
-	bluetooth_layer = bitmap_layer_create(GRect(95, 0, 14, 14));
+	bluetooth_layer = bitmap_layer_create(GRect(0, bounds.size.h - 14, 14, 14));
 	layer_add_child(window_layer, bitmap_layer_get_layer(bluetooth_layer));
 	bluetooth_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH);
 	handle_bluetooth(bluetooth_connection_service_peek());
 
-	batteryGraphLayer = layer_create(GRect(109, 0, 32, 14));
+	batteryGraphLayer = layer_create(GRect(110, bounds.size.h - 14, 32, 14));
 	layer_set_update_proc(batteryGraphLayer, updateBatteryGraphLayer);
 	layer_add_child(window_layer, batteryGraphLayer);
 
@@ -123,10 +139,29 @@ static void window_window_load(Window *window) {
 	charging_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CHARGING);
 
 	int diameter = min(bounds.size.w - 1, bounds.size.h - 16 - 1);
-	circleLayer = layer_create(GRect(0, 16, diameter, diameter));
+	circleLayer = layer_create(GRect(0, 0, diameter, diameter));
 	layer_set_update_proc(circleLayer, updateCircleLayer);
 	layer_add_child(window_layer, circleLayer);
 	layer_mark_dirty(circleLayer);
+
+	GRect text_time_rect = GRect(0, 0, bounds.size.w, 50);
+	grect_align(&text_time_rect, &bounds, GAlignCenter, false);
+	text_time_layer = text_layer_create(text_time_rect);
+	text_layer_set_text_color(text_time_layer, GColorCeleste);
+	text_layer_set_background_color(text_time_layer, GColorClear);
+	text_layer_set_font(text_time_layer, fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS));
+	text_layer_set_text_alignment(text_time_layer, GTextAlignmentCenter);
+	layer_add_child(window_layer, text_layer_get_layer(text_time_layer));
+
+	dateLayer = text_layer_create(GRect(14, bounds.size.h - 24, bounds.size.w - 32 - 14, 24));
+	text_layer_set_text_alignment(dateLayer, GTextAlignmentCenter);
+	text_layer_set_text_color(dateLayer, GColorLimerick);
+	text_layer_set_background_color(dateLayer, GColorClear);
+	text_layer_set_font(dateLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+	layer_add_child(window_layer, text_layer_get_layer(dateLayer));
+
+	dateLayerUpdate();
+	timeLayerUpdate();
 
 	tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
 	bluetooth_connection_service_subscribe(&handle_bluetooth);
@@ -146,6 +181,8 @@ static void window_window_unload(Window *window) {
 }
 
 static void window_init(void) {
+    time_t tt = time(0);
+    currentTime = localtime(&tt);
 	window = window_create();
 	window_set_background_color(window, GColorBlack);
 	window_set_window_handlers(window, (WindowHandlers) {
