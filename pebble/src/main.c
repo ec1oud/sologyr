@@ -1,5 +1,16 @@
 #include <pebble.h>
 
+enum DictKey {
+	KEY_NONE = 0,
+	KEY_LAT = 10,
+	KEY_LON = 11,
+	KEY_SUNRISE_HOUR = 12,
+	KEY_SUNRISE_MINUTE = 13,
+	KEY_SUNSET_HOUR = 14,
+	KEY_SUNSET_MINUTE = 15,
+	KEY_TEMPERATURE = 20
+};
+
 static Window *window;
 static TextLayer *text_time_layer;
 static TextLayer *dateLayer;
@@ -9,10 +20,10 @@ static Layer *batteryGraphLayer;
 static int batteryPct = 0;
 static int fontSize = 0;
 struct tm *currentTime;
-static uint8_t sunriseHour = 8;
-static uint8_t sunriseMinute = 50;
-static uint8_t sunsetHour = 15;
-static uint8_t sunsetMinute = 24;
+static uint8_t sunriseHour = 6;
+static uint8_t sunriseMinute = 0;
+static uint8_t sunsetHour = 6;
+static uint8_t sunsetMinute = 0;
 static bool bluetoothConnected = 0;
 static Layer *circleLayer;
 static GBitmap *bluetooth_bitmap = NULL;
@@ -119,6 +130,78 @@ static void handle_battery(BatteryChargeState charge_state)
 	layer_mark_dirty(batteryGraphLayer);
 }
 
+static void in_received_handler(DictionaryIterator *iter, void *context)
+{
+	Tuple *tuple = dict_read_first(iter);
+	while (tuple) {
+#ifdef DEBUG_MSG
+		switch (tuple->type) {
+		case TUPLE_CSTRING:
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "key %d value %s" , (int)tuple->key, tuple->value->cstring);
+			break;
+		case TUPLE_INT:
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "key %d value %d" , (int)tuple->key, tuple->value->int8);
+			break;
+		default:
+			APP_LOG(APP_LOG_LEVEL_WARNING, "key %d unexpected type %d len %d" , (int)tuple->key, tuple->type, tuple->length);
+			break;
+		}
+#endif
+
+		switch (tuple->key) {
+		case KEY_LAT:
+		case KEY_LON:
+		case KEY_TEMPERATURE:
+			break;
+		case KEY_SUNRISE_HOUR:
+			sunriseHour = tuple->value->int8;
+			break;
+		case KEY_SUNRISE_MINUTE:
+			sunriseMinute = tuple->value->int8;
+			break;
+		case KEY_SUNSET_HOUR:
+			sunsetHour = tuple->value->int8;
+			break;
+		case KEY_SUNSET_MINUTE:
+			sunsetMinute = tuple->value->int8;
+			break;
+		default:
+			APP_LOG(APP_LOG_LEVEL_WARNING, "unexpected key %d", (int)tuple->key);
+		}
+		tuple = dict_read_next(iter);
+	}
+	layer_mark_dirty(circleLayer);
+	//~ layer_mark_dirty(window_get_root_layer(window));
+}
+
+static void in_dropped_handler(AppMessageResult reason, void *context)
+{
+	APP_LOG(APP_LOG_LEVEL_WARNING, "App Message Dropped!");
+}
+
+static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context)
+{
+	if (reason == APP_MSG_SEND_REJECTED)
+		return; // nacks seem to happen all the time... not sure why
+	switch (reason) {
+		case APP_MSG_SEND_TIMEOUT:
+			APP_LOG(APP_LOG_LEVEL_WARNING, "failed to send: APP_MSG_SEND_TIMEOUT (%d)", APP_MSG_SEND_TIMEOUT);
+			break;
+		case APP_MSG_SEND_REJECTED:
+			APP_LOG(APP_LOG_LEVEL_WARNING, "failed to send: APP_MSG_SEND_REJECTED (%d)", APP_MSG_SEND_REJECTED);
+			break;
+		case APP_MSG_NOT_CONNECTED:
+			APP_LOG(APP_LOG_LEVEL_WARNING, "failed to send: APP_MSG_NOT_CONNECTED (%d)", APP_MSG_NOT_CONNECTED);
+			break;
+		case APP_MSG_APP_NOT_RUNNING:
+			APP_LOG(APP_LOG_LEVEL_WARNING, "failed to send: APP_MSG_APP_NOT_RUNNING (%d)", APP_MSG_APP_NOT_RUNNING);
+			break;
+		default:
+			APP_LOG(APP_LOG_LEVEL_WARNING, "failed to send: %d", reason);
+			break;
+	}
+}
+
 static void window_window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_bounds(window_layer);
@@ -191,6 +274,15 @@ static void window_init(void) {
 	});
 	const bool animated = true;
 	window_stack_push(window, animated);
+
+#ifdef DEBUG_MSG
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "max mailboxen %d %d", (int)app_message_inbox_size_maximum(), (int)app_message_outbox_size_maximum());
+#endif
+	app_message_register_inbox_received(in_received_handler);
+	app_message_register_inbox_dropped(in_dropped_handler);
+	app_message_register_outbox_failed(out_failed_handler);
+	Tuplet value = TupletInteger(KEY_NONE, 0);
+	app_message_open(1024, dict_calc_buffer_size_from_tuplets(&value, 1));
 }
 
 static void window_deinit(void) {
