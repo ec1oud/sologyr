@@ -7,4 +7,5 @@ package org.ecloud.sologyr;
 public interface WeatherListener {
     public void updateLocation(double lat, double lon);
     public void updateWeather(String temperature);
+    public void updateSunriseSunset(int sunriseHour, int sunriseMinute, int sunsetHour, int sunsetMinute);
 }

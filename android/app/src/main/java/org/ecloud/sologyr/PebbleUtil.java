@@ -128,4 +128,15 @@ public class PebbleUtil implements WeatherListener {
         out.addString(KEY_TEMPERATURE, temperature);
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
+
+    public void updateSunriseSunset(int sunriseHour, int sunriseMinute, int sunsetHour, int sunsetMinute) {
+        Log.d(TAG, "updateSunriseSunset " + sunriseHour + ":" + sunriseMinute + ", " + sunsetHour + ":" + sunsetMinute);
+        PebbleDictionary out = new PebbleDictionary();
+        out.addInt8(KEY_SUNRISE_HOUR, (byte)sunriseHour);
+        out.addInt8(KEY_SUNRISE_MINUTE, (byte)sunriseMinute);
+        out.addInt8(KEY_SUNSET_HOUR, (byte)sunsetHour);
+        out.addInt8(KEY_SUNSET_MINUTE, (byte)sunsetMinute);
+        PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
+
+    }
 }
