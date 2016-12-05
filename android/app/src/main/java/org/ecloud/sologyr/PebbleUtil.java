@@ -16,6 +16,7 @@ import java.util.UUID;
 public class PebbleUtil implements WeatherListener {
     public static final UUID WATCHAPP_UUID = UUID.fromString("7a83bfb6-3795-4452-8c26-5f23e9fedf34");
     public static final int
+            KEY_HELLO = 1,
             KEY_LAT = 10,
             KEY_LON = 11,
             KEY_SUNRISE_HOUR = 12,
@@ -103,9 +104,11 @@ public class PebbleUtil implements WeatherListener {
             @Override
             public void receiveData(final Context context, final int transactionId, final PebbleDictionary data) {
                 PebbleKit.sendAckToPebble(m_weatherService.getApplicationContext(), transactionId);
-                PebbleKit.sendAckToPebble(m_weatherService.getApplicationContext(), transactionId);
                 m_nackCount = 0;
                 Log.i(TAG, "Received txn " + transactionId + ": " + data.toJsonString());
+                PebbleKit.sendAckToPebble(context, transactionId);
+                if (data.contains(PebbleUtil.KEY_HELLO))
+                    m_weatherService.updateEverything(PebbleUtil.this);
             }
         };
         PebbleKit.registerReceivedDataHandler(m_weatherService, pdrcvr);

@@ -226,4 +226,10 @@ public class WeatherService extends Service {
             Log.d(TAG, "   all Weather listeners removed");
         }
     }
+
+    public void updateEverything(WeatherListener l) {
+        l.updateLocation(curlat, curlon);
+        l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
+        // TODO updateWeather
+    }
 }

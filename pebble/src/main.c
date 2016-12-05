@@ -2,6 +2,7 @@
 
 enum DictKey {
 	KEY_NONE = 0,
+	KEY_HELLO = 1,
 	KEY_LAT = 10,
 	KEY_LON = 11,
 	KEY_SUNRISE_HOUR = 12,
@@ -112,15 +113,30 @@ static void updateBatteryGraphLayer(Layer *layer, GContext* ctx)
 	graphics_draw_rect(ctx, layerBounds);
 }
 
+static void send_hello()
+{
+	Tuplet value = TupletInteger(KEY_HELLO, 0);
+	DictionaryIterator *iter;
+	app_message_outbox_begin(&iter);
+	if (iter == NULL)
+		return;
+	dict_write_tuplet(iter, &value);
+	dict_write_end(iter);
+	app_message_outbox_send();
+}
+
 static void handle_tap(AccelAxisType axis, int32_t direction)
 {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "tap %d %d", (int)axis, (int)direction);
+	send_hello();
 }
 
 static void handle_bluetooth(bool connected)
 {
 	bluetoothConnected = connected;
 	bitmap_layer_set_bitmap(bluetooth_layer, bluetoothConnected ? bluetooth_bitmap : 0);
+	if (bluetoothConnected)
+		send_hello();
 }
 
 static void handle_battery(BatteryChargeState charge_state)
@@ -202,7 +218,7 @@ static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reas
 	}
 }
 
-static void window_window_load(Window *window) {
+static void window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_bounds(window_layer);
 
@@ -253,7 +269,14 @@ static void window_window_load(Window *window) {
 	accel_tap_service_subscribe(handle_tap);
 }
 
-static void window_window_unload(Window *window) {
+static void window_appear(Window *window) {
+	send_hello();
+}
+
+static void window_disappear(Window *window) {
+}
+
+static void window_unload(Window *window) {
 	tick_timer_service_unsubscribe();
 	layer_destroy(circleLayer);
 	text_layer_destroy(text_time_layer);
@@ -269,8 +292,10 @@ static void window_init(void) {
 	window = window_create();
 	window_set_background_color(window, GColorBlack);
 	window_set_window_handlers(window, (WindowHandlers) {
-		.load = window_window_load,
-		.unload = window_window_unload,
+		.load = window_load,
+		.appear = window_appear,
+		.disappear = window_disappear,
+		.unload = window_unload,
 	});
 	const bool animated = true;
 	window_stack_push(window, animated);
