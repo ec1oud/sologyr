@@ -16,12 +16,14 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.luckycatlabs.sunrisesunset.SunriseSunsetCalculator;
+import com.oleaarnseth.weathercast.Forecast;
+import com.oleaarnseth.weathercast.WeatherAPIHandler;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.TimeZone;
 
 import static android.location.LocationManager.PASSIVE_PROVIDER;
 
@@ -35,8 +37,24 @@ public class WeatherService extends Service {
     String m_periodicProvider = PASSIVE_PROVIDER;
     double curlat = 0, curlon = 0;
     int sunriseHour = 0, sunriseMinute = 0, sunsetHour = 0, sunsetMinute = 0;
+    WeatherAPIHandler weatherApiHandler = new WeatherAPIHandler(this);
+    NowCastTask nowCastTask = null;
 
     public WeatherService() {
+    }
+
+    public void setForecasts(Forecast[] result) {
+        for (Forecast f : result)
+            Log.d(TAG, f.toString());
+    }
+
+    public void setLocality(String result) {
+        Log.d(TAG, "locality " + result);
+    }
+
+    public void setNowCast(LinkedList<Forecast> nowcast) {
+        for (Forecast f : nowcast)
+            Log.d(TAG, f.toString());
     }
 
     public class LocalBinder extends Binder {
@@ -87,7 +105,8 @@ public class WeatherService extends Service {
             public void onProviderDisabled(String provider) {}
         };
 
-        if (m_locationManager != null && m_periodicProvider != null && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (m_locationManager != null && m_periodicProvider != null && ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             m_locationManager.requestLocationUpdates(m_periodicProvider, 600000, 10000, m_locationListener);
             Log.i(TAG, "location providers " + m_locationManager.getProviders(true));
             if (initialProvider != null)
@@ -95,6 +114,12 @@ public class WeatherService extends Service {
         } else {
             Log.w(TAG, "requestRegularUpdates failed: provider " + m_periodicProvider);
         }
+
+        // TODO store last known location, restore here; using central Oslo for now
+        Location savedLoc = new Location("saved");
+        savedLoc.setLatitude(59.9132694);
+        savedLoc.setLongitude(10.7391112);
+        setLocation(savedLoc);
     }
 
     public void setLocation(Location location) {
@@ -114,6 +139,10 @@ public class WeatherService extends Service {
             l.updateLocation(curlat, curlon);
             l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
         }
+//        nowCastTask = new NowCastTask(this);
+//        nowCastTask.start(location);
+        weatherApiHandler.setLocation(location);
+        weatherApiHandler.startFetchForecastTask();
     }
 
     public void addWeatherListener(WeatherListener l) {
