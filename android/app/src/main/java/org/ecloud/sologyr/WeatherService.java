@@ -15,6 +15,8 @@ import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
+import com.github.dvdme.ForecastIOLib.FIOCurrently;
+import com.github.dvdme.ForecastIOLib.ForecastIO;
 import com.luckycatlabs.sunrisesunset.SunriseSunsetCalculator;
 import com.oleaarnseth.weathercast.Forecast;
 import com.oleaarnseth.weathercast.WeatherAPIHandler;
@@ -36,9 +38,11 @@ public class WeatherService extends Service {
     LocationListener m_locationListener;
     String m_periodicProvider = PASSIVE_PROVIDER;
     double curlat = 0, curlon = 0;
+    String curTemperature = "";
     int sunriseHour = 0, sunriseMinute = 0, sunsetHour = 0, sunsetMinute = 0;
     WeatherAPIHandler weatherApiHandler = new WeatherAPIHandler(this);
     NowCastTask nowCastTask = null;
+    DarkSkyCurrentTask darkSkyCurrentTask = null;
 
     public WeatherService() {
     }
@@ -55,6 +59,18 @@ public class WeatherService extends Service {
     public void setNowCast(LinkedList<Forecast> nowcast) {
         for (Forecast f : nowcast)
             Log.d(TAG, f.toString());
+    }
+
+    public void setDarkSkyForecast(ForecastIO fio) {
+        Log.d(TAG, "Timezone: "+fio.getTimezone());
+//        Log.d(TAG, "Offset: "+fio.getOffset());
+        FIOCurrently currently = new FIOCurrently(fio);
+        String [] f  = currently.get().getFieldsArray();
+        for(int i = 0; i < f.length; i++)
+            Log.d(TAG, f[i] + ": " + currently.get().getByKey(f[i]));
+        curTemperature = currently.get().getByKey("temperature") + "°C";
+        for (WeatherListener l : m_listeners)
+            l.updateWeather(curTemperature);
     }
 
     public class LocalBinder extends Binder {
@@ -143,6 +159,8 @@ public class WeatherService extends Service {
 //        nowCastTask.start(location);
         weatherApiHandler.setLocation(location);
         weatherApiHandler.startFetchForecastTask();
+        darkSkyCurrentTask = new DarkSkyCurrentTask(this);
+        darkSkyCurrentTask.execute(location);
     }
 
     public void addWeatherListener(WeatherListener l) {
@@ -164,6 +182,6 @@ public class WeatherService extends Service {
     public void updateEverything(WeatherListener l) {
         l.updateLocation(curlat, curlon);
         l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
-        // TODO updateWeather
+        l.updateWeather(curTemperature);
     }
 }
