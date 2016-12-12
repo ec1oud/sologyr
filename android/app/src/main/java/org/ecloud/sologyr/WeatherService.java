@@ -70,7 +70,7 @@ public class WeatherService extends Service {
         String [] f  = currently.get().getFieldsArray();
         for(int i = 0; i < f.length; i++)
             Log.d(TAG, f[i] + ": " + currently.get().getByKey(f[i]));
-        curTemperature = currently.get().getByKey("temperature") + "°C";
+        curTemperature = Math.round(Double.valueOf(currently.get().getByKey("temperature"))) + "°";
         for (WeatherListener l : m_listeners)
             l.updateWeather(curTemperature);
         lastUpdateTime = System.currentTimeMillis();
