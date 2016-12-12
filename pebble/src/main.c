@@ -15,6 +15,7 @@ enum DictKey {
 static Window *window;
 static TextLayer *text_time_layer;
 static TextLayer *dateLayer;
+static TextLayer *temperatureLayer;
 static BitmapLayer *bluetooth_layer;
 static BitmapLayer *charging_layer;
 static Layer *batteryGraphLayer;
@@ -25,6 +26,7 @@ static uint8_t sunriseHour = 6;
 static uint8_t sunriseMinute = 0;
 static uint8_t sunsetHour = 6;
 static uint8_t sunsetMinute = 0;
+static char currentTemperature[12];
 static bool bluetoothConnected = 0;
 static Layer *circleLayer;
 static GBitmap *bluetooth_bitmap = NULL;
@@ -167,7 +169,25 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 		switch (tuple->key) {
 		case KEY_LAT:
 		case KEY_LON:
+			// TODO maybe calculate sunrise/sunset so the phone doesn't have to send it
+			break;
 		case KEY_TEMPERATURE:
+			strncpy(currentTemperature, tuple->value->cstring, 12);
+			currentTemperature[11] = 0;
+			{
+				// remove any fractional degrees - we haven't got space here
+				char *firstDecimalPoint = strchr(currentTemperature, '.');
+				char *degreeSymbol = strchr(currentTemperature, 0xc2);
+				if (firstDecimalPoint) {
+					if (degreeSymbol) {
+						memmove(firstDecimalPoint, degreeSymbol, 3);
+						*(firstDecimalPoint + 2) = 0;
+					}
+					else
+						*firstDecimalPoint = 0;
+				}
+			}
+			text_layer_set_text(temperatureLayer, currentTemperature);
 			break;
 		case KEY_SUNRISE_HOUR:
 			sunriseHour = tuple->value->int8;
@@ -258,6 +278,13 @@ static void window_load(Window *window) {
 	text_layer_set_background_color(dateLayer, GColorClear);
 	text_layer_set_font(dateLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 	layer_add_child(window_layer, text_layer_get_layer(dateLayer));
+
+	temperatureLayer = text_layer_create(GRect(bounds.size.w - 32, -4, 32, 18));
+	text_layer_set_text_alignment(temperatureLayer, GTextAlignmentRight);
+	text_layer_set_text_color(temperatureLayer, GColorWhite);
+	text_layer_set_background_color(temperatureLayer, GColorClear);
+	text_layer_set_font(temperatureLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+	layer_add_child(window_layer, text_layer_get_layer(temperatureLayer));
 
 	dateLayerUpdate();
 	timeLayerUpdate();
