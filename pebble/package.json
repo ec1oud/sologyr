@@ -36,6 +36,61 @@
       },
       {
         "type": "png",
+        "name": "IMAGE_WEATHER_CLEAR",
+        "file": "img/weather-clear.png"
+      },
+      {
+		"type": "png",
+		"name": "IMAGE_WEATHER_CLEAR_NIGHT",
+		"file": "img/weather-clear-night.png"
+      },
+      {
+		"type": "png",
+		"name": "IMAGE_WEATHER_FEW_CLOUDS_NIGHT",
+		"file": "img/weather-few-clouds-night.png"
+      },
+      {
+		"type": "png",
+		"name": "IMAGE_WEATHER_FEW_CLOUDS",
+		"file": "img/weather-few-clouds.png"
+      },
+      {
+		"type": "png",
+		"name": "IMAGE_WEATHER_OVERCAST",
+		"file": "img/weather-overcast.png"
+      },
+      {
+		"type": "png",
+		"name": "IMAGE_WEATHER_SEVERE_ALERT",
+		"file": "img/weather-severe-alert.png"
+      },
+      {
+		"type": "png",
+		"name": "IMAGE_WEATHER_SHOWERS",
+		"file": "img/weather-showers.png"
+      },
+      {
+		"type": "png",
+		"name": "IMAGE_WEATHER_SHOWERS_SCATTERED",
+		"file": "img/weather-showers-scattered.png"
+      },
+      {
+		"type": "png",
+		"name": "IMAGE_WEATHER_SNOW",
+		"file": "img/weather-snow.png"
+      },
+      {
+		"type": "png",
+		"name": "IMAGE_WEATHER_STORM",
+		"file": "img/weather-storm.png"
+      },
+      {
+		"type": "png",
+		"name": "IMAGE_WEATHER_WIND",
+		"file": "img/weather-wind.png"
+      },
+      {
+        "type": "png",
         "name": "IMAGE_ICON",
         "file": "img/icon.png",
         "menuIcon": true

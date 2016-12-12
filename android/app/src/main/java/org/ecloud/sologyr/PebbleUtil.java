@@ -23,7 +23,9 @@ public class PebbleUtil implements WeatherListener {
             KEY_SUNRISE_MINUTE = 13,
             KEY_SUNSET_HOUR = 14,
             KEY_SUNSET_MINUTE = 15,
-            KEY_TEMPERATURE = 20;
+            KEY_TEMPERATURE = 20,
+            KEY_WEATHER_ICON = 21,
+            KEY_CLOUD_COVER = 22;
 
     private final String TAG = this.getClass().getSimpleName();
     List<BroadcastReceiver> m_receivers = new ArrayList<>();
@@ -125,10 +127,15 @@ public class PebbleUtil implements WeatherListener {
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
 
-    public void updateWeather(String temperature) {
-        Log.d(TAG, "updateWeather " + temperature);
+    public void updateCurrentWeather(double temperature, double cloudCover, WeatherIcon icon) {
+        String tempStr = Math.round(temperature) + "°";
+        if (icon == null)
+            return;
+        Log.d(TAG, "updateCurrentWeather " + tempStr + "° " + cloudCover + "% " + icon.getValue());
         PebbleDictionary out = new PebbleDictionary();
-        out.addString(KEY_TEMPERATURE, temperature);
+        out.addString(KEY_TEMPERATURE, tempStr);
+        out.addUint8(KEY_CLOUD_COVER, (byte)Math.round(cloudCover * 100)); // from fraction (e.g. 0.25) to int percent, so it fits in a byte
+        out.addUint8(KEY_WEATHER_ICON, icon.getValue());
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
 
@@ -140,6 +147,5 @@ public class PebbleUtil implements WeatherListener {
         out.addInt8(KEY_SUNSET_HOUR, (byte)sunsetHour);
         out.addInt8(KEY_SUNSET_MINUTE, (byte)sunsetMinute);
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
-
     }
 }

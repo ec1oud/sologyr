@@ -9,7 +9,61 @@ enum DictKey {
 	KEY_SUNRISE_MINUTE = 13,
 	KEY_SUNSET_HOUR = 14,
 	KEY_SUNSET_MINUTE = 15,
-	KEY_TEMPERATURE = 20
+	KEY_TEMPERATURE = 20,
+	KEY_WEATHER_ICON = 21,
+	KEY_CLOUD_COVER = 22
+};
+
+// from http://api.met.no/weatherapi/weathericon/1.1/documentation
+enum WeatherIcon {
+	WeatherUnknown = 0,
+    Sun = 1,
+    LightCloud,
+    PartlyCloud,
+    Cloud,
+    LightRainSun,
+    LightRainThunderSun,
+    SleetSun,
+    SnowSun,
+    LightRain,
+    Rain,
+    RainThunder,
+    Sleet,
+    Snow,
+    SnowThunder,
+    Fog,
+    SleetSunThunder = 20,
+    SnowSunThunder,
+    LightRainThunder,
+    SleetThunder,
+    DrizzleThunderSun,
+    RainThunderSun,
+    LightSleetThunderSun,
+    HeavySleetThunderSun,
+    LightSnowThunderSun,
+    HeavySnowThunderSun,
+    DrizzleThunder,
+    LightSleetThunder,
+    HeavySleetThunder,
+    LightSnowThunder,
+    HeavySnowThunder,
+    DrizzleSun = 40,
+    RainSun,
+    LightSleetSun,
+    HeavySleetSun,
+    LightSnowSun,
+    HeavysnowSun,
+    Drizzle,
+    LightSleet,
+    HeavySleet,
+    LightSnow,
+    HeavySnow,
+	// Some symbol ids are used for indicating polar night. These ids are over the ordinary id + 100, the name are prefixed with Dark_. For instance, Dark_Sun is symbol id 101 (1+100). Some examples are listed underneath. This is available for the following ids: 101, 102, 103, 105, 106, 107, 108, 120, 121, 124, 125, 126, 127, 128, 129, 140, 141, 142, 143, 144 and 145.
+    Dark_Sun = 101,
+    //~ 102 Dark_LightCloud
+    Dark_PartlyCloud = 103,
+    //~ 129 Dark_HeavySnowThunderSun
+	Wind = 200
 };
 
 static Window *window;
@@ -18,19 +72,21 @@ static TextLayer *dateLayer;
 static TextLayer *temperatureLayer;
 static BitmapLayer *bluetooth_layer;
 static BitmapLayer *charging_layer;
+static BitmapLayer *weather_icon_layer;
 static Layer *batteryGraphLayer;
 static int batteryPct = 0;
-static int fontSize = 0;
 struct tm *currentTime;
 static uint8_t sunriseHour = 100;
 static uint8_t sunriseMinute = 0;
 static uint8_t sunsetHour = 0;
 static uint8_t sunsetMinute = 0;
+static uint8_t cloudCover = 0;
 static char currentTemperature[12];
 static bool bluetoothConnected = 0;
 static Layer *circleLayer;
 static GBitmap *bluetooth_bitmap = NULL;
 static GBitmap *charging_bitmap = NULL;
+static GBitmap *weather_bitmap = NULL;
 
 static const int minutesPerDay = 24 * 60;
 
@@ -160,6 +216,56 @@ static void handle_bluetooth(bool connected)
 		send_hello();
 }
 
+static void handle_weather_icon(uint8_t icon)
+{
+	uint32_t resource = 0;
+	switch (icon) {
+		case Sun:
+			resource = RESOURCE_ID_IMAGE_WEATHER_CLEAR;
+			break;
+		case Dark_Sun:
+			resource = RESOURCE_ID_IMAGE_WEATHER_CLEAR_NIGHT;
+			break;
+		case Dark_PartlyCloud:
+			resource = RESOURCE_ID_IMAGE_WEATHER_FEW_CLOUDS_NIGHT;
+			break;
+		case PartlyCloud:
+			resource = RESOURCE_ID_IMAGE_WEATHER_FEW_CLOUDS;
+			break;
+		case Cloud:
+		case Fog:
+			resource = RESOURCE_ID_IMAGE_WEATHER_OVERCAST;
+			break;
+		//~ case ?:
+			//~ resource = RESOURCE_ID_IMAGE_WEATHER_SEVERE_ALERT;
+			//~ break;
+		case Rain:
+			resource = RESOURCE_ID_IMAGE_WEATHER_SHOWERS;
+			break;
+		//~ case ?:
+			//~ resource = RESOURCE_ID_IMAGE_WEATHER_SHOWERS_SCATTERED;
+			//~ break;
+		case Sleet:
+		case Snow:
+			resource = RESOURCE_ID_IMAGE_WEATHER_SNOW;
+			break;
+		//~ case ?:
+			//~ resource = RESOURCE_ID_IMAGE_WEATHER_STORM;
+			//~ break;
+		case Wind:
+			resource = RESOURCE_ID_IMAGE_WEATHER_WIND;
+			break;
+	}
+	if (weather_bitmap) {
+		gbitmap_destroy(weather_bitmap);
+		weather_bitmap = NULL;
+	}
+	if (resource) {
+		weather_bitmap = gbitmap_create_with_resource(resource);
+	}
+	bitmap_layer_set_bitmap(weather_icon_layer, weather_bitmap);
+}
+
 static void handle_battery(BatteryChargeState charge_state)
 {
 	batteryPct = charge_state.charge_percent;
@@ -189,6 +295,12 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 		case KEY_LAT:
 		case KEY_LON:
 			// TODO maybe calculate sunrise/sunset so the phone doesn't have to send it
+			break;
+		case KEY_CLOUD_COVER:
+			cloudCover = tuple->value->uint8;
+			break;
+		case KEY_WEATHER_ICON:
+			handle_weather_icon(tuple->value->uint8);
 			break;
 		case KEY_TEMPERATURE:
 			strncpy(currentTemperature, tuple->value->cstring, 12);
@@ -276,6 +388,16 @@ static void window_load(Window *window) {
 	layer_add_child(window_layer, bitmap_layer_get_layer(charging_layer));
 	charging_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CHARGING);
 
+	temperatureLayer = text_layer_create(GRect(bounds.size.w - 32, -4, 32, 18));
+	text_layer_set_text_alignment(temperatureLayer, GTextAlignmentRight);
+	text_layer_set_text_color(temperatureLayer, GColorWhite);
+	text_layer_set_background_color(temperatureLayer, GColorClear);
+	text_layer_set_font(temperatureLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+	layer_add_child(window_layer, text_layer_get_layer(temperatureLayer));
+
+	weather_icon_layer = bitmap_layer_create(GRect(0, -1, 22, 22));
+	layer_add_child(window_layer, bitmap_layer_get_layer(weather_icon_layer));
+
 	int diameter = min(bounds.size.w - 1, bounds.size.h - 16 - 1);
 	circleLayer = layer_create(GRect(0, 0, diameter, diameter));
 	layer_set_update_proc(circleLayer, updateCircleLayer);
@@ -297,13 +419,6 @@ static void window_load(Window *window) {
 	text_layer_set_background_color(dateLayer, GColorClear);
 	text_layer_set_font(dateLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 	layer_add_child(window_layer, text_layer_get_layer(dateLayer));
-
-	temperatureLayer = text_layer_create(GRect(bounds.size.w - 32, -4, 32, 18));
-	text_layer_set_text_alignment(temperatureLayer, GTextAlignmentRight);
-	text_layer_set_text_color(temperatureLayer, GColorWhite);
-	text_layer_set_background_color(temperatureLayer, GColorClear);
-	text_layer_set_font(temperatureLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
-	layer_add_child(window_layer, text_layer_get_layer(temperatureLayer));
 
 	dateLayerUpdate();
 	timeLayerUpdate();
@@ -330,6 +445,9 @@ static void window_unload(Window *window) {
 	gbitmap_destroy(bluetooth_bitmap);
 	bitmap_layer_destroy(charging_layer);
 	gbitmap_destroy(charging_bitmap);
+	bitmap_layer_destroy(weather_icon_layer);
+	if (weather_bitmap)
+		gbitmap_destroy(weather_bitmap);
 }
 
 static void window_init(void) {

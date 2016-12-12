@@ -28,6 +28,17 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static android.location.LocationManager.PASSIVE_PROVIDER;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Cloud;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.DarkPartlyCloud;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.DarkSun;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Fog;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.PartlyCloud;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Rain;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Sleet;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Snow;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Sun;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.WEATHERUNKNOWN;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Wind;
 
 public class WeatherService extends Service {
 
@@ -39,7 +50,8 @@ public class WeatherService extends Service {
     LocationListener m_locationListener;
     String m_periodicProvider = PASSIVE_PROVIDER;
     double curlat = 0, curlon = 0;
-    String curTemperature = "";
+    WeatherListener.WeatherIcon curWeatherIcon;
+    double curTemperature = 0, curCloudCover = 0;
     int sunriseHour = 0, sunriseMinute = 0, sunsetHour = 0, sunsetMinute = 0;
     long lastUpdateTime = 0;
     WeatherAPIHandler weatherApiHandler = new WeatherAPIHandler(this);
@@ -70,9 +82,73 @@ public class WeatherService extends Service {
         String [] f  = currently.get().getFieldsArray();
         for(int i = 0; i < f.length; i++)
             Log.d(TAG, f[i] + ": " + currently.get().getByKey(f[i]));
-        curTemperature = Math.round(Double.valueOf(currently.get().getByKey("temperature"))) + "°";
+        curTemperature = Double.valueOf(currently.get().getByKey("temperature"));
+        curCloudCover = Double.valueOf(currently.get().getByKey("cloudCover"));
+        String icon = currently.get().getByKey("icon");
+        /* oughtta work, but partly-cloudy-night turns into unknown
+        switch(icon) {
+            case "clear-day":
+                curWeatherIcon = Sun;
+                break;
+            case "clear-night":
+                curWeatherIcon = DarkSun;
+                break;
+            case "rain":
+                curWeatherIcon = Rain;
+                break;
+            case "snow":
+                curWeatherIcon = Snow;
+                break;
+            case "sleet":
+                curWeatherIcon = Sleet;
+                break;
+            case "wind":
+                curWeatherIcon = Wind; // doesn't match the Yr icon set
+                break;
+            case "fog":
+                curWeatherIcon = Fog;
+                break;
+            case "cloudy":
+                curWeatherIcon = Cloud;
+                break;
+            case "partly-cloudy-day":
+                curWeatherIcon = PartlyCloud;
+                break;
+            case "partly-cloudy-night":
+                curWeatherIcon = DarkPartlyCloud;
+                break;
+            default:
+                curWeatherIcon = WEATHERUNKNOWN;
+                break;
+        }
+        */
+
+        if (icon.contains("clear-day"))
+            curWeatherIcon = Sun;
+        else if (icon.contains("clear-night"))
+            curWeatherIcon = DarkSun;
+        else if (icon.contains("partly-cloudy-day"))
+            curWeatherIcon = PartlyCloud;
+        else if (icon.contains("partly-cloudy-night"))
+            curWeatherIcon = DarkPartlyCloud;
+        else if (icon.contains("rain"))
+            curWeatherIcon = Rain;
+        else if (icon.contains("snow"))
+            curWeatherIcon = Snow;
+        else if (icon.contains("sleet"))
+            curWeatherIcon = Sleet;
+        else if (icon.contains("wind"))
+            curWeatherIcon = Wind; // doesn't match the Yr icon set
+        else if (icon.contains("fog"))
+            curWeatherIcon = Fog;
+        else if (icon.contains("cloudy"))
+            curWeatherIcon = Cloud;
+        else
+            curWeatherIcon = WEATHERUNKNOWN;
+
+        Log.d(TAG, "for icon " + icon + " got enum " + curWeatherIcon);
         for (WeatherListener l : m_listeners)
-            l.updateWeather(curTemperature);
+            l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
         lastUpdateTime = System.currentTimeMillis();
     }
 
@@ -187,7 +263,7 @@ public class WeatherService extends Service {
             lastUpdateTime = System.currentTimeMillis();
             l.updateLocation(curlat, curlon);
             l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
-            l.updateWeather(curTemperature);
+            l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
         }
     }
 }
