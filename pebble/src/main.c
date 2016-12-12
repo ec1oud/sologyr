@@ -22,9 +22,9 @@ static Layer *batteryGraphLayer;
 static int batteryPct = 0;
 static int fontSize = 0;
 struct tm *currentTime;
-static uint8_t sunriseHour = 6;
+static uint8_t sunriseHour = 100;
 static uint8_t sunriseMinute = 0;
-static uint8_t sunsetHour = 6;
+static uint8_t sunsetHour = 0;
 static uint8_t sunsetMinute = 0;
 static char currentTemperature[12];
 static bool bluetoothConnected = 0;
@@ -33,6 +33,18 @@ static GBitmap *bluetooth_bitmap = NULL;
 static GBitmap *charging_bitmap = NULL;
 
 static const int minutesPerDay = 24 * 60;
+
+static void send_hello()
+{
+	Tuplet value = TupletInteger(KEY_HELLO, 0);
+	DictionaryIterator *iter;
+	app_message_outbox_begin(&iter);
+	if (iter == NULL)
+		return;
+	dict_write_tuplet(iter, &value);
+	dict_write_end(iter);
+	app_message_outbox_send();
+}
 
 static int min(int one, int other)
 {
@@ -76,10 +88,14 @@ static void updateCircleLayer(Layer *layer, GContext* ctx)
 	GRect fillCircle = grect_crop(layerBounds, 2);
 	graphics_context_set_stroke_color(ctx, GColorWhite);
 	graphics_draw_circle(ctx, grect_center_point(&layerBounds), layerBounds.size.w / 2);
-	int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / minutesPerDay - 180;
-	int sunsetAngle = (sunsetHour * 60 + sunsetMinute) * 360 / minutesPerDay - 180;
-	graphics_context_set_fill_color(ctx, GColorYellow);
-	graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 3,  DEG_TO_TRIGANGLE(sunriseAngle),  DEG_TO_TRIGANGLE(sunsetAngle));
+	if (sunriseHour > 24) {
+		send_hello();
+	} else {
+		int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / minutesPerDay - 180;
+		int sunsetAngle = (sunsetHour * 60 + sunsetMinute) * 360 / minutesPerDay - 180;
+		graphics_context_set_fill_color(ctx, GColorYellow);
+		graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 3,  DEG_TO_TRIGANGLE(sunriseAngle),  DEG_TO_TRIGANGLE(sunsetAngle));
+	}
 
 	GRect innerCircle = grect_crop(fillCircle, layerBounds.size.w / 4);
 	int32_t currentTimeAngle = (currentTime->tm_hour * 60 + currentTime->tm_min) * 360 / minutesPerDay - 180;
@@ -130,22 +146,10 @@ static void updateBatteryGraphLayer(Layer *layer, GContext* ctx)
 	graphics_draw_rect(ctx, layerBounds);
 }
 
-static void send_hello()
-{
-	Tuplet value = TupletInteger(KEY_HELLO, 0);
-	DictionaryIterator *iter;
-	app_message_outbox_begin(&iter);
-	if (iter == NULL)
-		return;
-	dict_write_tuplet(iter, &value);
-	dict_write_end(iter);
-	app_message_outbox_send();
-}
-
 static void handle_tap(AccelAxisType axis, int32_t direction)
 {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "tap %d %d", (int)axis, (int)direction);
-	send_hello();
+	//~ send_hello();
 }
 
 static void handle_bluetooth(bool connected)
@@ -312,7 +316,7 @@ static void window_load(Window *window) {
 }
 
 static void window_appear(Window *window) {
-	send_hello();
+	//~ send_hello();
 }
 
 static void window_disappear(Window *window) {

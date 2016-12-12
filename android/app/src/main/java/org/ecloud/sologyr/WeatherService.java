@@ -33,6 +33,7 @@ public class WeatherService extends Service {
 
     private List<WeatherListener> m_listeners = new ArrayList<>(2);
     private final String TAG = this.getClass().getSimpleName();
+    private final long UPDATE_INTERVAL = 600000; // milliseconds
     PebbleUtil m_pebbleUtil;
     LocationManager m_locationManager;
     LocationListener m_locationListener;
@@ -40,6 +41,7 @@ public class WeatherService extends Service {
     double curlat = 0, curlon = 0;
     String curTemperature = "";
     int sunriseHour = 0, sunriseMinute = 0, sunsetHour = 0, sunsetMinute = 0;
+    long lastUpdateTime = 0;
     WeatherAPIHandler weatherApiHandler = new WeatherAPIHandler(this);
     NowCastTask nowCastTask = null;
     DarkSkyCurrentTask darkSkyCurrentTask = null;
@@ -71,6 +73,7 @@ public class WeatherService extends Service {
         curTemperature = currently.get().getByKey("temperature") + "°C";
         for (WeatherListener l : m_listeners)
             l.updateWeather(curTemperature);
+        lastUpdateTime = System.currentTimeMillis();
     }
 
     public class LocalBinder extends Binder {
@@ -180,8 +183,11 @@ public class WeatherService extends Service {
     }
 
     public void updateEverything(WeatherListener l) {
-        l.updateLocation(curlat, curlon);
-        l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
-        l.updateWeather(curTemperature);
+        if (System.currentTimeMillis() - lastUpdateTime > UPDATE_INTERVAL) {
+            lastUpdateTime = System.currentTimeMillis();
+            l.updateLocation(curlat, curlon);
+            l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
+            l.updateWeather(curTemperature);
+        }
     }
 }
