@@ -62,6 +62,7 @@ static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
 	*currentTime = *tick_time;
 	if (units_changed & MINUTE_UNIT) {
 		timeLayerUpdate();
+		layer_mark_dirty(circleLayer);
 	}
 	if (units_changed & DAY_UNIT) {
 		dateLayerUpdate();
@@ -77,11 +78,25 @@ static void updateCircleLayer(Layer *layer, GContext* ctx)
 	graphics_draw_circle(ctx, grect_center_point(&layerBounds), layerBounds.size.w / 2);
 	int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / minutesPerDay - 180;
 	int sunsetAngle = (sunsetHour * 60 + sunsetMinute) * 360 / minutesPerDay - 180;
-	//~ graphics_context_set_fill_color(ctx, GColorRed);
-	//~ graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 2,  DEG_TO_TRIGANGLE(sunsetAngle - 2),  DEG_TO_TRIGANGLE(sunsetAngle));
 	graphics_context_set_fill_color(ctx, GColorYellow);
-	graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 2,  DEG_TO_TRIGANGLE(sunriseAngle),  DEG_TO_TRIGANGLE(sunsetAngle));
-	//~ graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 2,  DEG_TO_TRIGANGLE(sunriseAngle - 2),  DEG_TO_TRIGANGLE(sunriseAngle));
+	graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 3,  DEG_TO_TRIGANGLE(sunriseAngle),  DEG_TO_TRIGANGLE(sunsetAngle));
+
+	GRect innerCircle = grect_crop(fillCircle, layerBounds.size.w / 4);
+	int32_t currentTimeAngle = (currentTime->tm_hour * 60 + currentTime->tm_min) * 360 / minutesPerDay - 180;
+	//~ void graphics_fill_radial(GContext * ctx, GRect rect, GOvalScaleMode scale_mode, uint16_t inset_thickness, int32_t angle_start, int32_t angle_end)
+	//~ GPoint gpoint_from_polar(GRect rect, GOvalScaleMode scale_mode, int32_t angle)
+	//~ void graphics_draw_line(GContext * ctx, GPoint p0, GPoint p1)
+
+	//~ graphics_context_set_fill_color(ctx, GColorBlack);
+	//~ graphics_fill_radial(ctx, layerBounds, GCornerNone, layerBounds.size.w / 4,  DEG_TO_TRIGANGLE(currentTimeAngle - 2),  DEG_TO_TRIGANGLE(currentTimeAngle + 2));
+	GPoint pointerInner = gpoint_from_polar(innerCircle, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
+	GPoint pointerOuter = gpoint_from_polar(layerBounds, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
+	graphics_context_set_stroke_color(ctx, GColorBlack);
+	graphics_context_set_stroke_width(ctx, 7);
+	graphics_draw_line(ctx, pointerInner, pointerOuter);
+	graphics_context_set_stroke_color(ctx, GColorOrange);
+	graphics_context_set_stroke_width(ctx, 3);
+	graphics_draw_line(ctx, pointerInner, pointerOuter);
 }
 
 static void updateBatteryGraphLayer(Layer *layer, GContext* ctx)
