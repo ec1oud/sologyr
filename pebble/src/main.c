@@ -1,4 +1,6 @@
 #include <pebble.h>
+#include "common.h"
+#include "health.h"
 
 enum DictKey {
 	KEY_NONE = 0,
@@ -68,6 +70,7 @@ enum WeatherIcon {
 
 static Window *window;
 static TextLayer *text_time_layer;
+static TextLayer *stepsLayer;
 static TextLayer *dateLayer;
 static TextLayer *temperatureLayer;
 static BitmapLayer *bluetooth_layer;
@@ -87,8 +90,6 @@ static Layer *circleLayer;
 static GBitmap *bluetooth_bitmap = NULL;
 static GBitmap *charging_bitmap = NULL;
 static GBitmap *weather_bitmap = NULL;
-
-static const int minutesPerDay = 24 * 60;
 
 static void send_hello()
 {
@@ -125,6 +126,13 @@ void timeLayerUpdate()
 	text_layer_set_text(text_time_layer, time_text);
 }
 
+void stepsLayerUpdate()
+{
+	static char buf[] = "000000";
+	snprintf(buf, sizeof(buf), "%d", health_get_current_steps());
+	text_layer_set_text(stepsLayer, buf);
+}
+
 void circleLayerUpdate()
 {
 	layer_mark_dirty(circleLayer);
@@ -136,6 +144,8 @@ static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
 	if (units_changed & MINUTE_UNIT) {
 		timeLayerUpdate();
 		circleLayerUpdate();
+		stepsLayerUpdate();
+		health_update_steps_interval();
 	}
 	if (units_changed & DAY_UNIT) {
 		dateLayerUpdate();
@@ -152,20 +162,14 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	if (sunriseHour > 24) {
 		send_hello();
 	} else {
-		int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / minutesPerDay - 180;
-		int sunsetAngle = (sunsetHour * 60 + sunsetMinute) * 360 / minutesPerDay - 180;
+		int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / MINUTES_PER_DAY - 180;
+		int sunsetAngle = (sunsetHour * 60 + sunsetMinute) * 360 / MINUTES_PER_DAY - 180;
 		graphics_context_set_fill_color(ctx, GColorYellow);
 		graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 3,  DEG_TO_TRIGANGLE(sunriseAngle),  DEG_TO_TRIGANGLE(sunsetAngle));
 	}
 
 	GRect innerCircle = grect_crop(fillCircle, layerBounds.size.w / 4);
-	int32_t currentTimeAngle = (currentTime->tm_hour * 60 + currentTime->tm_min) * 360 / minutesPerDay - 180;
-	//~ void graphics_fill_radial(GContext * ctx, GRect rect, GOvalScaleMode scale_mode, uint16_t inset_thickness, int32_t angle_start, int32_t angle_end)
-	//~ GPoint gpoint_from_polar(GRect rect, GOvalScaleMode scale_mode, int32_t angle)
-	//~ void graphics_draw_line(GContext * ctx, GPoint p0, GPoint p1)
-
-	//~ graphics_context_set_fill_color(ctx, GColorBlack);
-	//~ graphics_fill_radial(ctx, layerBounds, GCornerNone, layerBounds.size.w / 4,  DEG_TO_TRIGANGLE(currentTimeAngle - 2),  DEG_TO_TRIGANGLE(currentTimeAngle + 2));
+	int32_t currentTimeAngle = (currentTime->tm_hour * 60 + currentTime->tm_min) * 360 / MINUTES_PER_DAY - 180;
 	GPoint pointerInner = gpoint_from_polar(innerCircle, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
 	GPoint pointerOuter = gpoint_from_polar(layerBounds, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
 	graphics_context_set_stroke_color(ctx, GColorBlack);
@@ -174,6 +178,25 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	graphics_context_set_stroke_color(ctx, GColorOrange);
 	graphics_context_set_stroke_width(ctx, 3);
 	graphics_draw_line(ctx, pointerInner, pointerOuter);
+
+	// activity record; TODO move it to another layer?
+	innerCircle = grect_crop(fillCircle, layerBounds.size.w / 3);
+	graphics_context_set_stroke_color(ctx, GColorGreen);
+	graphics_context_set_stroke_width(ctx, 3);
+
+	for (int i = 0; i < HEALTH_INTERVAL_COUNT; ++i) {
+		uint16_t steps = health_get_steps_for_interval(i);
+		if (steps) {
+			int angle = i * MINUTES_PER_HEALTH_INTERVAL * 360 / MINUTES_PER_DAY - 180;
+			GRect polarBounds;
+			polarBounds.size.w = innerCircle.size.w + steps / 15;
+			polarBounds.size.h = polarBounds.size.w;
+			grect_align(&polarBounds, &fillCircle, GAlignCenter, false);
+			GPoint pointerInner = gpoint_from_polar(innerCircle, GCornerNone, DEG_TO_TRIGANGLE(angle));
+			GPoint pointerOuter = gpoint_from_polar(polarBounds, GCornerNone, DEG_TO_TRIGANGLE(angle));
+			graphics_draw_line(ctx, pointerInner, pointerOuter);
+		}
+	}
 }
 
 static void updateBatteryGraphLayer(Layer *layer, GContext* ctx)
@@ -418,6 +441,14 @@ static void window_load(Window *window) {
 	text_layer_set_text_alignment(text_time_layer, GTextAlignmentCenter);
 	layer_add_child(window_layer, text_layer_get_layer(text_time_layer));
 
+	text_time_rect.origin.y += 40;
+	stepsLayer = text_layer_create(text_time_rect);
+	text_layer_set_text_color(stepsLayer, GColorGreen);
+	text_layer_set_background_color(stepsLayer, GColorClear);
+	text_layer_set_font(stepsLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+	text_layer_set_text_alignment(stepsLayer, GTextAlignmentCenter);
+	layer_add_child(window_layer, text_layer_get_layer(stepsLayer));
+
 	dateLayer = text_layer_create(GRect(14, bounds.size.h - 24, bounds.size.w - 32 - 14, 24));
 	text_layer_set_text_alignment(dateLayer, GTextAlignmentCenter);
 	text_layer_set_text_color(dateLayer, GColorLimerick);
@@ -427,6 +458,7 @@ static void window_load(Window *window) {
 
 	dateLayerUpdate();
 	timeLayerUpdate();
+	stepsLayerUpdate();
 
 	tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
 	bluetooth_connection_service_subscribe(&handle_bluetooth);
@@ -477,10 +509,12 @@ static void window_init(void) {
 	app_message_register_outbox_failed(out_failed_handler);
 	Tuplet value = TupletInteger(KEY_NONE, 0);
 	app_message_open(1024, dict_calc_buffer_size_from_tuplets(&value, 1));
+	health_init();
 }
 
 static void window_deinit(void) {
 	window_destroy(window);
+	health_deinit();
 }
 
 int main(void) {

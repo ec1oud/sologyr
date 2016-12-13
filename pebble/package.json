@@ -2,9 +2,10 @@
   "name": "SolOgYr",
   "author": "ecloud",
   "version": "0.1.0",
-  "keywords": ["pebble-app"],
+  "keywords": ["pebble-app", "circadian", "surise", "sunset", "health", "steps", "weather"],
   "private": true,
   "dependencies": {},
+  "capabilities": [ "health" ],
   "pebble": {
     "displayName": "sologyr",
     "uuid": "7a83bfb6-3795-4452-8c26-5f23e9fedf34",
