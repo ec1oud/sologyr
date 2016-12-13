@@ -125,12 +125,17 @@ void timeLayerUpdate()
 	text_layer_set_text(text_time_layer, time_text);
 }
 
+void circleLayerUpdate()
+{
+	layer_mark_dirty(circleLayer);
+}
+
 static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
 {
 	*currentTime = *tick_time;
 	if (units_changed & MINUTE_UNIT) {
 		timeLayerUpdate();
-		layer_mark_dirty(circleLayer);
+		circleLayerUpdate();
 	}
 	if (units_changed & DAY_UNIT) {
 		dateLayerUpdate();
@@ -138,7 +143,7 @@ static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
 	}
 }
 
-static void updateCircleLayer(Layer *layer, GContext* ctx)
+static void paintCircleLayer(Layer *layer, GContext* ctx)
 {
 	GRect layerBounds = layer_get_bounds(layer);
 	GRect fillCircle = grect_crop(layerBounds, 2);
@@ -337,7 +342,7 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 		}
 		tuple = dict_read_next(iter);
 	}
-	layer_mark_dirty(circleLayer);
+	circleLayerUpdate();
 	//~ layer_mark_dirty(window_get_root_layer(window));
 }
 
@@ -400,9 +405,9 @@ static void window_load(Window *window) {
 
 	int diameter = min(bounds.size.w - 1, bounds.size.h - 16 - 1);
 	circleLayer = layer_create(GRect(0, 0, diameter, diameter));
-	layer_set_update_proc(circleLayer, updateCircleLayer);
+	layer_set_update_proc(circleLayer, paintCircleLayer);
 	layer_add_child(window_layer, circleLayer);
-	layer_mark_dirty(circleLayer);
+	circleLayerUpdate();
 
 	GRect text_time_rect = GRect(0, 0, bounds.size.w, 50);
 	grect_align(&text_time_rect, &bounds, GAlignCenter, false);
