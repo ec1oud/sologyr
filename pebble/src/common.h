@@ -20,5 +20,27 @@ typedef enum {
 	AppKeyDailyAverage,
 	AppKeyCurrentSteps,
 	AppKeyStepIntervals,
-	AppKeyLastIntervalLoad
+	AppKeyLastIntervalLoad,
+	AppKeyVmcSunday, // tm_wday = 0
+	AppKeyVmcMonday,
+	AppKeyVmcTuesday,
+	AppKeyVmcWednesday,
+	AppKeyVmcThursday,
+	AppKeyVmcFriday,
+	AppKeyVmcSaturday
 } AppKey;
+
+enum DictKey {
+	KEY_NONE = 0,
+	KEY_HELLO = 1,
+	KEY_ACTIVE_INTERVAL = 2, // inform phone that the watch usually sees activity, so keep data up-to-date
+	KEY_LAT = 10,
+	KEY_LON = 11,
+	KEY_SUNRISE_HOUR = 12,
+	KEY_SUNRISE_MINUTE = 13,
+	KEY_SUNSET_HOUR = 14,
+	KEY_SUNSET_MINUTE = 15,
+	KEY_TEMPERATURE = 20,
+	KEY_WEATHER_ICON = 21,
+	KEY_CLOUD_COVER = 22
+};

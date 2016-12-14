@@ -10,10 +10,14 @@ typedef enum
 static int s_current_steps, s_daily_average, s_current_average;
 static char s_current_steps_buffer[8];
 static uint16_t s_steps_per_interval[HEALTH_INTERVAL_COUNT]; // first interval is midnight, next is 00:15 and so on
+// vector magnitude counts, same intervals.  Data from same day last week is used to predict the future today.
+static uint16_t s_vmc_per_interval[HEALTH_INTERVAL_COUNT];
 static uint8_t s_current_interval_idx;
 static time_t s_last_interval_load_time;
 
 extern void circleLayerUpdate();
+extern void handleCurrentIntervalChanged(uint8_t interval, uint16_t expectedVmc);
+extern struct tm *currentTime;
 
 static void update_average(AverageType type)
 {
@@ -115,27 +119,55 @@ char* health_get_current_steps_buffer()
 
 void health_update_steps_interval()
 {
-	HealthMinuteData intervalData[MINUTES_PER_HEALTH_INTERVAL];
 	time_t secondsPerInterval = MINUTES_PER_HEALTH_INTERVAL * SECONDS_PER_MINUTE;
-	time_t end = time(NULL) + secondsPerInterval;
-	end -= end % secondsPerInterval;
-	time_t start = end - secondsPerInterval;
-	// TODO check whether this happens too often... health_service_get_minute_history does take a bit of time
-	uint32_t records = health_service_get_minute_history(intervalData, MINUTES_PER_HEALTH_INTERVAL, &start, &end);
-	uint16_t stepAcc = 0;
-	for (uint32_t m = 0; m < records; m++)
-		if (!intervalData[m].is_invalid)
-			stepAcc += intervalData[m].steps;
-	uint8_t intervalIdx = (uint8_t)((start - time_start_of_today()) / secondsPerInterval);
-	s_steps_per_interval[intervalIdx] = stepAcc;
-	if (intervalIdx != s_current_interval_idx) {
+	time_t startToday = time_start_of_today();
+	uint8_t currentInterval = (uint8_t)((time(NULL) - startToday) / secondsPerInterval);
+	if (currentInterval == s_current_interval_idx) {
+		// Same interval, but we are interested in updating the current steps.
+		HealthMinuteData intervalData[MINUTES_PER_HEALTH_INTERVAL];
+		time_t start = startToday + currentInterval * secondsPerInterval;
+		time_t end = time(NULL) + 10; // slightly in the future in case it changes as we read?
+		// TODO check whether this happens too often... health_service_get_minute_history does take a bit of time
+		uint32_t records = health_service_get_minute_history(intervalData, MINUTES_PER_HEALTH_INTERVAL, &start, &end);
+		uint16_t stepAcc = 0;
+		for (uint32_t m = 0; m < records; m++)
+			if (!intervalData[m].is_invalid)
+				stepAcc += intervalData[m].steps;
+		s_steps_per_interval[currentInterval] = stepAcc;
+	} else {
+		// Presumably we went forward in time to the next interval.
+		// notify that a new interval has started and send old (predicted) data from this interval
+		handleCurrentIntervalChanged(currentInterval, s_vmc_per_interval[currentInterval]);
+		// then reset it to zero
+		s_vmc_per_interval[currentInterval] = 0;
+		// look back at previous interval to get the final step count, vmc etc.
+		HealthMinuteData intervalData[MINUTES_PER_HEALTH_INTERVAL];
+		time_t start = startToday + s_current_interval_idx * secondsPerInterval;
+		time_t end = start + secondsPerInterval;
+		uint32_t records = health_service_get_minute_history(intervalData, MINUTES_PER_HEALTH_INTERVAL, &start, &end);
+		uint16_t stepAcc = 0;
+		uint32_t vmcAcc = 0;
+		for (uint32_t m = 0; m < records; m++)
+			if (!intervalData[m].is_invalid) {
+				stepAcc += intervalData[m].steps;
+				vmcAcc += intervalData[m].vmc;
+			}
+		// save it: last interval's total is next week's prediction at the same time of day
+		s_steps_per_interval[s_current_interval_idx] = stepAcc;
+		s_vmc_per_interval[s_current_interval_idx] = (uint16_t)vmcAcc; // TODO ensure that it stops at the max 16-bit value instead of overflowing
 		persist_write_data(AppKeyStepIntervals, s_steps_per_interval, sizeof(s_steps_per_interval));
-		s_current_interval_idx = intervalIdx;
+		persist_write_data(AppKeyVmcSunday + currentTime->tm_wday, s_vmc_per_interval, sizeof(s_vmc_per_interval));
+		if (s_last_interval_load_time > 0) {
+			s_last_interval_load_time = time(NULL);
+			persist_write_int(AppKeyLastIntervalLoad, s_last_interval_load_time);
+		}
+		s_current_interval_idx = currentInterval;
 	}
-	if (s_last_interval_load_time > 0) {
-		s_last_interval_load_time = time(NULL);
-		persist_write_int(AppKeyLastIntervalLoad, s_last_interval_load_time);
-	}
+}
+
+void health_update_weekday()
+{
+	persist_read_data(AppKeyVmcSunday + currentTime->tm_wday, s_vmc_per_interval, sizeof(s_vmc_per_interval));
 }
 
 static void load_health_data(void *context)
@@ -154,6 +186,7 @@ static void load_health_data(void *context)
 	if (now - s_last_interval_load_time > SECONDS_PER_DAY) {
 		HealthMinuteData intervalData[MINUTES_PER_HEALTH_INTERVAL];
 		memset(s_steps_per_interval, 0, sizeof(s_steps_per_interval));
+		memset(s_vmc_per_interval, 0, sizeof(s_vmc_per_interval));
 		time_t startToday = time_start_of_today();
 		uint32_t i = (time(NULL) - startToday) / (MINUTES_PER_HEALTH_INTERVAL * SECONDS_PER_MINUTE);
 		for (; i > 0; --i) {
@@ -161,16 +194,21 @@ static void load_health_data(void *context)
 			time_t end = start + (MINUTES_PER_HEALTH_INTERVAL * SECONDS_PER_MINUTE);
 			uint32_t records = health_service_get_minute_history(intervalData, MINUTES_PER_HEALTH_INTERVAL, &start, &end);
 			uint16_t stepAcc = 0;
+			uint32_t vmcAcc = 0;
 			for (uint32_t m = 0; m < records; m++)
-				if (!intervalData[m].is_invalid)
+				if (!intervalData[m].is_invalid) {
 					stepAcc += intervalData[m].steps;
+					vmcAcc += intervalData[m].vmc;
+				}
 			s_steps_per_interval[i] = stepAcc;
-			APP_LOG(APP_LOG_LEVEL_DEBUG, "interval %d steps (from service) %d", (int)i, (int)stepAcc);
+			s_vmc_per_interval[i] = vmcAcc;
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "interval %d steps (from service) %d vmc %d", (int)i, (int)stepAcc, (int)vmcAcc);
 		}
 		s_last_interval_load_time = time(NULL);
 		persist_write_data(AppKeyStepIntervals, s_steps_per_interval, sizeof(s_steps_per_interval));
+		persist_write_data(AppKeyVmcSunday + currentTime->tm_wday, s_vmc_per_interval, sizeof(s_vmc_per_interval));
 		persist_write_int(AppKeyLastIntervalLoad, s_last_interval_load_time);
-	} else {
+	} else if (DEBUG) {
 		for (int i = 0; i < HEALTH_INTERVAL_COUNT; ++i)
 			if (s_steps_per_interval[i] > 0)
 				APP_LOG(APP_LOG_LEVEL_DEBUG, "interval %d steps %d", i, (int)(s_steps_per_interval[i]));
@@ -201,12 +239,14 @@ void health_init()
 		s_daily_average = 0;
 		s_last_interval_load_time = 0;
 		memset(s_steps_per_interval, 0, sizeof(s_steps_per_interval));
+		memset(s_vmc_per_interval, 0, sizeof(s_vmc_per_interval));
 	} else {
 		s_current_average = persist_read_int(AppKeyCurrentAverage);
 		s_daily_average = persist_read_int(AppKeyDailyAverage);
 		s_current_steps = persist_read_int(AppKeyCurrentSteps);
 		s_last_interval_load_time = persist_read_int(AppKeyLastIntervalLoad);
 		persist_read_data(AppKeyStepIntervals, s_steps_per_interval, sizeof(s_steps_per_interval));
+		health_update_weekday();
 	}
 	health_update_steps_buffer();
 
@@ -216,5 +256,5 @@ void health_init()
 
 void health_deinit()
 {
-	persist_write_data(AppKeyStepIntervals, s_steps_per_interval, sizeof(s_steps_per_interval));
+	// could persist stuff here but we've been doing it often enough as it is
 }

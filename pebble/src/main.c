@@ -2,20 +2,6 @@
 #include "common.h"
 #include "health.h"
 
-enum DictKey {
-	KEY_NONE = 0,
-	KEY_HELLO = 1,
-	KEY_LAT = 10,
-	KEY_LON = 11,
-	KEY_SUNRISE_HOUR = 12,
-	KEY_SUNRISE_MINUTE = 13,
-	KEY_SUNSET_HOUR = 14,
-	KEY_SUNSET_MINUTE = 15,
-	KEY_TEMPERATURE = 20,
-	KEY_WEATHER_ICON = 21,
-	KEY_CLOUD_COVER = 22
-};
-
 // from http://api.met.no/weatherapi/weathericon/1.1/documentation
 enum WeatherIcon {
 	WeatherUnknown = 0,
@@ -154,7 +140,22 @@ static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
 	if (units_changed & DAY_UNIT) {
 		dateLayerUpdate();
 		layer_mark_dirty(window_get_root_layer(window));
+		health_update_weekday();
 	}
+}
+
+void handleCurrentIntervalChanged(uint8_t interval, uint16_t expectedVmc)
+{
+	if (!expectedVmc)
+		return; // if total inactivity is expected, don't bother the phone with it
+	Tuplet value = TupletInteger(KEY_ACTIVE_INTERVAL, expectedVmc);
+	DictionaryIterator *iter;
+	app_message_outbox_begin(&iter);
+	if (iter == NULL)
+		return;
+	dict_write_tuplet(iter, &value);
+	dict_write_end(iter);
+	app_message_outbox_send();
 }
 
 static void paintCircleLayer(Layer *layer, GContext* ctx)
@@ -193,7 +194,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 		if (steps) {
 			int angle = (i * MINUTES_PER_HEALTH_INTERVAL + MINUTES_PER_HEALTH_INTERVAL / 2) * 360 / MINUTES_PER_DAY - 180;
 			GRect polarBounds;
-			polarBounds.size.w = innerCircle.size.w + steps / 15;
+			polarBounds.size.w = innerCircle.size.w + steps / 32;
 			polarBounds.size.h = polarBounds.size.w;
 			grect_align(&polarBounds, &fillCircle, GAlignCenter, false);
 			GPoint pointerInner = gpoint_from_polar(innerCircle, GCornerNone, DEG_TO_TRIGANGLE(angle));
