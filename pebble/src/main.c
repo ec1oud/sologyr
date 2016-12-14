@@ -60,7 +60,11 @@ enum WeatherIcon {
     HeavySleet,
     LightSnow,
     HeavySnow,
-	// Some symbol ids are used for indicating polar night. These ids are over the ordinary id + 100, the name are prefixed with Dark_. For instance, Dark_Sun is symbol id 101 (1+100). Some examples are listed underneath. This is available for the following ids: 101, 102, 103, 105, 106, 107, 108, 120, 121, 124, 125, 126, 127, 128, 129, 140, 141, 142, 143, 144 and 145.
+	// Some symbol ids are used for indicating polar night. These ids are over the ordinary id + 100,
+	// the name are prefixed with Dark_. For instance, Dark_Sun is symbol id 101 (1+100).
+	// Some examples are listed underneath. This is available for the following ids:
+	// 101, 102, 103, 105, 106, 107, 108, 120, 121, 124, 125,
+	// 126, 127, 128, 129, 140, 141, 142, 143, 144 and 145.
     Dark_Sun = 101,
     //~ 102 Dark_LightCloud
     Dark_PartlyCloud = 103,
@@ -159,11 +163,11 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	GRect fillCircle = grect_crop(layerBounds, 2);
 	graphics_context_set_stroke_color(ctx, GColorWhite);
 	graphics_draw_circle(ctx, grect_center_point(&layerBounds), layerBounds.size.w / 2);
+	int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / MINUTES_PER_DAY - 180;
+	int sunsetAngle = (sunsetHour * 60 + sunsetMinute) * 360 / MINUTES_PER_DAY - 180;
 	if (sunriseHour > 24) {
 		send_hello();
 	} else {
-		int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / MINUTES_PER_DAY - 180;
-		int sunsetAngle = (sunsetHour * 60 + sunsetMinute) * 360 / MINUTES_PER_DAY - 180;
 		graphics_context_set_fill_color(ctx, GColorYellow);
 		graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 3,  DEG_TO_TRIGANGLE(sunriseAngle),  DEG_TO_TRIGANGLE(sunsetAngle));
 	}
@@ -183,7 +187,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	innerCircle = grect_crop(fillCircle, layerBounds.size.w / 3);
 	graphics_context_set_stroke_color(ctx, GColorGreen);
 	graphics_context_set_stroke_width(ctx, 3);
-
+	int currentInterval = (time(NULL) - time_start_of_today()) / (MINUTES_PER_HEALTH_INTERVAL * SECONDS_PER_MINUTE);
 	for (int i = 0; i < HEALTH_INTERVAL_COUNT; ++i) {
 		uint16_t steps = health_get_steps_for_interval(i);
 		if (steps) {
@@ -194,6 +198,19 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 			grect_align(&polarBounds, &fillCircle, GAlignCenter, false);
 			GPoint pointerInner = gpoint_from_polar(innerCircle, GCornerNone, DEG_TO_TRIGANGLE(angle));
 			GPoint pointerOuter = gpoint_from_polar(polarBounds, GCornerNone, DEG_TO_TRIGANGLE(angle));
+			if (i > currentInterval) {
+				// yesterday's data: use faded colors
+				if (angle > sunriseAngle && angle < sunsetAngle)
+					graphics_context_set_stroke_color(ctx, GColorGreen);
+				else
+					graphics_context_set_stroke_color(ctx, GColorDarkGreen);
+			} else {
+				// today
+				if (angle > sunriseAngle && angle < sunsetAngle)
+					graphics_context_set_stroke_color(ctx, GColorInchworm);
+				else
+					graphics_context_set_stroke_color(ctx, GColorJaegerGreen);
+			}
 			graphics_draw_line(ctx, pointerInner, pointerOuter);
 		}
 	}
