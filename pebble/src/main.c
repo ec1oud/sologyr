@@ -191,7 +191,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	for (int i = 0; i < HEALTH_INTERVAL_COUNT; ++i) {
 		uint16_t steps = health_get_steps_for_interval(i);
 		if (steps) {
-			int angle = i * MINUTES_PER_HEALTH_INTERVAL * 360 / MINUTES_PER_DAY - 180;
+			int angle = (i * MINUTES_PER_HEALTH_INTERVAL + MINUTES_PER_HEALTH_INTERVAL / 2) * 360 / MINUTES_PER_DAY - 180;
 			GRect polarBounds;
 			polarBounds.size.w = innerCircle.size.w + steps / 15;
 			polarBounds.size.h = polarBounds.size.w;
