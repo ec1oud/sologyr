@@ -17,6 +17,8 @@ public class PebbleUtil implements WeatherListener {
     public static final UUID WATCHAPP_UUID = UUID.fromString("7a83bfb6-3795-4452-8c26-5f23e9fedf34");
     public static final int
             KEY_HELLO = 1,
+            KEY_ACTIVE_INTERVAL = 2, // inform phone that the watch usually sees activity, so keep data up-to-date
+            KEY_TAP = 3,
             KEY_LAT = 10,
             KEY_LON = 11,
             KEY_SUNRISE_HOUR = 12,
@@ -75,7 +77,7 @@ public class PebbleUtil implements WeatherListener {
         PebbleKit.PebbleAckReceiver parcvr = new PebbleKit.PebbleAckReceiver(PebbleUtil.WATCHAPP_UUID) {
             @Override
             public void receiveAck(Context context, int transactionId) {
-                Log.i(TAG, "Received ack for transaction " + transactionId);
+//                Log.i(TAG, "Received ack for transaction " + transactionId);
                 // if the phone app starts after the pebble app, we only receive an ack,
                 // but nothing in the pebble connected receiver
                 onConnected();
@@ -107,10 +109,21 @@ public class PebbleUtil implements WeatherListener {
             public void receiveData(final Context context, final int transactionId, final PebbleDictionary data) {
                 PebbleKit.sendAckToPebble(m_weatherService.getApplicationContext(), transactionId);
                 m_nackCount = 0;
-                Log.i(TAG, "Received txn " + transactionId + ": " + data.toJsonString());
+//                Log.i(TAG, "Received txn " + transactionId + ": " + data.toJsonString());
                 PebbleKit.sendAckToPebble(context, transactionId);
-                if (data.contains(PebbleUtil.KEY_HELLO))
-                    m_weatherService.updateEverything(PebbleUtil.this);
+                if (data.contains(PebbleUtil.KEY_HELLO)) {
+                    Log.i(TAG, "Pebble says hello");
+                    m_weatherService.updateWeather(false);
+                    m_weatherService.resendEverything(PebbleUtil.this);
+                } else if (data.contains(PebbleUtil.KEY_ACTIVE_INTERVAL)) {
+                    Log.i(TAG, "Pebble says predicted activity level will be " + data.getUnsignedIntegerAsLong(KEY_ACTIVE_INTERVAL));
+                    m_weatherService.updateWeather(false);
+                    m_weatherService.resendEverything(PebbleUtil.this);
+                } else if (data.contains(PebbleUtil.KEY_TAP)) {
+                    long axisDirn = data.getInteger(KEY_TAP);
+                    Log.i(TAG, "Pebble reports tap: axis " + (axisDirn & 0x0F) + " direction " + (axisDirn >> 4));
+                    m_weatherService.resendEverything(PebbleUtil.this);
+                }
             }
         };
         PebbleKit.registerReceivedDataHandler(m_weatherService, pdrcvr);
@@ -131,7 +144,7 @@ public class PebbleUtil implements WeatherListener {
         String tempStr = Math.round(temperature) + "°";
         if (icon == null)
             return;
-        Log.d(TAG, "updateCurrentWeather " + tempStr + "° " + cloudCover + "% " + icon.getValue());
+        Log.d(TAG, "updateCurrentWeather " + tempStr + " " + cloudCover + "% " + icon.getValue());
         PebbleDictionary out = new PebbleDictionary();
         out.addString(KEY_TEMPERATURE, tempStr);
         out.addUint8(KEY_CLOUD_COVER, (byte)Math.round(cloudCover * 100)); // from fraction (e.g. 0.25) to int percent, so it fits in a byte

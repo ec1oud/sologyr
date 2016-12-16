@@ -250,8 +250,21 @@ static void updateBatteryGraphLayer(Layer *layer, GContext* ctx)
 
 static void handle_tap(AccelAxisType axis, int32_t direction)
 {
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "tap %d %d", (int)axis, (int)direction);
-	//~ send_hello();
+	int8_t combined = (((int8_t)direction << 4) | (int8_t)axis);
+	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "tap %d %d | %d", (int)axis, (int)direction, (int)combined);
+	DictionaryIterator *iter;
+	app_message_outbox_begin(&iter);
+	if (iter == NULL) {
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "tap %d %d: null iterator", (int)axis, (int)direction);
+		return;
+	}
+	DictionaryResult ret;
+	if ((ret = dict_write_int8(iter, KEY_TAP, combined))) {
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "tap %d %d: can't write axis/direction", (int)axis, (int)direction);
+		return;
+	}
+	dict_write_end(iter);
+	app_message_outbox_send();
 }
 
 static void handle_bluetooth(bool connected)

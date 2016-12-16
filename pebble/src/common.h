@@ -34,6 +34,7 @@ enum DictKey {
 	KEY_NONE = 0,
 	KEY_HELLO = 1,
 	KEY_ACTIVE_INTERVAL = 2, // inform phone that the watch usually sees activity, so keep data up-to-date
+	KEY_TAP = 3,
 	KEY_LAT = 10,
 	KEY_LON = 11,
 	KEY_SUNRISE_HOUR = 12,

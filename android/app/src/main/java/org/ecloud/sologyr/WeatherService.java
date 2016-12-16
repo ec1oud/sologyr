@@ -50,6 +50,7 @@ public class WeatherService extends Service {
     LocationListener m_locationListener;
     String m_periodicProvider = PASSIVE_PROVIDER;
     double curlat = 0, curlon = 0;
+    Location curLocation = null;
     WeatherListener.WeatherIcon curWeatherIcon;
     double curTemperature = 0, curCloudCover = 0;
     int sunriseHour = 0, sunriseMinute = 0, sunsetHour = 0, sunsetMinute = 0;
@@ -218,6 +219,7 @@ public class WeatherService extends Service {
     }
 
     public void setLocation(Location location) {
+        curLocation = location;
         curlat = location.getLatitude();
         curlon = location.getLongitude();
         Calendar today = Calendar.getInstance();
@@ -237,9 +239,15 @@ public class WeatherService extends Service {
 //        nowCastTask = new NowCastTask(this);
 //        nowCastTask.start(location);
         weatherApiHandler.setLocation(location);
-        weatherApiHandler.startFetchForecastTask();
-        darkSkyCurrentTask = new DarkSkyCurrentTask(this);
-        darkSkyCurrentTask.execute(location);
+        updateWeather(true); // immediately because we know the location is different by at least 10km
+    }
+
+    public void updateWeather(boolean immediately) {
+        if (curLocation != null && (immediately || System.currentTimeMillis() - lastUpdateTime > UPDATE_INTERVAL)) {
+            weatherApiHandler.startFetchForecastTask();
+            darkSkyCurrentTask = new DarkSkyCurrentTask(this);
+            darkSkyCurrentTask.execute(curLocation);
+        }
     }
 
     public void addWeatherListener(WeatherListener l) {
@@ -258,12 +266,9 @@ public class WeatherService extends Service {
         }
     }
 
-    public void updateEverything(WeatherListener l) {
-        if (System.currentTimeMillis() - lastUpdateTime > UPDATE_INTERVAL) {
-            lastUpdateTime = System.currentTimeMillis();
-            l.updateLocation(curlat, curlon);
-            l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
-            l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
-        }
+    public void resendEverything(WeatherListener l) {
+        l.updateLocation(curlat, curlon);
+        l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
+        l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
     }
 }
