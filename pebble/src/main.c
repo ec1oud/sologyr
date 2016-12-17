@@ -162,31 +162,31 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 {
 	GRect layerBounds = layer_get_bounds(layer);
 	GRect fillCircle = grect_crop(layerBounds, 2);
-	graphics_context_set_stroke_color(ctx, GColorWhite);
+	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_RING);
 	graphics_draw_circle(ctx, grect_center_point(&layerBounds), layerBounds.size.w / 2);
 	int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / MINUTES_PER_DAY - 180;
 	int sunsetAngle = (sunsetHour * 60 + sunsetMinute) * 360 / MINUTES_PER_DAY - 180;
 	if (sunriseHour > 24) {
 		send_hello();
 	} else {
-		graphics_context_set_fill_color(ctx, GColorYellow);
-		graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 3,  DEG_TO_TRIGANGLE(sunriseAngle),  DEG_TO_TRIGANGLE(sunsetAngle));
+		graphics_context_set_fill_color(ctx, COLOR_SUN);
+		graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 3,
+			DEG_TO_TRIGANGLE(sunriseAngle),  DEG_TO_TRIGANGLE(sunsetAngle));
 	}
 
 	GRect innerCircle = grect_crop(fillCircle, layerBounds.size.w / 4);
 	int32_t currentTimeAngle = (currentTime->tm_hour * 60 + currentTime->tm_min) * 360 / MINUTES_PER_DAY - 180;
 	GPoint pointerInner = gpoint_from_polar(innerCircle, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
 	GPoint pointerOuter = gpoint_from_polar(layerBounds, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
-	graphics_context_set_stroke_color(ctx, GColorBlack);
+	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_POINTER_SHADOW);
 	graphics_context_set_stroke_width(ctx, 7);
 	graphics_draw_line(ctx, pointerInner, pointerOuter);
-	graphics_context_set_stroke_color(ctx, GColorOrange);
+	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_POINTER);
 	graphics_context_set_stroke_width(ctx, 3);
 	graphics_draw_line(ctx, pointerInner, pointerOuter);
 
 	// activity record; TODO move it to another layer?
 	innerCircle = grect_crop(fillCircle, layerBounds.size.w / 3);
-	graphics_context_set_stroke_color(ctx, GColorGreen);
 	graphics_context_set_stroke_width(ctx, 3);
 	int currentInterval = (time(NULL) - time_start_of_today()) / (MINUTES_PER_HEALTH_INTERVAL * SECONDS_PER_MINUTE);
 	for (int i = 0; i < HEALTH_INTERVAL_COUNT; ++i) {
@@ -202,15 +202,15 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 			if (i > currentInterval) {
 				// yesterday's data: use faded colors
 				if (angle > sunriseAngle && angle < sunsetAngle)
-					graphics_context_set_stroke_color(ctx, GColorGreen);
+					graphics_context_set_stroke_color(ctx, COLOR_STEPS_YESTERDAY);
 				else
-					graphics_context_set_stroke_color(ctx, GColorDarkGreen);
+					graphics_context_set_stroke_color(ctx, COLOR_STEPS_YESTERDAY_NIGHT);
 			} else {
 				// today
 				if (angle > sunriseAngle && angle < sunsetAngle)
-					graphics_context_set_stroke_color(ctx, GColorInchworm);
+					graphics_context_set_stroke_color(ctx, COLOR_STEPS_DAY);
 				else
-					graphics_context_set_stroke_color(ctx, GColorJaegerGreen);
+					graphics_context_set_stroke_color(ctx, COLOR_STEPS_NIGHT);
 			}
 			graphics_draw_line(ctx, pointerInner, pointerOuter);
 		}
@@ -221,10 +221,10 @@ static void updateBatteryGraphLayer(Layer *layer, GContext* ctx)
 {
 	GRect layerBounds = layer_get_bounds(layer);
 	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "updateBatteryGraphLayer bounds %d %d %d %d", layerBounds.origin.x, layerBounds.origin.y, layerBounds.size.w, layerBounds.size.h);
-	graphics_context_set_fill_color(ctx, GColorBlack);
+	graphics_context_set_fill_color(ctx, COLOR_BATTERY_BACKGROUND);
 	graphics_fill_rect(ctx, layerBounds, 0, GCornerNone);
-	graphics_context_set_fill_color(ctx, GColorWhite);
-	graphics_context_set_stroke_color(ctx, GColorWhite);
+	graphics_context_set_fill_color(ctx, COLOR_BATTERY_FILL);
+	graphics_context_set_stroke_color(ctx, COLOR_BATTERY_STROKE);
 	{
 		GRect knob;
 		int knobWidth = 2;
@@ -449,7 +449,7 @@ static void window_load(Window *window) {
 
 	temperatureLayer = text_layer_create(GRect(bounds.size.w - 32, -4, 32, 18));
 	text_layer_set_text_alignment(temperatureLayer, GTextAlignmentRight);
-	text_layer_set_text_color(temperatureLayer, GColorWhite);
+	text_layer_set_text_color(temperatureLayer, COLOR_TEMPERATURE);
 	text_layer_set_background_color(temperatureLayer, GColorClear);
 	text_layer_set_font(temperatureLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 	layer_add_child(window_layer, text_layer_get_layer(temperatureLayer));
@@ -466,7 +466,7 @@ static void window_load(Window *window) {
 	GRect text_time_rect = GRect(0, 0, bounds.size.w, 50);
 	grect_align(&text_time_rect, &bounds, GAlignCenter, false);
 	text_time_layer = text_layer_create(text_time_rect);
-	text_layer_set_text_color(text_time_layer, GColorCeleste);
+	text_layer_set_text_color(text_time_layer, COLOR_TIME);
 	text_layer_set_background_color(text_time_layer, GColorClear);
 	text_layer_set_font(text_time_layer, fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS));
 	text_layer_set_text_alignment(text_time_layer, GTextAlignmentCenter);
@@ -474,7 +474,7 @@ static void window_load(Window *window) {
 
 	text_time_rect.origin.y += 40;
 	stepsLayer = text_layer_create(text_time_rect);
-	text_layer_set_text_color(stepsLayer, GColorGreen);
+	text_layer_set_text_color(stepsLayer, COLOR_STEPS);
 	text_layer_set_background_color(stepsLayer, GColorClear);
 	text_layer_set_font(stepsLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 	text_layer_set_text_alignment(stepsLayer, GTextAlignmentCenter);
@@ -482,7 +482,7 @@ static void window_load(Window *window) {
 
 	dateLayer = text_layer_create(GRect(14, bounds.size.h - 24, bounds.size.w - 32 - 14, 24));
 	text_layer_set_text_alignment(dateLayer, GTextAlignmentCenter);
-	text_layer_set_text_color(dateLayer, GColorLimerick);
+	text_layer_set_text_color(dateLayer, COLOR_DATE);
 	text_layer_set_background_color(dateLayer, GColorClear);
 	text_layer_set_font(dateLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 	layer_add_child(window_layer, text_layer_get_layer(dateLayer));

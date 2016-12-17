@@ -45,3 +45,24 @@ enum DictKey {
 	KEY_WEATHER_ICON = 21,
 	KEY_CLOUD_COVER = 22
 };
+
+// Colors for the central 24-hour disk
+#define COLOR_SUN GColorWindsorTan
+#define COLOR_CLOCK_RING GColorWhite
+#define COLOR_CLOCK_POINTER GColorOrange
+#define COLOR_CLOCK_POINTER_SHADOW GColorBlack
+#define COLOR_STEPS_DAY GColorInchworm
+#define COLOR_STEPS_NIGHT GColorJaegerGreen
+#define COLOR_STEPS_YESTERDAY GColorKellyGreen
+#define COLOR_STEPS_YESTERDAY_NIGHT GColorMidnightGreen
+
+// Colors for the battery graph
+#define COLOR_BATTERY_BACKGROUND GColorBlack
+#define COLOR_BATTERY_FILL GColorMintGreen
+#define COLOR_BATTERY_STROKE GColorBrass
+
+// Colors for various labels
+#define COLOR_TEMPERATURE GColorWhite
+#define COLOR_TIME GColorCeleste
+#define COLOR_DATE GColorLimerick
+#define COLOR_STEPS GColorInchworm
