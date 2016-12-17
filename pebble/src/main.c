@@ -161,16 +161,16 @@ void handleCurrentIntervalChanged(uint8_t interval, uint16_t expectedVmc)
 static void paintCircleLayer(Layer *layer, GContext* ctx)
 {
 	GRect layerBounds = layer_get_bounds(layer);
-	GRect fillCircle = grect_crop(layerBounds, 2);
+	GRect fillCircle = grect_crop(layerBounds, 4);
 	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_RING);
-	graphics_draw_circle(ctx, grect_center_point(&layerBounds), layerBounds.size.w / 2);
+	graphics_draw_circle(ctx, grect_center_point(&fillCircle), layerBounds.size.w / 2 - 2);
 	int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / MINUTES_PER_DAY - 180;
 	int sunsetAngle = (sunsetHour * 60 + sunsetMinute) * 360 / MINUTES_PER_DAY - 180;
 	if (sunriseHour > 24) {
 		send_hello();
 	} else {
 		graphics_context_set_fill_color(ctx, COLOR_SUN);
-		graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 3,
+		graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 3 + 3,
 			DEG_TO_TRIGANGLE(sunriseAngle),  DEG_TO_TRIGANGLE(sunsetAngle));
 	}
 
@@ -447,14 +447,15 @@ static void window_load(Window *window) {
 	layer_add_child(window_layer, bitmap_layer_get_layer(charging_layer));
 	charging_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CHARGING);
 
-	temperatureLayer = text_layer_create(GRect(bounds.size.w - 32, -4, 32, 18));
-	text_layer_set_text_alignment(temperatureLayer, GTextAlignmentRight);
+	temperatureLayer = text_layer_create(GRect(0, -6, 50, 24));
+	//~ temperatureLayer = text_layer_create(GRect(bounds.size.w - 50, -4, 50, 22));
 	text_layer_set_text_color(temperatureLayer, COLOR_TEMPERATURE);
 	text_layer_set_background_color(temperatureLayer, GColorClear);
-	text_layer_set_font(temperatureLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+	text_layer_set_font(temperatureLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
 	layer_add_child(window_layer, text_layer_get_layer(temperatureLayer));
 
-	weather_icon_layer = bitmap_layer_create(GRect(0, -1, 22, 22));
+	weather_icon_layer = bitmap_layer_create(GRect(bounds.size.w - 22, -1, 22, 22));
+	//~ weather_icon_layer = bitmap_layer_create(GRect(0, -1, 22, 22));
 	layer_add_child(window_layer, bitmap_layer_get_layer(weather_icon_layer));
 
 	int diameter = min(bounds.size.w - 1, bounds.size.h - 16 - 1);
