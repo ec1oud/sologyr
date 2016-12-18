@@ -43,7 +43,9 @@ enum DictKey {
 	KEY_SUNSET_MINUTE = 15,
 	KEY_TEMPERATURE = 20,
 	KEY_WEATHER_ICON = 21,
-	KEY_CLOUD_COVER = 22
+	KEY_CLOUD_COVER = 22,
+	KEY_NOWCAST_MINUTES = 40, // how far in the future
+	KEY_NOWCAST_PRECIPITATION = 41
 };
 
 // Colors for the central 24-hour disk

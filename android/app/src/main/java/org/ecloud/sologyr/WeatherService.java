@@ -64,7 +64,7 @@ public class WeatherService extends Service {
 
     public void setForecasts(Forecast[] result) {
         for (Forecast f : result)
-            Log.d(TAG, f.toString());
+            Log.d(TAG, "forecast:" + f.toString());
     }
 
     public void setLocality(String result) {
@@ -72,17 +72,19 @@ public class WeatherService extends Service {
     }
 
     public void setNowCast(LinkedList<Forecast> nowcast) {
-        for (Forecast f : nowcast)
-            Log.d(TAG, f.toString());
+        for (WeatherListener el : m_listeners)
+            el.updateNowCast(nowcast);
+//        for (Forecast f : nowcast)
+//            Log.d(TAG, "nowcast " + f.getTimeFrom() + ": " + f.getPrecipitation());
     }
 
     public void setDarkSkyForecast(ForecastIO fio) {
-        Log.d(TAG, "Timezone: "+fio.getTimezone());
+//        Log.d(TAG, "Timezone: "+fio.getTimezone());
 //        Log.d(TAG, "Offset: "+fio.getOffset());
         FIOCurrently currently = new FIOCurrently(fio);
         String [] f  = currently.get().getFieldsArray();
         for(int i = 0; i < f.length; i++)
-            Log.d(TAG, f[i] + ": " + currently.get().getByKey(f[i]));
+            Log.d(TAG, "curr " + f[i] + ": " + currently.get().getByKey(f[i]));
         curTemperature = Double.valueOf(currently.get().getByKey("temperature"));
         curCloudCover = Double.valueOf(currently.get().getByKey("cloudCover"));
         String icon = currently.get().getByKey("icon");
@@ -147,7 +149,7 @@ public class WeatherService extends Service {
         else
             curWeatherIcon = WEATHERUNKNOWN;
 
-        Log.d(TAG, "for icon " + icon + " got enum " + curWeatherIcon);
+//        Log.d(TAG, "for icon " + icon + " got enum " + curWeatherIcon);
         for (WeatherListener l : m_listeners)
             l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
         lastUpdateTime = System.currentTimeMillis();
@@ -163,7 +165,7 @@ public class WeatherService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d(TAG, "onBind");
+//        Log.d(TAG, "onBind");
         return m_binder;
     }
 
@@ -177,12 +179,12 @@ public class WeatherService extends Service {
             initialProvider = m_locationManager.getBestProvider(crit, false);
             if (m_periodicProvider != null && initialProvider == null)
                 initialProvider = m_periodicProvider;
-            if (m_periodicProvider != null)
-                Log.d(TAG, "best low-power provider is " + m_periodicProvider + " from " + m_locationManager.getAllProviders() +
-                        ", enabled? " + m_locationManager.isProviderEnabled(m_periodicProvider));
-            if (initialProvider != null)
-                Log.d(TAG, "best provider is " + initialProvider + " from " + m_locationManager.getAllProviders() +
-                        ", enabled? " + m_locationManager.isProviderEnabled(initialProvider));
+//            if (m_periodicProvider != null)
+//                Log.d(TAG, "best low-power provider is " + m_periodicProvider + " from " + m_locationManager.getAllProviders() +
+//                        ", enabled? " + m_locationManager.isProviderEnabled(m_periodicProvider));
+//            if (initialProvider != null)
+//                Log.d(TAG, "best provider is " + initialProvider + " from " + m_locationManager.getAllProviders() +
+//                        ", enabled? " + m_locationManager.isProviderEnabled(initialProvider));
         }
         m_pebbleUtil = new PebbleUtil(this);
 
@@ -236,15 +238,15 @@ public class WeatherService extends Service {
             l.updateLocation(curlat, curlon);
             l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
         }
-//        nowCastTask = new NowCastTask(this);
-//        nowCastTask.start(location);
-        weatherApiHandler.setLocation(location);
         updateWeather(true); // immediately because we know the location is different by at least 10km
     }
 
     public void updateWeather(boolean immediately) {
         if (curLocation != null && (immediately || System.currentTimeMillis() - lastUpdateTime > UPDATE_INTERVAL)) {
+            weatherApiHandler.setLocation(curLocation);
             weatherApiHandler.startFetchForecastTask();
+            nowCastTask = new NowCastTask(this);
+            nowCastTask.start(curLocation);
             darkSkyCurrentTask = new DarkSkyCurrentTask(this);
             darkSkyCurrentTask.execute(curLocation);
         }
@@ -255,15 +257,14 @@ public class WeatherService extends Service {
             if (el == l)
                 return;
         m_listeners.add(l);
-        Log.d(TAG, "addWeatherListener " + l.getClass().getName() + ": count " + m_listeners.size());
+//        Log.d(TAG, "addWeatherListener " + l.getClass().getName() + ": count " + m_listeners.size());
     }
 
     public void removeWeatherListener(WeatherListener l) {
         m_listeners.remove(l);
-        Log.d(TAG, "removeWeatherListener " + l + ": count " + m_listeners.size());
-        if (m_listeners.isEmpty()) {
-            Log.d(TAG, "   all Weather listeners removed");
-        }
+//        Log.d(TAG, "removeWeatherListener " + l + ": count " + m_listeners.size());
+//        if (m_listeners.isEmpty())
+//            Log.d(TAG, "   all Weather listeners removed");
     }
 
     public void resendEverything(WeatherListener l) {

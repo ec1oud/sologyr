@@ -1,5 +1,9 @@
 package org.ecloud.sologyr;
 
+import com.oleaarnseth.weathercast.Forecast;
+
+import java.util.LinkedList;
+
 /**
  * Created by rutledge on 12/3/16.
  */
@@ -64,5 +68,6 @@ public interface WeatherListener {
 
     public void updateLocation(double lat, double lon);
     public void updateCurrentWeather(double temperature, double cloudCover, WeatherIcon icon);
+    public void updateNowCast(LinkedList<Forecast> nowcast);
     public void updateSunriseSunset(int sunriseHour, int sunriseMinute, int sunsetHour, int sunsetMinute);
 }

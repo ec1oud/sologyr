@@ -80,6 +80,10 @@ static Layer *circleLayer;
 static GBitmap *bluetooth_bitmap = NULL;
 static GBitmap *charging_bitmap = NULL;
 static GBitmap *weather_bitmap = NULL;
+static time_t nowcastReceivedTime;
+static int8_t nowcastTimes[16]; // minutes in the future from nowcastReceivedTime (in the past if negative)
+static uint8_t nowcastPrecipitation[16]; // tenths of mm
+static int8_t nowcastLength;
 
 static void send_hello()
 {
@@ -390,6 +394,20 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 			break;
 		case KEY_SUNSET_MINUTE:
 			sunsetMinute = tuple->value->int8;
+			break;
+		case KEY_NOWCAST_MINUTES:
+			nowcastReceivedTime = time(NULL);
+			nowcastLength = tuple->length;
+			//~ APP_LOG(APP_LOG_LEVEL_WARNING, "nowcast len %d", nowcastLength);
+			memset(nowcastTimes, 0, sizeof(nowcastTimes));
+			memcpy(nowcastTimes, tuple->value->data, tuple->length);
+			break;
+		case KEY_NOWCAST_PRECIPITATION:
+			memset(nowcastPrecipitation, 0, sizeof(nowcastPrecipitation));
+			memcpy(nowcastPrecipitation, tuple->value->data, tuple->length);
+			//~ APP_LOG(APP_LOG_LEVEL_WARNING, "nowcast prcp len %d", (int)tuple->length);
+			//~ for (int i = 0; i < tuple->length; ++i)
+				//~ APP_LOG(APP_LOG_LEVEL_WARNING, "nowcast %d %d", (int)nowcastTimes[i], nowcastPrecipitation[i]);
 			break;
 		default:
 			APP_LOG(APP_LOG_LEVEL_WARNING, "unexpected key %d", (int)tuple->key);

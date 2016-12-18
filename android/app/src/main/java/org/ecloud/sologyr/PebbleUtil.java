@@ -8,9 +8,16 @@ import android.util.Log;
 
 import com.getpebble.android.kit.PebbleKit;
 import com.getpebble.android.kit.util.PebbleDictionary;
+import com.oleaarnseth.weathercast.Forecast;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.UUID;
 
 public class PebbleUtil implements WeatherListener {
@@ -27,7 +34,9 @@ public class PebbleUtil implements WeatherListener {
             KEY_SUNSET_MINUTE = 15,
             KEY_TEMPERATURE = 20,
             KEY_WEATHER_ICON = 21,
-            KEY_CLOUD_COVER = 22;
+            KEY_CLOUD_COVER = 22,
+            KEY_NOWCAST_MINUTES = 40, // how far in the future
+            KEY_NOWCAST_PRECIPITATION = 41;
 
     private final String TAG = this.getClass().getSimpleName();
     List<BroadcastReceiver> m_receivers = new ArrayList<>();
@@ -149,6 +158,33 @@ public class PebbleUtil implements WeatherListener {
         out.addString(KEY_TEMPERATURE, tempStr);
         out.addUint8(KEY_CLOUD_COVER, (byte)Math.round(cloudCover * 100)); // from fraction (e.g. 0.25) to int percent, so it fits in a byte
         out.addUint8(KEY_WEATHER_ICON, icon.getValue());
+        PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
+    }
+
+    public void updateNowCast(LinkedList<Forecast> nowcast)
+    {
+        // example datetime: 2016-12-18T01:15:00Z
+        SimpleDateFormat timeFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        long now = System.currentTimeMillis();
+        int utcOffset = TimeZone.getDefault().getRawOffset();
+        PebbleDictionary out = new PebbleDictionary();
+        int len = nowcast.size();
+        byte[] precipitation = new byte[len]; // in tenths of mm
+        byte[] minutesInFuture = new byte[len];
+        int i = 0;
+        for (Forecast f : nowcast) {
+            precipitation[i] = (byte) Math.round(f.getPrecipitation().getPrecipitationDouble() * 10);
+            try {
+                Date d = timeFormatter.parse(f.getTimeFrom()); // it's in UTC though
+                minutesInFuture[i] = (byte)((d.getTime() - now + utcOffset) / 60000);
+                Log.d(TAG, "nowcast " + f.getTimeFrom() + " (" + minutesInFuture[i] + " min from now)" + ": " + f.getPrecipitation());
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            ++i;
+        }
+        out.addBytes(KEY_NOWCAST_MINUTES, minutesInFuture);
+        out.addBytes(KEY_NOWCAST_PRECIPITATION, precipitation);
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
 
