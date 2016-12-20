@@ -190,9 +190,11 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	graphics_draw_line(ctx, pointerInner, pointerOuter);
 
 	// activity record; TODO move it to another layer?
+	time_t now = time(NULL);
+	time_t startOfToday = time_start_of_today();
 	innerCircle = grect_crop(fillCircle, layerBounds.size.w / 3);
 	graphics_context_set_stroke_width(ctx, 3);
-	int currentInterval = (time(NULL) - time_start_of_today()) / (MINUTES_PER_HEALTH_INTERVAL * SECONDS_PER_MINUTE);
+	int currentInterval = (now - startOfToday) / (MINUTES_PER_HEALTH_INTERVAL * SECONDS_PER_MINUTE);
 	for (int i = 0; i < HEALTH_INTERVAL_COUNT; ++i) {
 		uint16_t steps = health_get_steps_for_interval(i);
 		if (steps) {
@@ -217,6 +219,34 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 					graphics_context_set_stroke_color(ctx, COLOR_STEPS_NIGHT);
 			}
 			graphics_draw_line(ctx, pointerInner, pointerOuter);
+		}
+	}
+
+	time_t nowCastAge = now - nowcastReceivedTime;
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast age %d len %d", (int)nowCastAge, nowcastLength);
+	if (nowCastAge < 2* SECONDS_PER_HOUR) {
+		time_t precipStartTime = 0;
+		for (int i = 0; i < (int)nowcastLength && i < (int)sizeof(nowcastPrecipitation); ++i) {
+			if (nowcastPrecipitation[i] > 0) {
+				if (!precipStartTime)
+					precipStartTime = nowcastTimes[i] + nowcastReceivedTime;
+			} else if (precipStartTime) {
+				int startAngle = (precipStartTime - startOfToday) * 360 / SECONDS_PER_DAY - 180;
+				int endAngle = (nowcastTimes[i] + nowcastReceivedTime - startOfToday) * 360 / SECONDS_PER_DAY - 180;
+				APP_LOG(APP_LOG_LEVEL_DEBUG, "precip %d %d %d %d",
+					(int)(precipStartTime - startOfToday), (int)(nowcastTimes[i] + nowcastReceivedTime - startOfToday),
+					startAngle, endAngle);
+				graphics_fill_radial(ctx, layerBounds, GCornerNone, 2, // TODO height acc. to amount
+					DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
+				precipStartTime = 0;
+			}
+		}
+		// If we ended with ongoing precipitation, assume it continues until the end of the nowcast
+		if (precipStartTime) {
+			int startAngle = (precipStartTime - startOfToday) * 360 / SECONDS_PER_DAY - 180;
+			int endAngle = (nowcastReceivedTime - startOfToday) * 360 / SECONDS_PER_DAY - 180;
+			graphics_fill_radial(ctx, layerBounds, GCornerNone, 2,
+				DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
 		}
 	}
 }
@@ -538,7 +568,7 @@ static void window_unload(Window *window) {
 }
 
 static void window_init(void) {
-    time_t tt = time(0);
+    time_t tt = time(NULL);
     currentTime = localtime(&tt);
 	window = window_create();
 	window_set_background_color(window, GColorBlack);
