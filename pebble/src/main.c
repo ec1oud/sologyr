@@ -84,6 +84,9 @@ static time_t nowcastReceivedTime;
 static int8_t nowcastTimes[NOWCAST_MAX_INTERVALS]; // minutes in the future from nowcastReceivedTime (in the past if negative)
 static uint8_t nowcastPrecipitation[NOWCAST_MAX_INTERVALS]; // tenths of mm
 static int8_t nowcastLength;
+static int16_t forecastPrecipitationTimes[FORECAST_MAX_INTERVALS]; // minutes from the beginning of today
+static uint8_t forecastPrecipitation[FORECAST_MAX_INTERVALS]; // tenths of mm
+static uint8_t forecastPrecipitationLength;
 
 static void send_hello()
 {
@@ -168,6 +171,9 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	GRect fillCircle = grect_crop(layerBounds, 4);
 	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_RING);
 	graphics_draw_circle(ctx, grect_center_point(&fillCircle), layerBounds.size.w / 2 - 2);
+	time_t now = time(NULL);
+
+	// render the period of the day with sunlight
 	int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / MINUTES_PER_DAY - 180;
 	int sunsetAngle = (sunsetHour * 60 + sunsetMinute) * 360 / MINUTES_PER_DAY - 180;
 	if (sunriseHour > 24) {
@@ -178,6 +184,41 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 			DEG_TO_TRIGANGLE(sunriseAngle),  DEG_TO_TRIGANGLE(sunsetAngle));
 	}
 
+	// render the forecast precipitation assuming that it's pre-sorted by time (the phone's responsibility)
+	// and assuming that each interval in which precipitation is predicted is one hour long.
+	graphics_context_set_fill_color(ctx, COLOR_PRECIPITATION);
+	if (forecastPrecipitationLength > 0) {
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip len %d", forecastPrecipitationLength);
+		for (int i = 0; i < (int)forecastPrecipitationLength && i < FORECAST_MAX_INTERVALS &&
+					forecastPrecipitationTimes[i] < MINUTES_PER_DAY; ++i) {
+			if (forecastPrecipitation[i] > 0) {
+				int startAngle = forecastPrecipitationTimes[i] * 360 / MINUTES_PER_DAY - 180;
+				int endAngle = (forecastPrecipitationTimes[i] + MINUTES_PER_HOUR) * 360 / MINUTES_PER_DAY - 180;
+				APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip %d angles %d %d amount %d", (int)forecastPrecipitationTimes[i], startAngle, endAngle, forecastPrecipitation[i]);
+				graphics_fill_radial(ctx, fillCircle, GCornerNone, forecastPrecipitation[i],
+					DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
+			}
+		}
+	}
+
+	// render the nowcast precipitation
+	graphics_context_set_fill_color(ctx, COLOR_NOWCAST);
+	time_t nowCastAge = now - nowcastReceivedTime;
+	if (nowCastAge > 0 && nowCastAge < 120)
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast age %d len %d", (int)nowCastAge, nowcastLength);
+	if (nowCastAge < 2* SECONDS_PER_HOUR) {
+		for (int i = 0; i < (int)nowcastLength && i < NOWCAST_MAX_INTERVALS; ++i) {
+			if (nowcastPrecipitation[i] > 0) {
+				int startAngle = nowcastTimes[i] * 360 / MINUTES_PER_DAY - 180;
+				int endAngle = (nowcastTimes[i] + 7 /* minutes */) * 360 / MINUTES_PER_DAY - 180;
+				APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast precip %d angles %d %d amount %d", (int)nowcastTimes[i], startAngle, endAngle, nowcastPrecipitation[i]);
+				graphics_fill_radial(ctx, fillCircle, GCornerNone, nowcastPrecipitation[i],
+					DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
+			}
+		}
+	}
+
+	// render the clock pointer
 	GRect innerCircle = grect_crop(fillCircle, layerBounds.size.w / 4);
 	int32_t currentTimeAngle = (currentTime->tm_hour * 60 + currentTime->tm_min) * 360 / MINUTES_PER_DAY - 180;
 	GPoint pointerInner = gpoint_from_polar(innerCircle, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
@@ -189,8 +230,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	graphics_context_set_stroke_width(ctx, 3);
 	graphics_draw_line(ctx, pointerInner, pointerOuter);
 
-	// activity record; TODO move it to another layer?
-	time_t now = time(NULL);
+	// render the activity record; TODO move it to another layer?
 	time_t startOfToday = time_start_of_today();
 	innerCircle = grect_crop(fillCircle, layerBounds.size.w / 3);
 	graphics_context_set_stroke_width(ctx, 3);
@@ -219,34 +259,6 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 					graphics_context_set_stroke_color(ctx, COLOR_STEPS_NIGHT);
 			}
 			graphics_draw_line(ctx, pointerInner, pointerOuter);
-		}
-	}
-
-	time_t nowCastAge = now - nowcastReceivedTime;
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast age %d len %d", (int)nowCastAge, nowcastLength);
-	if (nowCastAge < 2* SECONDS_PER_HOUR) {
-		time_t precipStartTime = 0;
-		for (int i = 0; i < (int)nowcastLength && i < NOWCAST_MAX_INTERVALS; ++i) {
-			if (nowcastPrecipitation[i] > 0) {
-				if (!precipStartTime)
-					precipStartTime = nowcastTimes[i] + nowcastReceivedTime;
-			} else if (precipStartTime) {
-				int startAngle = (precipStartTime - startOfToday) * 360 / SECONDS_PER_DAY - 180;
-				int endAngle = (nowcastTimes[i] + nowcastReceivedTime - startOfToday) * 360 / SECONDS_PER_DAY - 180;
-				APP_LOG(APP_LOG_LEVEL_DEBUG, "precip %d %d %d %d",
-					(int)(precipStartTime - startOfToday), (int)(nowcastTimes[i] + nowcastReceivedTime - startOfToday),
-					startAngle, endAngle);
-				graphics_fill_radial(ctx, layerBounds, GCornerNone, 2, // TODO height acc. to amount
-					DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
-				precipStartTime = 0;
-			}
-		}
-		// If we ended with ongoing precipitation, assume it continues until the end of the nowcast
-		if (precipStartTime) {
-			int startAngle = (precipStartTime - startOfToday) * 360 / SECONDS_PER_DAY - 180;
-			int endAngle = (nowcastReceivedTime - startOfToday) * 360 / SECONDS_PER_DAY - 180;
-			graphics_fill_radial(ctx, layerBounds, GCornerNone, 2,
-				DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
 		}
 	}
 }
@@ -369,6 +381,8 @@ static void handle_battery(BatteryChargeState charge_state)
 static void in_received_handler(DictionaryIterator *iter, void *context)
 {
 	Tuple *tuple = dict_read_first(iter);
+	int16_t currentForecastTime = 0;
+	uint8_t currentForecastPrecipitation = 0; // tenths of mm
 	while (tuple) {
 #ifdef DEBUG_MSG
 		switch (tuple->type) {
@@ -443,13 +457,33 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 			//~ for (int i = 0; i < tuple->length; ++i)
 				//~ APP_LOG(APP_LOG_LEVEL_WARNING, "nowcast %d %d", (int)nowcastTimes[i], nowcastPrecipitation[i]);
 			break;
+		case KEY_FORECAST_BEGIN:
+			forecastPrecipitationLength = 0;
+			memset(forecastPrecipitationTimes, 0, sizeof(forecastPrecipitationTimes));
+			memset(forecastPrecipitation, 0, sizeof(forecastPrecipitation));
+			break;
+		case KEY_PRECIPITATION_MINUTES:
+			currentForecastTime = tuple->value->int16;
+			break;
+		case KEY_FORECAST_PRECIPITATION:
+			currentForecastPrecipitation = tuple->value->uint8;
+			break;
 		default:
 			APP_LOG(APP_LOG_LEVEL_WARNING, "unexpected key %d", (int)tuple->key);
 		}
 		tuple = dict_read_next(iter);
 	}
-	circleLayerUpdate();
-	//~ layer_mark_dirty(window_get_root_layer(window));
+	if (currentForecastTime) {
+		if (forecastPrecipitationLength < FORECAST_MAX_INTERVALS) {
+			if (currentForecastPrecipitation > 0)
+				APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip %d %d\n", (int)currentForecastTime, (int)currentForecastPrecipitation);
+			forecastPrecipitationTimes[forecastPrecipitationLength] = currentForecastTime;
+			forecastPrecipitation[forecastPrecipitationLength] = currentForecastPrecipitation;
+			++forecastPrecipitationLength;
+		}
+	} else {
+		circleLayerUpdate();
+	}
 }
 
 static void in_dropped_handler(AppMessageResult reason, void *context)
@@ -603,7 +637,6 @@ static void window_deinit(void) {
 
 int main(void) {
 	window_init();
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", window);
 	app_event_loop();
 	window_deinit();
 }

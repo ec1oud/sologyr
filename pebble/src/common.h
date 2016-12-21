@@ -16,6 +16,7 @@
 #define HEALTH_INTERVAL_COUNT 24 * 60 / MINUTES_PER_HEALTH_INTERVAL
 
 #define NOWCAST_MAX_INTERVALS 16
+#define FORECAST_MAX_INTERVALS 128
 
 typedef enum {
 	AppKeyCurrentAverage = 0,
@@ -46,12 +47,17 @@ enum DictKey {
 	KEY_TEMPERATURE = 20,
 	KEY_WEATHER_ICON = 21,
 	KEY_CLOUD_COVER = 22,
+	KEY_FORECAST_BEGIN = 39,
 	KEY_NOWCAST_MINUTES = 40, // how far in the future
-	KEY_NOWCAST_PRECIPITATION = 41
+	KEY_NOWCAST_PRECIPITATION = 41,
+	KEY_PRECIPITATION_MINUTES = 42, // minutes after last midnight (beginning of today)
+	KEY_FORECAST_PRECIPITATION = 43
 };
 
 // Colors for the central 24-hour disk
 #define COLOR_SUN GColorWindsorTan
+#define COLOR_PRECIPITATION GColorCobaltBlue
+#define COLOR_NOWCAST GColorBlue
 #define COLOR_CLOCK_RING GColorWhite
 #define COLOR_CLOCK_POINTER GColorOrange
 #define COLOR_CLOCK_POINTER_SHADOW GColorBlack

@@ -17,14 +17,14 @@ What's working:
 - [x] today's step counts as a radial bar graph, in green
 - [x] today's total step count
 - [x] yesterday's step counts in dimmer green
+- [x] precipitation forecast beyond the next 2 hours
 
 Not well tested but but perhaps working:
-- [ ] NowCast, the yr.no highly-localized prediction of upcoming precipitation for the next 2 hours.  Intend to have thin sectors around the outside of the dial to indicate precipitation.
+- [ ] NowCast, the yr.no highly-localized prediction of upcoming precipitation for the next 2 hours.
 - [ ] learning the user's active periods of day, so as to ask the phone to fetch weather updates during that time only.  That plus a frequency limit should keep API calls to a minimum.
 
 Not started yet:
 - [ ] calculate sunrise/sunset in the Pebble app, based on current location; persist current location on Pebble.  (The problem now is that every time you leave the watch screen, it loses those times.)
-- [ ] precipitation forecast beyond the next 2 hours
 - [ ] send the rest of the forecast across to the Pebble
 - [ ] second screen (accessed via wrist flick/tap) showing longer forecast (full-width horizontal chart), and we'll see what else
 - [ ] preferences on Android.  The ones you see are just mockups provided by Android Studio when it created the skeleton project.

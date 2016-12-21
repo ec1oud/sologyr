@@ -3,20 +3,19 @@ package org.ecloud.sologyr;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.text.format.DateUtils;
 import android.util.Log;
 
 import com.getpebble.android.kit.PebbleKit;
 import com.getpebble.android.kit.util.PebbleDictionary;
 import com.oleaarnseth.weathercast.Forecast;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.TimeZone;
 import java.util.UUID;
 
@@ -35,8 +34,11 @@ public class PebbleUtil implements WeatherListener {
             KEY_TEMPERATURE = 20,
             KEY_WEATHER_ICON = 21,
             KEY_CLOUD_COVER = 22,
+            KEY_FORECAST_BEGIN = 39,
             KEY_NOWCAST_MINUTES = 40, // how far in the future
-            KEY_NOWCAST_PRECIPITATION = 41;
+            KEY_NOWCAST_PRECIPITATION = 41,
+            KEY_PRECIPITATION_MINUTES = 42, // minutes after last midnight (beginning of today)
+            KEY_FORECAST_PRECIPITATION = 43;
 
     private final String TAG = this.getClass().getSimpleName();
     List<BroadcastReceiver> m_receivers = new ArrayList<>();
@@ -44,6 +46,10 @@ public class PebbleUtil implements WeatherListener {
     int m_nackCount = 0;
     boolean m_connected = false;
     WeatherService m_weatherService;
+
+    LinkedList<Forecast> m_forecast = new LinkedList<>();
+    LinkedList<Forecast> m_precipitation = new LinkedList<>();
+    LinkedList<Forecast> m_nowcast = new LinkedList<>();
 
     public void close() {
         for (BroadcastReceiver r : m_receivers)
@@ -124,6 +130,9 @@ public class PebbleUtil implements WeatherListener {
                     Log.i(TAG, "Pebble says hello");
                     m_weatherService.updateWeather(false);
                     m_weatherService.resendEverything(PebbleUtil.this);
+                    sendPrecipitation();
+                    sendNowCast();
+                    sendForecast();
                 } else if (data.contains(PebbleUtil.KEY_ACTIVE_INTERVAL)) {
                     Log.i(TAG, "Pebble says predicted activity level will be " + data.getUnsignedIntegerAsLong(KEY_ACTIVE_INTERVAL));
                     m_weatherService.updateWeather(false);
@@ -161,54 +170,71 @@ public class PebbleUtil implements WeatherListener {
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
 
-    public LinkedList<Forecast> mergeForecasts(LinkedList<Forecast> one, LinkedList<Forecast> other)
-    {
-        LinkedList<Forecast> ret = (LinkedList<Forecast>)one.clone();
-        ret.addAll(other);
-        Collections.sort(ret);
-        // TODO remove dups
-        return ret;
+    public static Date getStartOfDay() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
     }
 
-    private void sendPrecipitation(LinkedList<Forecast> fs)
+    private void sendPrecipitation()
     {
-        // TODO
+        Collections.sort(m_precipitation);
+        int utcOffset = TimeZone.getDefault().getRawOffset();
+        long startOfToday = getStartOfDay().getTime();
+        for (Forecast f : m_precipitation) {
+            long minInFuture = (f.getTimeFrom().getTime() - startOfToday + utcOffset) / 60000;
+            if (minInFuture < 1440) { // TODO will need more than one day's worth for the second screen
+                PebbleDictionary out = new PebbleDictionary();
+                out.addInt16(KEY_PRECIPITATION_MINUTES, (short)minInFuture);
+                out.addUint8(KEY_FORECAST_PRECIPITATION, (byte) Math.round(f.getPrecipitation().getPrecipitationDouble() * 10));
+                // TODO add min/max precipitation values (but the parser isn't even extracting them yet)
+                PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
+            }
+        }
     }
 
-    private void sendForecast(LinkedList<Forecast> fs)
+    private void sendForecast()
     {
         // TODO
     }
 
     public void updateForecast(LinkedList<Forecast> fs)
     {
-        // Some Forecast objects have bpth times and precipitation;
+        // Some Forecast objects have both times and precipitation;
         // others have everything else and only timeFrom.
-        LinkedList<Forecast> forecast = new LinkedList<>();
-        LinkedList<Forecast> precipitation = new LinkedList<>();
+        m_forecast = new LinkedList<>();
+        m_precipitation = new LinkedList<>();
+        int precipCount = 0;
 
         for (Forecast f : fs)
             if (f.getPrecipitation() == null) {
-                forecast.add(f);
+                m_forecast.add(f);
                 Log.d(TAG, "forecast:" + f.toString());
-            } else {
-                precipitation.add(f);
+            } else if (f.getPrecipitation().getPrecipitationDouble() > 0 && precipCount < 128) {
+                m_precipitation.add(f);
+                ++precipCount;
                 Log.d(TAG, f.getTimeFrom() + " precipitation: " + f.getPrecipitation());
             }
-        sendPrecipitation(precipitation);
-        sendForecast(forecast);
+        PebbleDictionary out = new PebbleDictionary();
+        out.addUint8(KEY_FORECAST_BEGIN, (byte)0);
+        PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
+        sendPrecipitation();
+        sendForecast();
     }
 
-    public void updateNowCast(LinkedList<Forecast> nowcast)
+    private void sendNowCast()
     {
         long now = System.currentTimeMillis();
         int utcOffset = TimeZone.getDefault().getRawOffset();
         PebbleDictionary out = new PebbleDictionary();
-        int len = nowcast.size();
+        int len = m_nowcast.size();
         byte[] precipitation = new byte[len]; // in tenths of mm
         byte[] minutesInFuture = new byte[len];
         int i = 0;
-        for (Forecast f : nowcast) {
+        for (Forecast f : m_nowcast) {
             precipitation[i] = (byte) Math.round(f.getPrecipitation().getPrecipitationDouble() * 10);
             minutesInFuture[i] = (byte)((f.getTimeFrom().getTime() - now + utcOffset) / 60000);
             Log.d(TAG, "nowcast " + f.getTimeFrom() + " (" + minutesInFuture[i] + " min from now)" + ": " + f.getPrecipitation());
@@ -217,6 +243,12 @@ public class PebbleUtil implements WeatherListener {
         out.addBytes(KEY_NOWCAST_MINUTES, minutesInFuture);
         out.addBytes(KEY_NOWCAST_PRECIPITATION, precipitation);
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
+    }
+
+    public void updateNowCast(LinkedList<Forecast> nowcast)
+    {
+        m_nowcast = nowcast;
+        sendNowCast();
     }
 
     public void updateSunriseSunset(int sunriseHour, int sunriseMinute, int sunsetHour, int sunsetMinute) {

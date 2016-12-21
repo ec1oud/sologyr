@@ -33,7 +33,6 @@ public class Forecast implements Serializable, Comparable<Forecast> {
         this.weatherIcon = weatherIcon;
     }
 
-
     public Date getTimeFrom() { return timeFrom; }
 
     public Date getTimeTo() { return timeTo; }
@@ -41,12 +40,6 @@ public class Forecast implements Serializable, Comparable<Forecast> {
     public Temperature getTemperature() { return temperature; }
 
     public double getWindspeed() { return windspeed; }
-
-    public void setPrecipitation(Precipitation precipitation) {
-        this.precipitation = precipitation;
-    }
-
-    public void setForecastWeatherIcon(WeatherIcon weatherIcon) { this.weatherIcon = weatherIcon; }
 
     public Precipitation getPrecipitation() { return precipitation; }
 
@@ -67,16 +60,4 @@ public class Forecast implements Serializable, Comparable<Forecast> {
     public final int compareTo(Forecast other) {
         return getTimeFrom().compareTo(other.getTimeFrom());
     }
-
-//    public class ForecastComparator extends Comparator<Forecast> {
-//        @Override
-//        public int compare(Forecast f1, Forecast f2) {
-//            return f1.getTimeFrom().compareTo(f2.getTimeFrom());
-//        }
-//
-//        @Override
-//        public boolean equals(Object o) {
-//            return false;
-//        }
-//    }
 }
