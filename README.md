@@ -32,5 +32,5 @@ Not started yet:
   - [ ] colors?
   - [ ] what to show and where?
   - [ ] keep them simple to keep the package size small.  The APK is 1.3MB now, could probably be smaller.
+- [ ] Android app should install the Pebble app (included in the APK)
 - [ ] get real-time weather from some other source, preferably an open source where users' weather station data is contributed
-
