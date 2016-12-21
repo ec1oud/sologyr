@@ -1,15 +1,17 @@
 package com.oleaarnseth.weathercast;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Denne klassen rommer værvarsel-data for et gjeldende tidsrom.
  */
-public class Forecast implements Serializable {
+public class Forecast implements Serializable, Comparable<Forecast> {
     // XML-oppføringens tid lagres som String for enkelthetens skyld:
-    private String timeFrom, timeTo;
-
-    private String displayDate;
+    private Date timeFrom, timeTo;
 
     private double windspeed;
 
@@ -17,29 +19,28 @@ public class Forecast implements Serializable {
     private Precipitation precipitation;
     private WeatherIcon weatherIcon;
 
+    // example datetime: 2016-12-18T01:15:00Z
+    private static final SimpleDateFormat timeFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+
     // Konstruktør:
-    public Forecast(String timeFrom, String timeTo, Temperature temperature, double windspeed, Precipitation precipitation, WeatherIcon weatherIcon) {
-        this.timeFrom = timeFrom;
-        this.timeTo = timeTo;
+    public Forecast(String timeFrom, String timeTo, Temperature temperature, double windspeed,
+                    Precipitation precipitation, WeatherIcon weatherIcon) throws ParseException {
+        this.timeFrom = timeFormatter.parse(timeFrom);
+        this.timeTo = timeFormatter.parse(timeTo);
         this.temperature = temperature;
         this.windspeed = windspeed;
         this.precipitation = precipitation;
         this.weatherIcon = weatherIcon;
-        displayDate = "";
     }
 
 
-    public String getTimeFrom() { return timeFrom; }
+    public Date getTimeFrom() { return timeFrom; }
 
-    public String getTimeTo() { return timeTo; }
-
-    public String getDisplayDate() { return displayDate; }
+    public Date getTimeTo() { return timeTo; }
 
     public Temperature getTemperature() { return temperature; }
 
     public double getWindspeed() { return windspeed; }
-
-    public void setDisplayDate(String displayDate) { this.displayDate = displayDate; }
 
     public void setPrecipitation(Precipitation precipitation) {
         this.precipitation = precipitation;
@@ -55,17 +56,27 @@ public class Forecast implements Serializable {
 
     @Override
     public String toString() {
-        return "Time from: "
-                + timeFrom
-                + "\nTime to: "
-                + timeTo
-                + "\nTemperature: "
-                + (temperature == null ? "none" :temperature.toString())
-                + "\nWindspeed: "
-                + windspeed
-                + "\nPrecipitation: "
-                + precipitation
-                + "\nDisplay date: "
-                + displayDate;
+        return "Time from: " + timeFrom
+                + " to: " + timeTo
+                + " temperature: " + (temperature == null ? "none" : temperature.toString())
+                + " windspeed: " + windspeed
+                + (precipitation == null ? "" : " precipitation: " + precipitation);
     }
+
+    @Override
+    public final int compareTo(Forecast other) {
+        return getTimeFrom().compareTo(other.getTimeFrom());
+    }
+
+//    public class ForecastComparator extends Comparator<Forecast> {
+//        @Override
+//        public int compare(Forecast f1, Forecast f2) {
+//            return f1.getTimeFrom().compareTo(f2.getTimeFrom());
+//        }
+//
+//        @Override
+//        public boolean equals(Object o) {
+//            return false;
+//        }
+//    }
 }

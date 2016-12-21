@@ -19,11 +19,9 @@ import com.github.dvdme.ForecastIOLib.FIOCurrently;
 import com.github.dvdme.ForecastIOLib.ForecastIO;
 import com.luckycatlabs.sunrisesunset.SunriseSunsetCalculator;
 import com.oleaarnseth.weathercast.Forecast;
-import com.oleaarnseth.weathercast.WeatherAPIHandler;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -55,20 +53,19 @@ public class WeatherService extends Service {
     double curTemperature = 0, curCloudCover = 0;
     int sunriseHour = 0, sunriseMinute = 0, sunsetHour = 0, sunsetMinute = 0;
     long lastUpdateTime = 0;
-    WeatherAPIHandler weatherApiHandler = new WeatherAPIHandler(this);
     NowCastTask nowCastTask = null;
+    ForecastTask forecastTask = null;
     DarkSkyCurrentTask darkSkyCurrentTask = null;
 
     public WeatherService() {
     }
 
-    public void setForecasts(Forecast[] result) {
-        for (Forecast f : result)
-            Log.d(TAG, "forecast:" + f.toString());
-    }
-
-    public void setLocality(String result) {
-        Log.d(TAG, "locality " + result);
+    public void setForecast(LinkedList<Forecast> forecast) {
+        for (WeatherListener el : m_listeners)
+            el.updateForecast(forecast);
+//        for (Forecast f : forecast)
+//            Log.d(TAG, "forecast:" + f.toString());
+        forecastTask = null;
     }
 
     public void setNowCast(LinkedList<Forecast> nowcast) {
@@ -76,6 +73,7 @@ public class WeatherService extends Service {
             el.updateNowCast(nowcast);
 //        for (Forecast f : nowcast)
 //            Log.d(TAG, "nowcast " + f.getTimeFrom() + ": " + f.getPrecipitation());
+        nowCastTask = null;
     }
 
     public void setDarkSkyForecast(ForecastIO fio) {
@@ -153,6 +151,7 @@ public class WeatherService extends Service {
         for (WeatherListener l : m_listeners)
             l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
         lastUpdateTime = System.currentTimeMillis();
+        darkSkyCurrentTask = null;
     }
 
     public class LocalBinder extends Binder {
@@ -243,8 +242,8 @@ public class WeatherService extends Service {
 
     public void updateWeather(boolean immediately) {
         if (curLocation != null && (immediately || System.currentTimeMillis() - lastUpdateTime > UPDATE_INTERVAL)) {
-            weatherApiHandler.setLocation(curLocation);
-            weatherApiHandler.startFetchForecastTask();
+            forecastTask = new ForecastTask(this);
+            forecastTask.start(curLocation);
             nowCastTask = new NowCastTask(this);
             nowCastTask.start(curLocation);
             darkSkyCurrentTask = new DarkSkyCurrentTask(this);

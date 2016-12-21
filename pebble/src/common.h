@@ -15,6 +15,8 @@
 
 #define HEALTH_INTERVAL_COUNT 24 * 60 / MINUTES_PER_HEALTH_INTERVAL
 
+#define NOWCAST_MAX_INTERVALS 16
+
 typedef enum {
 	AppKeyCurrentAverage = 0,
 	AppKeyDailyAverage,

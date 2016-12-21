@@ -8,6 +8,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.util.LinkedList;
 
 
@@ -46,7 +47,8 @@ public class XMLParser {
     public static final String PRECIPITATION_UNIT_INCHES = "in";
 
     // Her starter parseren, som videre kaller alle private hjelpemetoder under:
-    public LinkedList<Forecast> parse(InputStream in) throws XmlPullParserException, IOException {
+    public LinkedList<Forecast> parse(InputStream in)
+            throws XmlPullParserException, ParseException, IOException {
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -60,7 +62,8 @@ public class XMLParser {
         }
     }
 
-    private LinkedList<Forecast> readXmlFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
+    private LinkedList<Forecast> readXmlFeed(XmlPullParser parser)
+            throws XmlPullParserException, ParseException, IOException {
         parser.require(XmlPullParser.START_TAG, NAMESPACE, START_TAG_WEATHERDATA);
         LinkedList<Forecast> forecasts = new LinkedList<Forecast>();
 
@@ -74,7 +77,8 @@ public class XMLParser {
         return forecasts;
     }
 
-    private Forecast readForecast(XmlPullParser parser) throws XmlPullParserException, IOException {
+    private Forecast readForecast(XmlPullParser parser)
+            throws XmlPullParserException, ParseException, IOException {
         parser.require(XmlPullParser.START_TAG, NAMESPACE, TAG_FORECAST);
 
         String timeFrom = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_TIME_FROM);

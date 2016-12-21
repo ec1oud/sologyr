@@ -3,7 +3,6 @@ package org.ecloud.sologyr;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.getpebble.android.kit.PebbleKit;
@@ -13,6 +12,7 @@ import com.oleaarnseth.weathercast.Forecast;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -161,10 +161,46 @@ public class PebbleUtil implements WeatherListener {
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
 
+    public LinkedList<Forecast> mergeForecasts(LinkedList<Forecast> one, LinkedList<Forecast> other)
+    {
+        LinkedList<Forecast> ret = (LinkedList<Forecast>)one.clone();
+        ret.addAll(other);
+        Collections.sort(ret);
+        // TODO remove dups
+        return ret;
+    }
+
+    private void sendPrecipitation(LinkedList<Forecast> fs)
+    {
+        // TODO
+    }
+
+    private void sendForecast(LinkedList<Forecast> fs)
+    {
+        // TODO
+    }
+
+    public void updateForecast(LinkedList<Forecast> fs)
+    {
+        // Some Forecast objects have bpth times and precipitation;
+        // others have everything else and only timeFrom.
+        LinkedList<Forecast> forecast = new LinkedList<>();
+        LinkedList<Forecast> precipitation = new LinkedList<>();
+
+        for (Forecast f : fs)
+            if (f.getPrecipitation() == null) {
+                forecast.add(f);
+                Log.d(TAG, "forecast:" + f.toString());
+            } else {
+                precipitation.add(f);
+                Log.d(TAG, f.getTimeFrom() + " precipitation: " + f.getPrecipitation());
+            }
+        sendPrecipitation(precipitation);
+        sendForecast(forecast);
+    }
+
     public void updateNowCast(LinkedList<Forecast> nowcast)
     {
-        // example datetime: 2016-12-18T01:15:00Z
-        SimpleDateFormat timeFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         long now = System.currentTimeMillis();
         int utcOffset = TimeZone.getDefault().getRawOffset();
         PebbleDictionary out = new PebbleDictionary();
@@ -174,13 +210,8 @@ public class PebbleUtil implements WeatherListener {
         int i = 0;
         for (Forecast f : nowcast) {
             precipitation[i] = (byte) Math.round(f.getPrecipitation().getPrecipitationDouble() * 10);
-            try {
-                Date d = timeFormatter.parse(f.getTimeFrom()); // it's in UTC though
-                minutesInFuture[i] = (byte)((d.getTime() - now + utcOffset) / 60000);
-                Log.d(TAG, "nowcast " + f.getTimeFrom() + " (" + minutesInFuture[i] + " min from now)" + ": " + f.getPrecipitation());
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+            minutesInFuture[i] = (byte)((f.getTimeFrom().getTime() - now + utcOffset) / 60000);
+            Log.d(TAG, "nowcast " + f.getTimeFrom() + " (" + minutesInFuture[i] + " min from now)" + ": " + f.getPrecipitation());
             ++i;
         }
         out.addBytes(KEY_NOWCAST_MINUTES, minutesInFuture);
