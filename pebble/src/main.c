@@ -171,6 +171,35 @@ void handleCurrentIntervalChanged(uint8_t interval, uint16_t expectedVmc)
 static void paintWeatherPlot(Layer *layer, GContext* ctx)
 {
 	GRect layerBounds = layer_get_bounds(layer);
+	time_t now = time(NULL);
+	time_t startOfToday = time_start_of_today();
+
+	graphics_context_set_stroke_color(ctx, COLOR_CHART_DAY_DIV);
+	time_t nextDay = startOfToday + SECONDS_PER_DAY;
+	int x = 0;
+	while (x < layerBounds.size.w) {
+		time_t minutesFromNow = (nextDay - now) / 60;
+		x = (int)(minutesFromNow / FORECAST_CHART_MINUTES_PER_PIXEL);
+		if (x < layerBounds.size.w) {
+			GPoint p1 = GPoint(x, 0);
+			GPoint p2 = GPoint(x, layerBounds.size.h);
+			graphics_draw_line(ctx, p1, p2);
+		}
+		nextDay += SECONDS_PER_DAY;
+	}
+
+	graphics_context_set_fill_color(ctx, COLOR_CHART_PRECIPITATION);
+	GRect precipitationBar = GRect(0, 0, 60 / FORECAST_CHART_MINUTES_PER_PIXEL, 0);
+	for (uint8_t i = 0; i < forecastPrecipitationLength; ++i) {
+		time_t minutesFromNow = ((forecastPrecipitationTimes[i] * 60) + startOfToday - now) / 60;
+		precipitationBar.origin.x = (int)(minutesFromNow / FORECAST_CHART_MINUTES_PER_PIXEL);
+		precipitationBar.size.h = (forecastPrecipitation[i] * FORECAST_CHART_PIXELS_PER_MM_PRECIPITATION) / 10;
+		precipitationBar.origin.y = layerBounds.size.h - precipitationBar.size.h - 2;
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip t %d x %d amount %d bar %d x %d",
+			(int)minutesFromNow, precipitationBar.origin.x, forecastPrecipitation[i], precipitationBar.size.w, precipitationBar.size.h);
+		graphics_fill_rect(ctx, precipitationBar, 0, GCornerNone);
+	}
+
 	graphics_context_set_stroke_color(ctx, GColorWhite);
 	graphics_draw_rect(ctx, layerBounds);
 }

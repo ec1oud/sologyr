@@ -186,7 +186,7 @@ public class PebbleUtil implements WeatherListener {
         long startOfToday = getStartOfDay().getTime();
         for (Forecast f : m_precipitation) {
             long minInFuture = (f.getTimeFrom().getTime() - startOfToday + utcOffset) / 60000;
-            if (minInFuture < 1440) { // TODO will need more than one day's worth for the second screen
+            if (minInFuture < 4500) { // 144px, 1 px per half-hour period = 4320 minutes = 3 days
                 PebbleDictionary out = new PebbleDictionary();
                 out.addInt16(KEY_PRECIPITATION_MINUTES, (short)minInFuture);
                 out.addUint8(KEY_FORECAST_PRECIPITATION, (byte) Math.round(f.getPrecipitation().getPrecipitationDouble() * 10));

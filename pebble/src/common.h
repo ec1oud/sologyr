@@ -18,6 +18,9 @@
 #define NOWCAST_MAX_INTERVALS 16
 #define FORECAST_MAX_INTERVALS 128
 
+#define FORECAST_CHART_MINUTES_PER_PIXEL 30
+#define FORECAST_CHART_PIXELS_PER_MM_PRECIPITATION 5
+
 typedef enum {
 	AppKeyCurrentAverage = 0,
 	AppKeyDailyAverage,
@@ -76,3 +79,9 @@ enum DictKey {
 #define COLOR_TIME GColorCeleste
 #define COLOR_DATE GColorLimerick
 #define COLOR_STEPS GColorInchworm
+
+// Colors for the yr forecast chart
+#define COLOR_CHART_PRECIPITATION_MAX GColorCobaltBlue
+#define COLOR_CHART_PRECIPITATION GColorPictonBlue
+#define COLOR_CHART_PRECIPITATION_MIN GColorCyan
+#define COLOR_CHART_DAY_DIV GColorLightGray
