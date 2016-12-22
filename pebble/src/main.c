@@ -347,7 +347,7 @@ static void show_page(int page) {
 		case 1:
 			layer_set_hidden(tap_layer, false);
 			layer_set_hidden(main_layer, true);
-			app_timer_register(5000, &revert_page, (void*)0);
+			app_timer_register(TAP_LAYER_TIMEOUT, &revert_page, (void*)0);
 			break;
 	}
 }
