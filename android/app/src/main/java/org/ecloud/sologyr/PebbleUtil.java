@@ -38,7 +38,9 @@ public class PebbleUtil implements WeatherListener {
             KEY_NOWCAST_MINUTES = 40, // how far in the future
             KEY_NOWCAST_PRECIPITATION = 41,
             KEY_PRECIPITATION_MINUTES = 42, // minutes after last midnight (beginning of today)
-            KEY_FORECAST_PRECIPITATION = 43;
+            KEY_FORECAST_PRECIPITATION = 43,
+            KEY_FORECAST_MINUTES = 44, // minutes after last midnight (beginning of today)
+            KEY_FORECAST_TEMPERATURE = 45;
 
     private final String TAG = this.getClass().getSimpleName();
     List<BroadcastReceiver> m_receivers = new ArrayList<>();
@@ -198,7 +200,19 @@ public class PebbleUtil implements WeatherListener {
 
     private void sendForecast()
     {
-        // TODO
+        Collections.sort(m_forecast);
+        int utcOffset = TimeZone.getDefault().getRawOffset();
+        long startOfToday = getStartOfDay().getTime();
+        for (Forecast f : m_forecast) {
+            long minInFuture = (f.getTimeFrom().getTime() - startOfToday + utcOffset) / 60000;
+            if (minInFuture < 4500 && f.getTemperature() != null) { // 144px, 1 px per half-hour period = 4320 minutes = 3 days
+                PebbleDictionary out = new PebbleDictionary();
+                out.addInt16(KEY_FORECAST_MINUTES, (short)minInFuture);
+                out.addInt16(KEY_FORECAST_TEMPERATURE, (short)Math.round(f.getTemperature().getTemperatureDouble() * 10));
+                // TODO add wind speed? what else?
+                PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
+            }
+        }
     }
 
     public void updateForecast(LinkedList<Forecast> fs)

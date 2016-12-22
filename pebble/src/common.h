@@ -56,7 +56,9 @@ enum DictKey {
 	KEY_NOWCAST_MINUTES = 40, // how far in the future
 	KEY_NOWCAST_PRECIPITATION = 41,
 	KEY_PRECIPITATION_MINUTES = 42, // minutes after last midnight (beginning of today)
-	KEY_FORECAST_PRECIPITATION = 43
+	KEY_FORECAST_PRECIPITATION = 43,
+	KEY_FORECAST_MINUTES = 44, // minutes after last midnight (beginning of today)
+	KEY_FORECAST_TEMPERATURE = 45
 };
 
 // Colors for the central 24-hour disk
@@ -86,4 +88,7 @@ enum DictKey {
 #define COLOR_CHART_PRECIPITATION_MAX GColorCobaltBlue
 #define COLOR_CHART_PRECIPITATION GColorPictonBlue
 #define COLOR_CHART_PRECIPITATION_MIN GColorCyan
+#define COLOR_CHART_TEMPERATURE_POSITIVE GColorRajah
+#define COLOR_CHART_TEMPERATURE_NEGATIVE GColorElectricBlue
+#define COLOR_CHART_AXIS GColorLightGray
 #define COLOR_CHART_DAY_DIV GColorLightGray

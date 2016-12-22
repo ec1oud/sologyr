@@ -91,6 +91,11 @@ static int8_t nowcastLength;
 static int16_t forecastPrecipitationTimes[FORECAST_MAX_INTERVALS]; // minutes from the beginning of today
 static uint8_t forecastPrecipitation[FORECAST_MAX_INTERVALS]; // tenths of mm
 static uint8_t forecastPrecipitationLength;
+static int16_t forecastTimes[FORECAST_MAX_INTERVALS]; // minutes from the beginning of today
+static int16_t forecastTemperature[FORECAST_MAX_INTERVALS]; // tenths of degrees
+static uint8_t forecastLength;
+static int16_t minForecastTemperature;
+static int16_t maxForecastTemperature;
 
 static void send_hello()
 {
@@ -196,14 +201,49 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 		time_t minutesFromNow = ((forecastPrecipitationTimes[i] * 60) + startOfToday - now) / 60;
 		precipitationBar.origin.x = (int)(minutesFromNow / FORECAST_CHART_MINUTES_PER_PIXEL);
 		precipitationBar.size.h = (forecastPrecipitation[i] * FORECAST_CHART_PIXELS_PER_MM_PRECIPITATION) / 10;
-		precipitationBar.origin.y = layerBounds.size.h - precipitationBar.size.h - 2;
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip t %d x %d amount %d bar %d x %d",
-			(int)minutesFromNow, precipitationBar.origin.x, forecastPrecipitation[i], precipitationBar.size.w, precipitationBar.size.h);
+		precipitationBar.origin.y = layerBounds.size.h - precipitationBar.size.h;
+		//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip t %d x %d amount %d bar %d x %d",
+			//~ (int)minutesFromNow, precipitationBar.origin.x, forecastPrecipitation[i], precipitationBar.size.w, precipitationBar.size.h);
 		graphics_fill_rect(ctx, precipitationBar, 0, GCornerNone);
 	}
 
-	graphics_context_set_stroke_color(ctx, GColorWhite);
-	graphics_draw_rect(ctx, layerBounds);
+	if (maxForecastTemperature == minForecastTemperature) // unlikely but would be a divide-by-zero below
+		return;
+	GPoint lastPoint;
+	float scale = (float)layerBounds.size.h / (minForecastTemperature - maxForecastTemperature);
+	int16_t zeroToPx = maxForecastTemperature * -scale;
+	for (uint8_t i = 0; i < forecastLength; ++i) {
+		time_t minutesFromNow = ((forecastTimes[i] * 60) + startOfToday - now) / 60;
+		GPoint point = GPoint( (int16_t)(minutesFromNow / FORECAST_CHART_MINUTES_PER_PIXEL),
+				zeroToPx + (int16_t)(forecastTemperature[i] * scale) );
+		APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast temp t %d x %d v %d y %d",
+			(int)minutesFromNow, point.x, forecastTemperature[i], point.y);
+		if (i > 0) {
+			if (forecastTemperature[i - 1] > 0 && forecastTemperature[i] > 0) {
+				graphics_context_set_stroke_color(ctx, COLOR_CHART_TEMPERATURE_POSITIVE);
+				graphics_draw_line(ctx, lastPoint, point);
+			} else if (forecastTemperature[i - 1] <= 0 && forecastTemperature[i] <= 0) {
+				graphics_context_set_stroke_color(ctx, COLOR_CHART_TEMPERATURE_NEGATIVE);
+				graphics_draw_line(ctx, lastPoint, point);
+			} else {
+				// draw separate positive and negative portions
+				GPoint xAxisCrossing = GPoint(abs(forecastTemperature[i - 1] / (forecastTemperature[i - 1] - forecastTemperature[i])), zeroToPx);
+				graphics_context_set_stroke_color(ctx,
+					forecastTemperature[i - 1] < 0 ? COLOR_CHART_TEMPERATURE_NEGATIVE : COLOR_CHART_TEMPERATURE_POSITIVE);
+				graphics_draw_line(ctx, lastPoint, xAxisCrossing);
+				graphics_context_set_stroke_color(ctx,
+					forecastTemperature[i] < 0 ? COLOR_CHART_TEMPERATURE_NEGATIVE : COLOR_CHART_TEMPERATURE_POSITIVE);
+				graphics_draw_line(ctx, xAxisCrossing, point);
+			}
+		}
+		lastPoint = point;
+	}
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast plot height %d scale %c%d.%d axis %d",
+		layerBounds.size.h, scale < 0 ? '-' : ' ', (int)scale, abs((int)(scale * 100)) % 100, zeroToPx);
+	graphics_context_set_stroke_color(ctx, COLOR_CHART_AXIS);
+	if (zeroToPx == layerBounds.size.h)
+		--zeroToPx;
+	graphics_draw_line(ctx, GPoint(0, zeroToPx), GPoint(layerBounds.size.w, zeroToPx));
 }
 
 static void paintCircleLayer(Layer *layer, GContext* ctx)
@@ -444,8 +484,10 @@ static void handle_battery(BatteryChargeState charge_state)
 static void in_received_handler(DictionaryIterator *iter, void *context)
 {
 	Tuple *tuple = dict_read_first(iter);
-	int16_t currentForecastTime = 0;
+	int16_t currentForecastPrecipitationTime = 0;
 	uint8_t currentForecastPrecipitation = 0; // tenths of mm
+	int16_t currentForecastTime = 0;
+	int16_t currentForecastTemperature = 0; // tenths of degrees
 	while (tuple) {
 #ifdef DEBUG_MSG
 		switch (tuple->type) {
@@ -524,25 +566,54 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 			forecastPrecipitationLength = 0;
 			memset(forecastPrecipitationTimes, 0, sizeof(forecastPrecipitationTimes));
 			memset(forecastPrecipitation, 0, sizeof(forecastPrecipitation));
+			forecastLength = 0;
+			minForecastTemperature = 8000;
+			maxForecastTemperature = -8000;
+			memset(forecastTimes, 0, sizeof(forecastTimes));
+			memset(forecastTemperature, 0, sizeof(forecastTemperature));
 			break;
 		case KEY_PRECIPITATION_MINUTES:
-			currentForecastTime = tuple->value->int16;
+			currentForecastPrecipitationTime = tuple->value->int16;
 			break;
 		case KEY_FORECAST_PRECIPITATION:
 			currentForecastPrecipitation = tuple->value->uint8;
+			break;
+		case KEY_FORECAST_MINUTES:
+			currentForecastTime = tuple->value->int16;
+			break;
+		case KEY_FORECAST_TEMPERATURE:
+			currentForecastTemperature = tuple->value->int16;
+			if (currentForecastTemperature < minForecastTemperature) {
+				minForecastTemperature = currentForecastTemperature;
+				if (minForecastTemperature % 100)
+					minForecastTemperature -= 100 + minForecastTemperature % 100;
+			}
+			if (currentForecastTemperature > maxForecastTemperature) {
+				maxForecastTemperature = currentForecastTemperature;
+				if (maxForecastTemperature % 100)
+					maxForecastTemperature += 100 - maxForecastTemperature % 100;
+			}
 			break;
 		default:
 			APP_LOG(APP_LOG_LEVEL_WARNING, "unexpected key %d", (int)tuple->key);
 		}
 		tuple = dict_read_next(iter);
 	}
-	if (currentForecastTime) {
+	if (currentForecastPrecipitationTime) {
 		if (forecastPrecipitationLength < FORECAST_MAX_INTERVALS) {
 			if (currentForecastPrecipitation > 0)
-				APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip %d %d\n", (int)currentForecastTime, (int)currentForecastPrecipitation);
-			forecastPrecipitationTimes[forecastPrecipitationLength] = currentForecastTime;
+				APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast %d precip %d\n", (int)currentForecastPrecipitationTime, (int)currentForecastPrecipitation);
+			forecastPrecipitationTimes[forecastPrecipitationLength] = currentForecastPrecipitationTime;
 			forecastPrecipitation[forecastPrecipitationLength] = currentForecastPrecipitation;
 			++forecastPrecipitationLength;
+		}
+	} else if (currentForecastTime) {
+		if (forecastLength < FORECAST_MAX_INTERVALS) {
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast %d temp %d min %d max %d\n",
+				currentForecastTime, currentForecastTemperature, minForecastTemperature, maxForecastTemperature);
+			forecastTimes[forecastLength] = currentForecastTime;
+			forecastTemperature[forecastLength] = currentForecastTemperature;
+			++forecastLength;
 		}
 	} else {
 		circleLayerUpdate();
