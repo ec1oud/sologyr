@@ -62,6 +62,7 @@ static Window *window;
 static Layer *main_layer;
 static Layer *tap_layer;
 static TextLayer *text_time_layer;
+static TextLayer *tapTimeLayer;
 static TextLayer *stepsLayer;
 static TextLayer *dateLayer;
 static TextLayer *temperatureLayer;
@@ -124,6 +125,7 @@ void timeLayerUpdate()
 	strftime(time_text, sizeof(time_text), time_format, currentTime);
 	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "tick %s", time_text);
 	text_layer_set_text(text_time_layer, time_text);
+	text_layer_set_text(tapTimeLayer, time_text);
 }
 
 void stepsLayerUpdate()
@@ -633,6 +635,14 @@ static void window_load(Window *window) {
 	text_layer_set_text_alignment(stepsLayer, GTextAlignmentCenter);
 	layer_add_child(main_layer, text_layer_get_layer(stepsLayer));
 
+	text_time_rect.origin.y = bounds.size.h / 2;
+	tapTimeLayer = text_layer_create(text_time_rect);
+	text_layer_set_text_color(tapTimeLayer, COLOR_TIME);
+	text_layer_set_background_color(tapTimeLayer, GColorClear);
+	text_layer_set_font(tapTimeLayer, fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS));
+	text_layer_set_text_alignment(tapTimeLayer, GTextAlignmentCenter);
+	layer_add_child(tap_layer, text_layer_get_layer(tapTimeLayer));
+
 	dateLayer = text_layer_create(GRect(14, bounds.size.h - 24, bounds.size.w - 32 - 14, 24));
 	text_layer_set_text_alignment(dateLayer, GTextAlignmentCenter);
 	text_layer_set_text_color(dateLayer, COLOR_DATE);
@@ -671,6 +681,7 @@ static void window_unload(Window *window) {
 	layer_destroy(main_layer);
 	layer_destroy(tap_layer);
 	text_layer_destroy(text_time_layer);
+	text_layer_destroy(tapTimeLayer);
 	bitmap_layer_destroy(bluetooth_layer);
 	gbitmap_destroy(bluetooth_bitmap);
 	bitmap_layer_destroy(charging_layer);
