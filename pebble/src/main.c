@@ -59,6 +59,8 @@ enum WeatherIcon {
 };
 
 static Window *window;
+static Layer *main_layer;
+static Layer *tap_layer;
 static TextLayer *text_time_layer;
 static TextLayer *stepsLayer;
 static TextLayer *dateLayer;
@@ -67,6 +69,8 @@ static BitmapLayer *bluetooth_layer;
 static BitmapLayer *charging_layer;
 static BitmapLayer *weather_icon_layer;
 static Layer *batteryGraphLayer;
+static Layer *circleLayer;
+static Layer *weatherPlotLayer;
 static int batteryPct = 0;
 struct tm *currentTime;
 static uint8_t sunriseHour = 100;
@@ -76,7 +80,6 @@ static uint8_t sunsetMinute = 0;
 static uint8_t cloudCover = 0;
 static char currentTemperature[12];
 static bool bluetoothConnected = 0;
-static Layer *circleLayer;
 static GBitmap *bluetooth_bitmap = NULL;
 static GBitmap *charging_bitmap = NULL;
 static GBitmap *weather_bitmap = NULL;
@@ -163,6 +166,13 @@ void handleCurrentIntervalChanged(uint8_t interval, uint16_t expectedVmc)
 	dict_write_tuplet(iter, &value);
 	dict_write_end(iter);
 	app_message_outbox_send();
+}
+
+static void paintWeatherPlot(Layer *layer, GContext* ctx)
+{
+	GRect layerBounds = layer_get_bounds(layer);
+	graphics_context_set_stroke_color(ctx, GColorWhite);
+	graphics_draw_rect(ctx, layerBounds);
 }
 
 static void paintCircleLayer(Layer *layer, GContext* ctx)
@@ -294,6 +304,27 @@ static void updateBatteryGraphLayer(Layer *layer, GContext* ctx)
 	graphics_draw_rect(ctx, layerBounds);
 }
 
+static void revert_page(void *data);
+
+static void show_page(int page) {
+	//	APP_LOG(APP_LOG_LEVEL_DEBUG, "show page %d", page);
+	switch(page){
+		case 0:
+			layer_set_hidden(main_layer, false);
+			layer_set_hidden(tap_layer, true);
+			break;
+		case 1:
+			layer_set_hidden(tap_layer, false);
+			layer_set_hidden(main_layer, true);
+			app_timer_register(5000, &revert_page, (void*)0);
+			break;
+	}
+}
+
+static void revert_page(void *data){
+	show_page((int)data);
+}
+
 static void handle_tap(AccelAxisType axis, int32_t direction)
 {
 	int8_t combined = (((int8_t)direction << 4) | (int8_t)axis);
@@ -311,6 +342,7 @@ static void handle_tap(AccelAxisType axis, int32_t direction)
 	}
 	dict_write_end(iter);
 	app_message_outbox_send();
+	show_page(1);
 }
 
 static void handle_bluetooth(bool connected)
@@ -518,19 +550,24 @@ static void window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_bounds(window_layer);
 
+	main_layer = layer_create(bounds);
+	layer_add_child(window_layer, main_layer);
+	tap_layer = layer_create(bounds);
+	layer_add_child(window_layer, tap_layer);
+
 	bluetooth_layer = bitmap_layer_create(GRect(0, bounds.size.h - 14, 14, 14));
-	layer_add_child(window_layer, bitmap_layer_get_layer(bluetooth_layer));
+	layer_add_child(main_layer, bitmap_layer_get_layer(bluetooth_layer));
 	bluetooth_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH);
 	handle_bluetooth(bluetooth_connection_service_peek());
 
 	batteryGraphLayer = layer_create(GRect(110, bounds.size.h - 14, 32, 14));
 	layer_set_update_proc(batteryGraphLayer, updateBatteryGraphLayer);
-	layer_add_child(window_layer, batteryGraphLayer);
+	layer_add_child(main_layer, batteryGraphLayer);
 
 	charging_layer = bitmap_layer_create(GRect(117, 2, 14, 10));
 	bitmap_layer_set_background_color(charging_layer, GColorClear);
 	bitmap_layer_set_compositing_mode(charging_layer, GCompOpAssignInverted);
-	layer_add_child(window_layer, bitmap_layer_get_layer(charging_layer));
+	layer_add_child(main_layer, bitmap_layer_get_layer(charging_layer));
 	charging_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CHARGING);
 
 	temperatureLayer = text_layer_create(GRect(0, -6, 50, 24));
@@ -538,16 +575,16 @@ static void window_load(Window *window) {
 	text_layer_set_text_color(temperatureLayer, COLOR_TEMPERATURE);
 	text_layer_set_background_color(temperatureLayer, GColorClear);
 	text_layer_set_font(temperatureLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
-	layer_add_child(window_layer, text_layer_get_layer(temperatureLayer));
+	layer_add_child(main_layer, text_layer_get_layer(temperatureLayer));
 
 	weather_icon_layer = bitmap_layer_create(GRect(bounds.size.w - 22, -1, 22, 22));
 	//~ weather_icon_layer = bitmap_layer_create(GRect(0, -1, 22, 22));
-	layer_add_child(window_layer, bitmap_layer_get_layer(weather_icon_layer));
+	layer_add_child(main_layer, bitmap_layer_get_layer(weather_icon_layer));
 
 	int diameter = min(bounds.size.w - 1, bounds.size.h - 16 - 1);
 	circleLayer = layer_create(GRect(0, 0, diameter, diameter));
 	layer_set_update_proc(circleLayer, paintCircleLayer);
-	layer_add_child(window_layer, circleLayer);
+	layer_add_child(main_layer, circleLayer);
 	circleLayerUpdate();
 
 	GRect text_time_rect = GRect(0, 0, bounds.size.w, 50);
@@ -557,7 +594,7 @@ static void window_load(Window *window) {
 	text_layer_set_background_color(text_time_layer, GColorClear);
 	text_layer_set_font(text_time_layer, fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS));
 	text_layer_set_text_alignment(text_time_layer, GTextAlignmentCenter);
-	layer_add_child(window_layer, text_layer_get_layer(text_time_layer));
+	layer_add_child(main_layer, text_layer_get_layer(text_time_layer));
 
 	text_time_rect.origin.y += 40;
 	stepsLayer = text_layer_create(text_time_rect);
@@ -565,14 +602,20 @@ static void window_load(Window *window) {
 	text_layer_set_background_color(stepsLayer, GColorClear);
 	text_layer_set_font(stepsLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 	text_layer_set_text_alignment(stepsLayer, GTextAlignmentCenter);
-	layer_add_child(window_layer, text_layer_get_layer(stepsLayer));
+	layer_add_child(main_layer, text_layer_get_layer(stepsLayer));
 
 	dateLayer = text_layer_create(GRect(14, bounds.size.h - 24, bounds.size.w - 32 - 14, 24));
 	text_layer_set_text_alignment(dateLayer, GTextAlignmentCenter);
 	text_layer_set_text_color(dateLayer, COLOR_DATE);
 	text_layer_set_background_color(dateLayer, GColorClear);
 	text_layer_set_font(dateLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-	layer_add_child(window_layer, text_layer_get_layer(dateLayer));
+	layer_add_child(main_layer, text_layer_get_layer(dateLayer));
+
+	weatherPlotLayer = layer_create(GRect(0, 0, bounds.size.w, bounds.size.h / 2));
+	layer_set_update_proc(weatherPlotLayer, paintWeatherPlot);
+	layer_add_child(tap_layer, weatherPlotLayer);
+
+	show_page(0);
 
 	dateLayerUpdate();
 	timeLayerUpdate();
@@ -595,6 +638,9 @@ static void window_disappear(Window *window) {
 static void window_unload(Window *window) {
 	tick_timer_service_unsubscribe();
 	layer_destroy(circleLayer);
+	layer_destroy(weatherPlotLayer);
+	layer_destroy(main_layer);
+	layer_destroy(tap_layer);
 	text_layer_destroy(text_time_layer);
 	bitmap_layer_destroy(bluetooth_layer);
 	gbitmap_destroy(bluetooth_bitmap);
