@@ -210,9 +210,12 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 	if (maxForecastTemperature == minForecastTemperature) // unlikely but would be a divide-by-zero below
 		return;
 	GPoint lastPoint;
+	int16_t lastTime = 0;
 	float scale = (float)layerBounds.size.h / (minForecastTemperature - maxForecastTemperature);
 	int16_t zeroToPx = maxForecastTemperature * -scale;
 	for (uint8_t i = 0; i < forecastLength; ++i) {
+		if (forecastTimes[i] < lastTime)
+			break;
 		time_t minutesFromNow = ((forecastTimes[i] * 60) + startOfToday - now) / 60;
 		GPoint point = GPoint( (int16_t)(minutesFromNow / FORECAST_CHART_MINUTES_PER_PIXEL),
 				zeroToPx + (int16_t)(forecastTemperature[i] * scale) );
@@ -237,6 +240,7 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 			}
 		}
 		lastPoint = point;
+		lastTime = forecastTimes[i];
 	}
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast plot height %d scale %c%d.%d axis %d",
 		layerBounds.size.h, scale < 0 ? '-' : ' ', (int)scale, abs((int)(scale * 100)) % 100, zeroToPx);

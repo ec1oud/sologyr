@@ -28,7 +28,8 @@ Not well tested but but perhaps working:
 Not started yet:
 - [ ] calculate sunrise/sunset in the Pebble app, based on current location; persist current location on Pebble.  (The problem now is that every time you leave the watch screen, it loses those times.)
 - [ ] send the rest of the forecast across to the Pebble (wind? cloud level?)
-- [ ] second screen: add more stuff
+- [ ] show moonrise/set - second screen
+- [ ] show local weather zone - second screen probably
 - [ ] preferences on Android.  The ones you see are just mockups provided by Android Studio when it created the skeleton project.
   - [ ] maximum time between weather updates
   - [ ] colors?
