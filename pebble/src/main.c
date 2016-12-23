@@ -253,6 +253,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_RING);
 	graphics_draw_circle(ctx, grect_center_point(&fillCircle), layerBounds.size.w / 2 - 2);
 	time_t now = time(NULL);
+	time_t startOfToday = time_start_of_today();
 
 	// render the period of the day with sunlight
 	int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / MINUTES_PER_DAY - 180;
@@ -270,12 +271,17 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	graphics_context_set_fill_color(ctx, COLOR_PRECIPITATION);
 	if (forecastPrecipitationLength > 0) {
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip len %d", forecastPrecipitationLength);
-		for (int i = 0; i < (int)forecastPrecipitationLength && i < FORECAST_MAX_INTERVALS &&
-					forecastPrecipitationTimes[i] < MINUTES_PER_DAY; ++i) {
+		for (int i = 0; i < (int)forecastPrecipitationLength && i < FORECAST_MAX_INTERVALS; ++i) {
 			if (forecastPrecipitation[i] > 0) {
+				time_t actualPrecipitationTime = forecastPrecipitationTimes[i] * 60 + startOfToday;
+				if (actualPrecipitationTime < now - SECONDS_PER_HOUR)
+					continue;
+				if (actualPrecipitationTime - now > SECONDS_PER_DAY - (SECONDS_PER_HOUR * 2))
+					break;
 				int startAngle = forecastPrecipitationTimes[i] * 360 / MINUTES_PER_DAY - 180;
 				int endAngle = (forecastPrecipitationTimes[i] + MINUTES_PER_HOUR) * 360 / MINUTES_PER_DAY - 180;
-				//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip %d angles %d %d amount %d", (int)forecastPrecipitationTimes[i], startAngle, endAngle, forecastPrecipitation[i]);
+				//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip %d angles %d %d amount %d",
+				//~ 	(int)forecastPrecipitationTimes[i], startAngle, endAngle, forecastPrecipitation[i]);
 				graphics_fill_radial(ctx, fillCircle, GCornerNone,
 					(forecastPrecipitation[i] * FORECAST_PIXELS_PER_MM_PRECIPITATION) / 10,
 					DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
@@ -313,7 +319,6 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	graphics_draw_line(ctx, pointerInner, pointerOuter);
 
 	// render the activity record; TODO move it to another layer?
-	time_t startOfToday = time_start_of_today();
 	innerCircle = grect_crop(fillCircle, layerBounds.size.w / 3);
 	graphics_context_set_stroke_width(ctx, 3);
 	int currentInterval = (now - startOfToday) / (MINUTES_PER_HEALTH_INTERVAL * SECONDS_PER_MINUTE);
