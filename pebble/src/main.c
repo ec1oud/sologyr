@@ -216,8 +216,8 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 		time_t minutesFromNow = ((forecastTimes[i] * 60) + startOfToday - now) / 60;
 		GPoint point = GPoint( (int16_t)(minutesFromNow / FORECAST_CHART_MINUTES_PER_PIXEL),
 				zeroToPx + (int16_t)(forecastTemperature[i] * scale) );
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast temp t %d x %d v %d y %d",
-			(int)minutesFromNow, point.x, forecastTemperature[i], point.y);
+		//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast temp t %d x %d v %d y %d",
+			//~ (int)minutesFromNow, point.x, forecastTemperature[i], point.y);
 		if (i > 0) {
 			if (forecastTemperature[i - 1] > 0 && forecastTemperature[i] > 0) {
 				graphics_context_set_stroke_color(ctx, COLOR_CHART_TEMPERATURE_POSITIVE);
@@ -275,8 +275,9 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 			if (forecastPrecipitation[i] > 0) {
 				int startAngle = forecastPrecipitationTimes[i] * 360 / MINUTES_PER_DAY - 180;
 				int endAngle = (forecastPrecipitationTimes[i] + MINUTES_PER_HOUR) * 360 / MINUTES_PER_DAY - 180;
-				APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip %d angles %d %d amount %d", (int)forecastPrecipitationTimes[i], startAngle, endAngle, forecastPrecipitation[i]);
-				graphics_fill_radial(ctx, fillCircle, GCornerNone, forecastPrecipitation[i],
+				//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip %d angles %d %d amount %d", (int)forecastPrecipitationTimes[i], startAngle, endAngle, forecastPrecipitation[i]);
+				graphics_fill_radial(ctx, fillCircle, GCornerNone,
+					(forecastPrecipitation[i] * FORECAST_PIXELS_PER_MM_PRECIPITATION) / 10,
 					DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
 			}
 		}
@@ -292,7 +293,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 			if (nowcastPrecipitation[i] > 0) {
 				int startAngle = nowcastTimes[i] * 360 / MINUTES_PER_DAY - 180;
 				int endAngle = (nowcastTimes[i] + 7 /* minutes */) * 360 / MINUTES_PER_DAY - 180;
-				APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast precip %d angles %d %d amount %d", (int)nowcastTimes[i], startAngle, endAngle, nowcastPrecipitation[i]);
+				//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast precip %d angles %d %d amount %d", (int)nowcastTimes[i], startAngle, endAngle, nowcastPrecipitation[i]);
 				graphics_fill_radial(ctx, fillCircle, GCornerNone, nowcastPrecipitation[i],
 					DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
 			}
@@ -403,12 +404,12 @@ static void handle_tap(AccelAxisType axis, int32_t direction)
 	DictionaryIterator *iter;
 	app_message_outbox_begin(&iter);
 	if (iter == NULL) {
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "tap %d %d: null iterator", (int)axis, (int)direction);
+		APP_LOG(APP_LOG_LEVEL_WARNING, "tap %d %d: null iterator", (int)axis, (int)direction);
 		return;
 	}
 	DictionaryResult ret;
 	if ((ret = dict_write_int8(iter, KEY_TAP, combined))) {
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "tap %d %d: can't write axis/direction", (int)axis, (int)direction);
+		APP_LOG(APP_LOG_LEVEL_WARNING, "tap %d %d: can't write axis/direction", (int)axis, (int)direction);
 		return;
 	}
 	dict_write_end(iter);
@@ -549,7 +550,7 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 			nowcastLength = tuple->length;
 			if (nowcastLength > NOWCAST_MAX_INTERVALS)
 				nowcastLength = NOWCAST_MAX_INTERVALS;
-			//~ APP_LOG(APP_LOG_LEVEL_WARNING, "nowcast len %d", nowcastLength);
+			//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast len %d", nowcastLength);
 			memset(nowcastTimes, 0, NOWCAST_MAX_INTERVALS);
 			memcpy(nowcastTimes, tuple->value->data, nowcastLength);
 			break;
@@ -558,9 +559,9 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 			if (nowcastLength > NOWCAST_MAX_INTERVALS)
 				nowcastLength = NOWCAST_MAX_INTERVALS;
 			memcpy(nowcastPrecipitation, tuple->value->data, nowcastLength);
-			//~ APP_LOG(APP_LOG_LEVEL_WARNING, "nowcast prcp len %d", (int)tuple->length);
+			//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast prcp len %d", (int)tuple->length);
 			//~ for (int i = 0; i < tuple->length; ++i)
-				//~ APP_LOG(APP_LOG_LEVEL_WARNING, "nowcast %d %d", (int)nowcastTimes[i], nowcastPrecipitation[i]);
+				//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast %d %d", (int)nowcastTimes[i], nowcastPrecipitation[i]);
 			break;
 		case KEY_FORECAST_BEGIN:
 			forecastPrecipitationLength = 0;
@@ -601,16 +602,16 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 	}
 	if (currentForecastPrecipitationTime) {
 		if (forecastPrecipitationLength < FORECAST_MAX_INTERVALS) {
-			if (currentForecastPrecipitation > 0)
-				APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast %d precip %d\n", (int)currentForecastPrecipitationTime, (int)currentForecastPrecipitation);
+			//~ if (currentForecastPrecipitation > 0)
+				//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast %d precip %d\n", (int)currentForecastPrecipitationTime, (int)currentForecastPrecipitation);
 			forecastPrecipitationTimes[forecastPrecipitationLength] = currentForecastPrecipitationTime;
 			forecastPrecipitation[forecastPrecipitationLength] = currentForecastPrecipitation;
 			++forecastPrecipitationLength;
 		}
 	} else if (currentForecastTime) {
 		if (forecastLength < FORECAST_MAX_INTERVALS) {
-			APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast %d temp %d min %d max %d\n",
-				currentForecastTime, currentForecastTemperature, minForecastTemperature, maxForecastTemperature);
+			//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast %d temp %d min %d max %d\n",
+				//~ currentForecastTime, currentForecastTemperature, minForecastTemperature, maxForecastTemperature);
 			forecastTimes[forecastLength] = currentForecastTime;
 			forecastTemperature[forecastLength] = currentForecastTemperature;
 			++forecastLength;

@@ -18,8 +18,12 @@
 #define NOWCAST_MAX_INTERVALS 16
 #define FORECAST_MAX_INTERVALS 128
 
+// on the circular watchface
+#define FORECAST_PIXELS_PER_MM_PRECIPITATION 3
+
 #define TAP_LAYER_TIMEOUT 3000
 
+// on the tap-screen forecast chart
 #define FORECAST_CHART_MINUTES_PER_PIXEL 30
 #define FORECAST_CHART_PIXELS_PER_MM_PRECIPITATION 5
 
