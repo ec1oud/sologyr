@@ -25,9 +25,7 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.1', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:appcompat-v7:24.+'
     compile 'com.android.support:support-v4:24.+'
-    compile 'com.android.support:support-vector-drawable:24.+'
     compile 'com.luckycatlabs:SunriseSunsetCalculator:1.2'
     compile 'com.github.dvdme:ForecastIOLib:1.5.+'
     compile 'com.getpebble:pebblekit:4.0.0'

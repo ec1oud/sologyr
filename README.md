@@ -21,6 +21,7 @@ What's working:
 - [x] precipitation forecast beyond the next 2 hours
 - [x] temperature forecast
 - [x] second screen (accessed via wrist flick/tap) showing longer forecast (full-width horizontal chart), and the time
+- [x] Android app includes and installs the Pebble watch face
 
 Not well tested but but perhaps working:
 - [ ] learning the user's active periods of day, so as to ask the phone to fetch weather updates during that time only.  That plus a frequency limit should keep API calls to a minimum.
@@ -35,6 +36,5 @@ Not started yet:
   - [ ] colors?
   - [ ] what to show and where?
   - [ ] keep them simple to keep the package size small.  The APK is 1.3MB now, could probably be smaller.
-- [ ] Android app should install the Pebble app (included in the APK)
 - [ ] get real-time weather from some other source, preferably an open source where users' weather station data is contributed
 - [ ] Android widgets
