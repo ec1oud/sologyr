@@ -1,0 +1,82 @@
+<weatherdata xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://api.met.no/weatherapi/locationforecast/1.5/schema" created="2016-12-23T21:14:27Z">
+   <meta>
+      <model name="NowCast" termin="2016-12-23T21:00:00Z" runended="2016-12-23T21:09:15Z" nextrun="2016-12-23T21:16:45Z" from="2016-12-23T21:07:30Z" to="2016-12-23T22:52:30Z" />
+      </meta>
+   <product class="pointData">
+      <time datatype="forecast" from="2016-12-23T21:07:30Z" to="2016-12-23T21:07:30Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.4"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T21:15:00Z" to="2016-12-23T21:15:00Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.6"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T21:22:30Z" to="2016-12-23T21:22:30Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.7"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T21:30:00Z" to="2016-12-23T21:30:00Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="1.1"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T21:37:30Z" to="2016-12-23T21:37:30Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.2"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T21:45:00Z" to="2016-12-23T21:45:00Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.1"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T21:52:30Z" to="2016-12-23T21:52:30Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.2"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T22:00:00Z" to="2016-12-23T22:00:00Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.2"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T22:07:30Z" to="2016-12-23T22:07:30Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.3"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T22:15:00Z" to="2016-12-23T22:15:00Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.2"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T22:22:30Z" to="2016-12-23T22:22:30Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.2"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T22:30:00Z" to="2016-12-23T22:30:00Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.1"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T22:37:30Z" to="2016-12-23T22:37:30Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.2"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T22:45:00Z" to="2016-12-23T22:45:00Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.0"/>
+         </location>
+      </time>
+      <time datatype="forecast" from="2016-12-23T22:52:30Z" to="2016-12-23T22:52:30Z">
+         <location latitude="59.9133" longitude="10.7391">
+            <precipitation unit="mm/h" value="0.0"/>
+         </location>
+      </time>
+   </product>
+</weatherdata> 
