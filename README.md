@@ -12,6 +12,7 @@ So, using darksky.net for now, but perhaps not for the long term
 What's working:
 - [x] real-time temperature and cloudy/sunny icons from darksky.net
 - [x] time, date, battery and bluetooth status
+- [x] name (locality) of current location
 - [x] sunrise/sunset times calculated in the Android app
 - [x] 24-hour dial with highlighted region for daylight hours
 - [x] today's step counts as a radial bar graph, in green
@@ -30,7 +31,6 @@ Not started yet:
 - [ ] calculate sunrise/sunset in the Pebble app, based on current location; persist current location on Pebble.  (The problem now is that every time you leave the watch screen, it loses those times.)
 - [ ] send the rest of the forecast across to the Pebble (wind? cloud level?)
 - [ ] show moonrise/set - second screen
-- [ ] show local weather zone - second screen probably
 - [ ] preferences on Android
   - [ ] colors? maybe use https://github.com/gabrielemariotti/colorpickercollection
   - [ ] what to show and where?

@@ -53,6 +53,7 @@ enum DictKey {
 	KEY_SUNRISE_MINUTE = 13,
 	KEY_SUNSET_HOUR = 14,
 	KEY_SUNSET_MINUTE = 15,
+	KEY_LOCATION_NAME = 16,
 	KEY_TEMPERATURE = 20,
 	KEY_WEATHER_ICON = 21,
 	KEY_CLOUD_COVER = 22,
@@ -88,6 +89,7 @@ enum DictKey {
 #define COLOR_TIME GColorCeleste
 #define COLOR_DATE GColorLimerick
 #define COLOR_STEPS GColorInchworm
+#define COLOR_LOCATION GColorBrass
 
 // Colors for the yr forecast chart
 #define COLOR_CHART_PRECIPITATION_MAX GColorCobaltBlue

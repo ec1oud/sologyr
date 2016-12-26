@@ -32,6 +32,7 @@ public class PebbleUtil implements WeatherListener {
             KEY_SUNRISE_MINUTE = 13,
             KEY_SUNSET_HOUR = 14,
             KEY_SUNSET_MINUTE = 15,
+            KEY_LOCATION_NAME = 16,
             KEY_TEMPERATURE = 20,
             KEY_WEATHER_ICON = 21,
             KEY_CLOUD_COVER = 22,
@@ -169,11 +170,12 @@ public class PebbleUtil implements WeatherListener {
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
 
-    public void updateLocation(double lat, double lon) {
-        Log.d(TAG, "updateLocation " + lat + " " + lon);
+    public void updateLocation(double lat, double lon, String name) {
+        Log.d(TAG, "updateLocation " + lat + " " + lon + " '" + name + "'");
         PebbleDictionary out = new PebbleDictionary();
         out.addInt32(KEY_LAT, (int)Math.round(lat * 1000));
         out.addInt32(KEY_LON, (int)Math.round(lon * 1000));
+        out.addString(KEY_LOCATION_NAME, name);
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
 

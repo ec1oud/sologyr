@@ -63,6 +63,7 @@ static Layer *main_layer;
 static Layer *tap_layer;
 static TextLayer *text_time_layer;
 static TextLayer *tapTimeLayer;
+static TextLayer *tapLocationLayer;
 static TextLayer *stepsLayer;
 static TextLayer *dateLayer;
 static TextLayer *temperatureLayer;
@@ -74,6 +75,9 @@ static Layer *circleLayer;
 static Layer *weatherPlotLayer;
 static int batteryPct = 0;
 struct tm *currentTime;
+static int curLat = 59913; // degrees * 1000
+static int curLon = 10739; // degrees * 1000
+static char curLocationName[32];
 static uint8_t sunriseHour = 100;
 static uint8_t sunriseMinute = 0;
 static uint8_t sunsetHour = 0;
@@ -516,8 +520,15 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 
 		switch (tuple->key) {
 		case KEY_LAT:
+			curLat = tuple->value->int32;
+			break;
 		case KEY_LON:
-			// TODO maybe calculate sunrise/sunset so the phone doesn't have to send it
+			curLon = tuple->value->int32;
+			break;
+		case KEY_LOCATION_NAME:
+			strncpy(curLocationName, tuple->value->cstring, sizeof(curLocationName));
+			curLocationName[sizeof(curLocationName) - 1] = 0;
+			text_layer_set_text(tapLocationLayer, curLocationName);
 			break;
 		case KEY_CLOUD_COVER:
 			cloudCover = tuple->value->uint8;
@@ -526,8 +537,8 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 			handle_weather_icon(tuple->value->uint8);
 			break;
 		case KEY_TEMPERATURE:
-			strncpy(currentTemperature, tuple->value->cstring, 12);
-			currentTemperature[11] = 0;
+			strncpy(currentTemperature, tuple->value->cstring, sizeof(currentTemperature));
+			currentTemperature[sizeof(currentTemperature) - 1] = 0;
 			{
 				// remove any fractional degrees - we haven't got space here
 				char *firstDecimalPoint = strchr(currentTemperature, '.');
@@ -728,6 +739,14 @@ static void window_load(Window *window) {
 	text_layer_set_text_alignment(tapTimeLayer, GTextAlignmentCenter);
 	layer_add_child(tap_layer, text_layer_get_layer(tapTimeLayer));
 
+	text_time_rect.origin.y += 40;
+	tapLocationLayer = text_layer_create(text_time_rect);
+	text_layer_set_text_color(tapLocationLayer, COLOR_LOCATION);
+	text_layer_set_background_color(tapLocationLayer, GColorClear);
+	text_layer_set_font(tapLocationLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
+	text_layer_set_text_alignment(tapLocationLayer, GTextAlignmentCenter);
+	layer_add_child(tap_layer, text_layer_get_layer(tapLocationLayer));
+
 	dateLayer = text_layer_create(GRect(14, bounds.size.h - 24, bounds.size.w - 32 - 14, 24));
 	text_layer_set_text_alignment(dateLayer, GTextAlignmentCenter);
 	text_layer_set_text_color(dateLayer, COLOR_DATE);
@@ -767,6 +786,7 @@ static void window_unload(Window *window) {
 	layer_destroy(tap_layer);
 	text_layer_destroy(text_time_layer);
 	text_layer_destroy(tapTimeLayer);
+	text_layer_destroy(tapLocationLayer);
 	bitmap_layer_destroy(bluetooth_layer);
 	gbitmap_destroy(bluetooth_bitmap);
 	bitmap_layer_destroy(charging_layer);

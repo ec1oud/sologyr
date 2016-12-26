@@ -6,7 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.Address;
 import android.location.Criteria;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -21,10 +23,12 @@ import com.github.dvdme.ForecastIOLib.ForecastIO;
 import com.luckycatlabs.sunrisesunset.SunriseSunsetCalculator;
 import com.oleaarnseth.weathercast.Forecast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 import static android.location.LocationManager.PASSIVE_PROVIDER;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Cloud;
@@ -32,7 +36,7 @@ import static org.ecloud.sologyr.WeatherListener.WeatherIcon.DarkPartlyCloud;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.DarkSun;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Fog;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.PartlyCloud;
-import static org.ecloud.sologyr.WeatherListener .WeatherIcon.Rain;
+import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Rain;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Sleet;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Snow;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Sun;
@@ -52,6 +56,7 @@ public class WeatherService extends Service {
     String m_periodicProvider = PASSIVE_PROVIDER;
     double curlat = 0, curlon = 0;
     Location curLocation = null;
+    String curLocationName = "";
     WeatherListener.WeatherIcon curWeatherIcon;
     double curTemperature = 0, curCloudCover = 0;
     int sunriseHour = 0, sunriseMinute = 0, sunsetHour = 0, sunsetMinute = 0;
@@ -253,8 +258,18 @@ public class WeatherService extends Service {
         sunriseMinute = sunrise.get(Calendar.MINUTE);
         sunsetHour = sunset.get(Calendar.HOUR_OF_DAY);
         sunsetMinute = sunset.get(Calendar.MINUTE);
+        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+        curLocationName = String.format("%.4f,%.4f", curlat, curlon);
+        try {
+            List<Address> listAddresses = geocoder.getFromLocation(curlat, curlon, 1);
+            Log.d(TAG, "for location " + curLocationName + " got " + listAddresses + "; isPresent " + geocoder.isPresent());
+            if (null != listAddresses && listAddresses.size() > 0)
+                curLocationName = listAddresses.get(0).getLocality();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         for (WeatherListener l : m_listeners) {
-            l.updateLocation(curlat, curlon);
+            l.updateLocation(curlat, curlon, curLocationName);
             l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
         }
         updateWeather(true); // immediately because we know the location is different by at least 10km
@@ -287,7 +302,7 @@ public class WeatherService extends Service {
     }
 
     public void resendEverything(WeatherListener l) {
-        l.updateLocation(curlat, curlon);
+        l.updateLocation(curlat, curlon, curLocationName);
         l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
         l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
     }
