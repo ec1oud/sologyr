@@ -32,7 +32,7 @@ Not started yet:
 - [ ] show moonrise/set - second screen
 - [ ] show local weather zone - second screen probably
 - [ ] preferences on Android
-  - [ ] colors?
+  - [ ] colors? maybe use https://github.com/gabrielemariotti/colorpickercollection
   - [ ] what to show and where?
 - [ ] Android: show time since weather update, expected active periods today (or even all week)
 - [ ] get real-time weather from some other source, preferably an open source where users' weather station data is contributed

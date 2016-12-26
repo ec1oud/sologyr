@@ -45,6 +45,7 @@ public class WeatherService extends Service {
     private final String TAG = this.getClass().getSimpleName();
     SharedPreferences m_prefs = null;
     private long m_updateInterval = 10800000; // 3 hours in milliseconds
+    private long m_locationThreshold = 10000; // 10 km in meters
     PebbleUtil m_pebbleUtil;
     LocationManager m_locationManager;
     LocationListener m_locationListener;
@@ -208,7 +209,7 @@ public class WeatherService extends Service {
 
         if (m_locationManager != null && m_periodicProvider != null && ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            m_locationManager.requestLocationUpdates(m_periodicProvider, 600000, 10000, m_locationListener);
+            m_locationManager.requestLocationUpdates(m_periodicProvider, 600000, m_locationThreshold, m_locationListener);
             Log.i(TAG, "location providers " + m_locationManager.getProviders(true));
             if (initialProvider != null)
                 m_locationManager.requestSingleUpdate(initialProvider, m_locationListener, null);
@@ -225,9 +226,15 @@ public class WeatherService extends Service {
         m_prefs.registerOnSharedPreferenceChangeListener(
             new SharedPreferences.OnSharedPreferenceChangeListener() {
                 public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                    Log.d(TAG, "pref changed: " + key);
+                    Log.d(TAG, "pref changed " + key + ":" + m_prefs.getString(key, ""));
                     if (key.equals("weather_update_frequency"))
                         m_updateInterval = Integer.parseInt(m_prefs.getString("weather_update_frequency", "180")) * 60000; // milliseconds
+                    else if (key.equals("location_threshold")) {
+                        m_locationThreshold = Integer.parseInt(m_prefs.getString("location_threshold", "10000")); // meters
+                        try {
+                            m_locationManager.requestLocationUpdates(m_periodicProvider, 600000, m_locationThreshold, m_locationListener);
+                        } catch (SecurityException e) { }
+                    }
                 }
             });
     }

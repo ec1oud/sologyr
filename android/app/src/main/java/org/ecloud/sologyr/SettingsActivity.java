@@ -93,6 +93,7 @@ public class SettingsActivity extends Activity {
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design guidelines.
             bindPreferenceSummaryToValue(findPreference("weather_update_frequency"), "180");
+            bindPreferenceSummaryToValue(findPreference("location_threshold"), "10");
         }
     }
 }

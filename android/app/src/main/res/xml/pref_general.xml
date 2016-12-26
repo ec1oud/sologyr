@@ -9,4 +9,13 @@
         android:positiveButtonText="@null"
         android:title="@string/pref_title_weather_update_frequency" />
 
+    <ListPreference
+        android:defaultValue="10000"
+        android:entries="@array/pref_location_threshold_titles"
+        android:entryValues="@array/pref_location_threshold_values"
+        android:key="location_threshold"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_location_threshold" />
+
 </PreferenceScreen>
