@@ -96,6 +96,7 @@ static int16_t forecastTemperature[FORECAST_MAX_INTERVALS]; // tenths of degrees
 static uint8_t forecastLength;
 static int16_t minForecastTemperature;
 static int16_t maxForecastTemperature;
+static int16_t weatherUpdateFrequency; // how often we can request it, in minutes
 
 static void send_hello()
 {
@@ -603,6 +604,9 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 				if (maxForecastTemperature % 100)
 					maxForecastTemperature += 100 - maxForecastTemperature % 100;
 			}
+			break;
+		case KEY_PREF_UPDATE_FREQ:
+			weatherUpdateFrequency = tuple->value->int16;
 			break;
 		default:
 			APP_LOG(APP_LOG_LEVEL_WARNING, "unexpected key %d", (int)tuple->key);

@@ -31,10 +31,9 @@ Not started yet:
 - [ ] send the rest of the forecast across to the Pebble (wind? cloud level?)
 - [ ] show moonrise/set - second screen
 - [ ] show local weather zone - second screen probably
-- [ ] preferences on Android.  The ones you see are just mockups provided by Android Studio when it created the skeleton project.
-  - [ ] maximum time between weather updates
+- [ ] preferences on Android
   - [ ] colors?
   - [ ] what to show and where?
-  - [ ] keep them simple to keep the package size small.  The APK is 1.3MB now, could probably be smaller.
+- [ ] Android: show time since weather update, expected active periods today (or even all week)
 - [ ] get real-time weather from some other source, preferably an open source where users' weather station data is contributed
 - [ ] Android widgets

@@ -3,6 +3,7 @@ package org.ecloud.sologyr;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.text.format.DateUtils;
 import android.util.Log;
 
@@ -38,9 +39,10 @@ public class PebbleUtil implements WeatherListener {
             KEY_NOWCAST_MINUTES = 40, // how far in the future
             KEY_NOWCAST_PRECIPITATION = 41,
             KEY_PRECIPITATION_MINUTES = 42, // minutes after last midnight (beginning of today)
-            KEY_FORECAST_PRECIPITATION = 43,
+            KEY_FORECAST_PRECIPITATION = 43, // tenths of mm
             KEY_FORECAST_MINUTES = 44, // minutes after last midnight (beginning of today)
-            KEY_FORECAST_TEMPERATURE = 45;
+            KEY_FORECAST_TEMPERATURE = 45, // tenths of degrees
+            KEY_PREF_UPDATE_FREQ = 100;
 
     private final String TAG = this.getClass().getSimpleName();
     List<BroadcastReceiver> m_receivers = new ArrayList<>();
@@ -149,7 +151,22 @@ public class PebbleUtil implements WeatherListener {
         PebbleKit.registerReceivedDataHandler(m_weatherService, pdrcvr);
         m_receivers.add(pdrcvr);
 
+        m_weatherService.m_prefs.registerOnSharedPreferenceChangeListener(
+                new SharedPreferences.OnSharedPreferenceChangeListener() {
+                    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                        Log.d(TAG, "pref changed: " + key);
+                        if (key.equals("weather_update_frequency"))
+                            sendPreferences();
+                    }
+                });
+
         m_weatherService.addWeatherListener(this); // in case the Android app was restarted separately
+    }
+
+    public void sendPreferences() {
+        PebbleDictionary out = new PebbleDictionary();
+        out.addInt16(KEY_PREF_UPDATE_FREQ, (short)Integer.parseInt(m_weatherService.m_prefs.getString("weather_update_frequency", "180")));
+        PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
 
     public void updateLocation(double lat, double lon) {

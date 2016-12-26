@@ -62,7 +62,8 @@ enum DictKey {
 	KEY_PRECIPITATION_MINUTES = 42, // minutes after last midnight (beginning of today)
 	KEY_FORECAST_PRECIPITATION = 43,
 	KEY_FORECAST_MINUTES = 44, // minutes after last midnight (beginning of today)
-	KEY_FORECAST_TEMPERATURE = 45
+	KEY_FORECAST_TEMPERATURE = 45, // tenths of degrees
+    KEY_PREF_UPDATE_FREQ = 100
 };
 
 // Colors for the central 24-hour disk

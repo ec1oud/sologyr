@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -31,7 +32,7 @@ import static org.ecloud.sologyr.WeatherListener.WeatherIcon.DarkPartlyCloud;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.DarkSun;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Fog;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.PartlyCloud;
-import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Rain;
+import static org.ecloud.sologyr.WeatherListener .WeatherIcon.Rain;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Sleet;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Snow;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Sun;
@@ -42,7 +43,8 @@ public class WeatherService extends Service {
 
     private List<WeatherListener> m_listeners = new ArrayList<>(2);
     private final String TAG = this.getClass().getSimpleName();
-    private final long UPDATE_INTERVAL = 600000; // milliseconds
+    SharedPreferences m_prefs = null;
+    private long m_updateInterval = 10800000; // 3 hours in milliseconds
     PebbleUtil m_pebbleUtil;
     LocationManager m_locationManager;
     LocationListener m_locationListener;
@@ -169,6 +171,8 @@ public class WeatherService extends Service {
     }
 
     public void onCreate() {
+        m_prefs = getSharedPreferences("org.ecloud.sologyr_preferences", MODE_PRIVATE);
+        m_updateInterval = Integer.parseInt(m_prefs.getString("weather_update_frequency", "180")) * 60000;
         m_locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         String initialProvider = null;
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -217,6 +221,15 @@ public class WeatherService extends Service {
         savedLoc.setLatitude(59.9132694);
         savedLoc.setLongitude(10.7391112);
         setLocation(savedLoc);
+
+        m_prefs.registerOnSharedPreferenceChangeListener(
+            new SharedPreferences.OnSharedPreferenceChangeListener() {
+                public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                    Log.d(TAG, "pref changed: " + key);
+                    if (key.equals("weather_update_frequency"))
+                        m_updateInterval = Integer.parseInt(m_prefs.getString("weather_update_frequency", "180")) * 60000; // milliseconds
+                }
+            });
     }
 
     public void setLocation(Location location) {
@@ -241,7 +254,7 @@ public class WeatherService extends Service {
     }
 
     public void updateWeather(boolean immediately) {
-        if (curLocation != null && (immediately || System.currentTimeMillis() - lastUpdateTime > UPDATE_INTERVAL)) {
+        if (curLocation != null && (immediately || (m_updateInterval > 0 && System.currentTimeMillis() - lastUpdateTime > m_updateInterval))) {
             forecastTask = new ForecastTask(this);
             forecastTask.start(curLocation);
             nowCastTask = new NowCastTask(this);
