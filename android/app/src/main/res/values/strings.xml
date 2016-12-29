@@ -33,5 +33,6 @@
         <item>10000</item>
         <item>50000</item>
     </string-array>
+    <string name="add_widget">Add widget</string>
 
 </resources>
