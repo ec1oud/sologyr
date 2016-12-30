@@ -31,6 +31,7 @@ In progress:
 Not started yet:
 - [ ] reverse geocoding to get the name of the current location (at least the city), and/or nearest weather station
 - [ ] calculate sunrise/sunset in the Pebble app, based on current location; persist current location on Pebble.  (The problem now is that every time you leave the watch screen, it loses those times.)
+- [ ] label the temperature range on the forecast chart
 - [ ] send the rest of the forecast across to the Pebble (wind? cloud level?)
 - [ ] show moonrise/set - second screen
 - [ ] preferences on Android

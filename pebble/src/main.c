@@ -214,6 +214,7 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 
 	if (maxForecastTemperature == minForecastTemperature) // unlikely but would be a divide-by-zero below
 		return;
+	graphics_context_set_stroke_width(ctx, 3);
 	GPoint lastPoint;
 	int16_t lastTime = 0;
 	float scale = (float)layerBounds.size.h / (minForecastTemperature - maxForecastTemperature);
@@ -252,6 +253,7 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 	}
 	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast plot height %d scale %c%d.%d axis %d",
 		//~ layerBounds.size.h, scale < 0 ? '-' : ' ', (int)scale, abs((int)(scale * 100)) % 100, zeroToPx);
+	graphics_context_set_stroke_width(ctx, 1);
 	graphics_context_set_stroke_color(ctx, COLOR_CHART_AXIS);
 	if (zeroToPx == layerBounds.size.h)
 		--zeroToPx;
