@@ -1,0 +1,5 @@
+http://services.gisgraphy.com/reversegeocoding/search?format=json&lat=59.9132694&lng=10.7391112
+
+an example query; terms are www.gisgraphy.com/free-access.htm
+
+Maybe can get by with it if we cache results.
