@@ -227,7 +227,7 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 		//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast temp t %d x %d v %d y %d",
 			//~ (int)minutesFromNow, point.x, forecastTemperature[i], point.y);
 		if (i > 0) {
-			if (forecastTemperature[i - 1] > 0 && forecastTemperature[i] > 0) {
+			if (forecastTemperature[i - 1] >= 0 && forecastTemperature[i] >= 0) {
 				graphics_context_set_stroke_color(ctx, COLOR_CHART_TEMPERATURE_POSITIVE);
 				graphics_draw_line(ctx, lastPoint, point);
 			} else if (forecastTemperature[i - 1] <= 0 && forecastTemperature[i] <= 0) {
@@ -235,7 +235,10 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 				graphics_draw_line(ctx, lastPoint, point);
 			} else {
 				// draw separate positive and negative portions
-				GPoint xAxisCrossing = GPoint(abs(forecastTemperature[i - 1] / (forecastTemperature[i - 1] - forecastTemperature[i])), zeroToPx);
+				int16_t dt = abs(forecastTemperature[i - 1] * (point.x - lastPoint.x) / (forecastTemperature[i - 1] - forecastTemperature[i]));
+				GPoint xAxisCrossing = GPoint(lastPoint.x + dt, zeroToPx);
+				//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast temp t %d x %d v %d y %d x-axis crossing at %d, %d",
+					//~ (int)minutesFromNow, point.x, forecastTemperature[i], point.y, xAxisCrossing.x, xAxisCrossing.y);
 				graphics_context_set_stroke_color(ctx,
 					forecastTemperature[i - 1] < 0 ? COLOR_CHART_TEMPERATURE_NEGATIVE : COLOR_CHART_TEMPERATURE_POSITIVE);
 				graphics_draw_line(ctx, lastPoint, xAxisCrossing);
@@ -247,8 +250,8 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 		lastPoint = point;
 		lastTime = forecastTimes[i];
 	}
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast plot height %d scale %c%d.%d axis %d",
-		layerBounds.size.h, scale < 0 ? '-' : ' ', (int)scale, abs((int)(scale * 100)) % 100, zeroToPx);
+	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast plot height %d scale %c%d.%d axis %d",
+		//~ layerBounds.size.h, scale < 0 ? '-' : ' ', (int)scale, abs((int)(scale * 100)) % 100, zeroToPx);
 	graphics_context_set_stroke_color(ctx, COLOR_CHART_AXIS);
 	if (zeroToPx == layerBounds.size.h)
 		--zeroToPx;
@@ -301,8 +304,8 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	// render the nowcast precipitation
 	graphics_context_set_fill_color(ctx, COLOR_NOWCAST);
 	time_t nowCastAge = now - nowcastReceivedTime;
-	if (nowCastAge > 0 && nowCastAge < 120)
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast age %d len %d", (int)nowCastAge, nowcastLength);
+	//~ if (nowCastAge > 0 && nowCastAge < 120)
+		//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast age %d len %d", (int)nowCastAge, nowcastLength);
 	if (nowCastAge < 2* SECONDS_PER_HOUR) {
 		for (int i = 0; i < (int)nowcastLength && i < NOWCAST_MAX_INTERVALS; ++i) {
 			if (nowcastPrecipitation[i] > 0) {

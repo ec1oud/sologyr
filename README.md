@@ -1,6 +1,6 @@
 a "circadian" Pebble watch face with weather from yr.no and darksky.net
 
-<img src="doc/screenshot-pebble.png"> <img src="doc/screenshot-pebble-precipitation-and-nowcast.png"> <img src="doc/screenshot-pebble-tap-screen.png">
+<img src="doc/screenshot-pebble.png"> <img src="doc/screenshot-pebble-precipitation-and-nowcast.png"> <img src="doc/screenshot-pebble-tap-screen.png"> <img src="doc/screenshot-pebble-temperature-transitions.png">
 
 Intended for use with [GadgetBridge](https://github.com/Freeyourgadget/Gadgetbridge),
 thus it has its own Android companion app rather than relying on Javascript.

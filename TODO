@@ -5,4 +5,5 @@ done
 ----
 when watch app is reentered, have app resend values without requerying web services
 render precipitation from current hour ahead into the next day
+fix rendering of temperature freezing->above transitions
 
