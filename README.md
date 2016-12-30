@@ -24,10 +24,12 @@ What's working:
 - [x] second screen (accessed via wrist flick/tap) showing longer forecast (full-width horizontal chart), and the time
 - [x] Android app includes and installs the Pebble watch face
 
-Not well tested but but perhaps working:
+In progress:
 - [ ] learning the user's active periods of day, so as to ask the phone to fetch weather updates during that time only.  That plus a frequency limit should keep API calls to a minimum.
+- [ ] Android widget for yr.no "meteogram" - currently has hard-coded location, need to figure out how to get suitable location by reverse-geocoding
 
 Not started yet:
+- [ ] reverse geocoding to get the name of the current location (at least the city), and/or nearest weather station
 - [ ] calculate sunrise/sunset in the Pebble app, based on current location; persist current location on Pebble.  (The problem now is that every time you leave the watch screen, it loses those times.)
 - [ ] send the rest of the forecast across to the Pebble (wind? cloud level?)
 - [ ] show moonrise/set - second screen
@@ -36,7 +38,7 @@ Not started yet:
   - [ ] what to show and where?
 - [ ] Android: show time since weather update, expected active periods today (or even all week)
 - [ ] get real-time weather from some other source, preferably an open source where users' weather station data is contributed
-- [ ] Android widgets
-- [ ] weather radar
-- [ ] yr.no forecast chart
+- [ ] Android widget for weather radar?
+- [ ] weather radar in the Android app (main activity)
+- [ ] yr.no forecast chart / meteogram: zoomed view, accessed from main activity or by clicking the home screen widget
 
