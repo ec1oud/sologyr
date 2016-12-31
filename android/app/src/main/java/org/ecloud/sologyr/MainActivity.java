@@ -7,25 +7,39 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.oleaarnseth.weathercast.Forecast;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Calendar;
+import java.util.LinkedList;
+import java.util.Locale;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements WeatherListener {
 
     private final String TAG = this.getClass().getSimpleName();
     private static final String WATCHAPP_FILENAME = "sologyr.pbw";
     private WeatherService m_weatherService = null;
     private ServiceConnection m_connection = null;
+
+    double m_lat, m_lon;
+    String m_locationName;
+    double m_temperature, m_cloudCover;
+    WeatherIcon m_weatherIcon;
+    int m_sunriseHour, m_sunriseMinute, m_sunsetHour, m_sunsetMinute;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +54,8 @@ public class MainActivity extends Activity {
                 // service that we know is running in our own process, we can
                 // cast its IBinder to a concrete class and directly access it.
                 m_weatherService = ((WeatherService.LocalBinder)service).getService();
-//                m_weatherService.addWeatherListener(SettingsActivity.this);
+                m_weatherService.addWeatherListener(MainActivity.this);
+                m_weatherService.resendEverything(MainActivity.this);
             }
 
             public void onServiceDisconnected(ComponentName className) {
@@ -70,7 +85,7 @@ public class MainActivity extends Activity {
         Log.d(TAG, "onStop");
         super.onStop();
         if (m_weatherService != null) {
-//            m_weatherService.removeWeatherListener(this);
+            m_weatherService.removeWeatherListener(this);
             m_weatherService = null;
         }
         if (m_connection != null)
@@ -125,5 +140,51 @@ public class MainActivity extends Activity {
         } catch (IOException e) {
             Toast.makeText(ctx, "App install failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    @Override
+    public void updateLocation(final double lat, final double lon, final String name, final int distance) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                TextView t = (TextView)findViewById(R.id.locationTextView);
+                t.setText(String.format(Locale.getDefault(), "as of %4$tH:%4$tM location %1$3.4f,%2$3.4f %5$d m from %3$s",
+                        lat, lon, name, Calendar.getInstance(), distance));
+            }
+        });
+    }
+
+    @Override
+    public void updateCurrentWeather(final double temperature, final double cloudCover, final WeatherIcon icon) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                TextView t = (TextView) findViewById(R.id.currentWeatherTextView);
+                t.setText(String.format(Locale.getDefault(), "%1$3.2f°C %2$2.0f%% cloudy; icon '%3$s'",
+                        temperature, cloudCover, icon == null ? "" : icon.name()));
+            }
+        });
+    }
+
+    @Override
+    public void updateForecast(LinkedList<Forecast> nowcast) {
+        // TODO
+    }
+
+    @Override
+    public void updateNowCast(LinkedList<Forecast> nowcast) {
+        // TODO
+    }
+
+    @Override
+    public void updateSunriseSunset(final int sunriseHour, final int sunriseMinute, final int sunsetHour, final int sunsetMinute) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                TextView t = (TextView) findViewById(R.id.sunriseSunsetTextView);
+                t.setText(String.format(Locale.getDefault(), "sunrise %1$d:%2$02d sunset %3$d:%4$02d",
+                        sunriseHour, sunriseMinute, sunsetHour, sunsetMinute));
+            }
+        });
     }
 }

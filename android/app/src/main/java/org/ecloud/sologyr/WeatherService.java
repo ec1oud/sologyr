@@ -53,6 +53,7 @@ public class WeatherService extends Service {
     double curlat = 0, curlon = 0;
     Location curLocation = null;
     String curLocationName = "";
+    int curLocationDistance = 0;
     WeatherListener.WeatherIcon curWeatherIcon;
     double curTemperature = 0, curCloudCover = 0;
     int sunriseHour = 0, sunriseMinute = 0, sunsetHour = 0, sunsetMinute = 0;
@@ -162,6 +163,7 @@ public class WeatherService extends Service {
     void setLocality(String city, String country, double distance) {
         Log.d(TAG, "we seem to find ourselves " + (int)distance + "m from " + city + ", " + country);
         curLocationName = city;
+        curLocationDistance = (int)Math.round(distance);
         updateWeather(true); // immediately because we know the location is different by at least 10km
     }
 
@@ -266,7 +268,7 @@ public class WeatherService extends Service {
         geocoderTask = new GisgraphyReverseGeocoderTask(this);
         geocoderTask.start(curLocation);
         for (WeatherListener l : m_listeners) {
-            l.updateLocation(curlat, curlon, curLocationName);
+            l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
             l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
         }
     }
@@ -298,7 +300,7 @@ public class WeatherService extends Service {
     }
 
     public void resendEverything(WeatherListener l) {
-        l.updateLocation(curlat, curlon, curLocationName);
+        l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
         l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
         l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
     }

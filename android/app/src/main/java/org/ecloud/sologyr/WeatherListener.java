@@ -66,7 +66,7 @@ public interface WeatherListener {
         }
     }
 
-    public void updateLocation(double lat, double lon, String name);
+    public void updateLocation(double lat, double lon, String name, int distance);
     public void updateCurrentWeather(double temperature, double cloudCover, WeatherIcon icon);
     public void updateForecast(LinkedList<Forecast> nowcast);
     public void updateNowCast(LinkedList<Forecast> nowcast);

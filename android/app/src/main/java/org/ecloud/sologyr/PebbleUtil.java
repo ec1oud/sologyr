@@ -170,7 +170,7 @@ public class PebbleUtil implements WeatherListener {
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
 
-    public void updateLocation(double lat, double lon, String name) {
+    public void updateLocation(double lat, double lon, String name, int distance) {
         Log.d(TAG, "updateLocation " + lat + " " + lon + " '" + name + "'");
         PebbleDictionary out = new PebbleDictionary();
         out.addInt32(KEY_LAT, (int)Math.round(lat * 1000));
