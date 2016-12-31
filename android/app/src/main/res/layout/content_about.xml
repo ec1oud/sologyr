@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
+    android:paddingBottom="12dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/aboutSolOgYrText"
+        android:text="This is a configuration and auxiliary viewer application for the Sol og Yr Pebble watch face.  There is also a Sol og Yr widget for your home screen." />
+
+    <TextView
+        android:text="Weather forecast from Yr, delivered by the Norwegian Meteorological Institute and NRK."
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/aboutYrText"
+        android:layout_marginTop="12dp" />
+
+    <TextView
+        android:text='The real-time weather data is powered by Dark Sky.'
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/aboutDarkSkyText"
+        android:layout_marginTop="12dp" />
+
+    <TextView
+        android:text="Reverse geocoding (mapping your GPS location to the name of the locality) is powered by Gisgraphy."
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/aboutGisgraphyText"
+        android:layout_marginTop="12dp" />
+
+</LinearLayout>

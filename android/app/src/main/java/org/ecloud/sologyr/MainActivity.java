@@ -1,19 +1,21 @@
 package org.ecloud.sologyr;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -111,9 +113,29 @@ public class MainActivity extends Activity implements WeatherListener {
                 intent = new Intent(this, SettingsActivity.class);
                 startActivity(intent);
                 return true;
+            case R.id.action_about:
+                showAbout();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    protected void showAbout() {
+        // Inflate the about message contents
+        View messageView = getLayoutInflater().inflate(R.layout.content_about, null, false);
+
+        TextView t = (TextView)messageView.findViewById(R.id.aboutDarkSkyText);
+        t.setMovementMethod(LinkMovementMethod.getInstance());
+        t.setText(Html.fromHtml(
+                "The real-time weather data is <a href=\"https://darksky.net/poweredby/\">powered by Dark Sky.</a>"));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setIcon(R.drawable.app_icon);
+        builder.setTitle(R.string.app_name);
+        builder.setView(messageView);
+        builder.create();
+        builder.show();
     }
 
     /**
