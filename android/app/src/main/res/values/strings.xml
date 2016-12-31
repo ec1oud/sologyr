@@ -1,6 +1,7 @@
 <resources>
-    <string name="app_name">Sol og Yr</string>
-    <string name="title_activity_main">Sol og Yr</string>
+    <string name="app_name" translatable="false">Sol og Yr</string>
+    <string name="app_version" translatable="false">Version 0.5</string>
+    <string name="title_activity_main" translatable="false">Sol og Yr</string>
     <string name="action_install_pebble">Install Pebble watch face</string>
     <string name="action_settings">Settings</string>
     <string name="pebble_install_toast">Installing Pebble watch face</string>
@@ -15,7 +16,7 @@
         <item>6 hours</item>
         <item>Only when location changes</item>
     </string-array>
-    <string-array name="pref_weather_update_frequency_values">
+    <string-array name="pref_weather_update_frequency_values" translatable="false">
         <item>60</item>
         <item>180</item>
         <item>360</item>
@@ -23,12 +24,12 @@
     </string-array>
 
     <string name="pref_title_location_threshold">Location change threshold</string>
-    <string-array name="pref_location_threshold_titles">
+    <string-array name="pref_location_threshold_titles" translatable="false">
         <item>5 km</item>
         <item>10 km</item>
         <item>50 km</item>
     </string-array>
-    <string-array name="pref_location_threshold_values">
+    <string-array name="pref_location_threshold_values" translatable="false">
         <item>5000</item>
         <item>10000</item>
         <item>50000</item>

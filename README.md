@@ -5,6 +5,11 @@ a "circadian" Pebble watch face with weather from yr.no and darksky.net
 Intended for use with [GadgetBridge](https://github.com/Freeyourgadget/Gadgetbridge),
 thus it has its own Android companion app rather than relying on Javascript.
 
+To install:
+
+- Download and install [the APK](android/app/sologyr-release.apk)
+- Select "Install Pebble watch face" from the menu
+
 yr.no provides nice forecasts, but not real-time sensor readings AFAICT.
 So, using darksky.net for now, but perhaps not for the long term
 (using it too much will cost money).

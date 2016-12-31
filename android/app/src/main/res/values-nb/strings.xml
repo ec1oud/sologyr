@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_install_pebble">Installer Pebble urskiven</string>
+    <string name="action_settings">Innstillinger</string>
+    <string name="add_widget">Legg widget</string>
+    <string name="pebble_install_toast">Installerer Pebble urskiven</string>
+    <string name="pref_header_general">Generell</string>
+    <string name="pref_title_location_threshold">Beliggenhet endring terskel</string>
+    <string name="pref_title_weather_update_frequency">"Vær oppdateringsfrekvens "</string>
+    <string-array name="pref_weather_update_frequency_titles">
+        <item>en time</item>
+        <item>3 timer</item>
+        <item>6 timer</item>
+        <item>Bare når beliggenhet endres</item>
+    </string-array>
+</resources>

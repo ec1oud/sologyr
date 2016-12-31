@@ -10,8 +10,16 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:id="@+id/versionText"
+        android:text="@string/app_version" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:id="@+id/aboutSolOgYrText"
-        android:text="This is a configuration and auxiliary viewer application for the Sol og Yr Pebble watch face.  There is also a Sol og Yr widget for your home screen." />
+        android:text="This is a configuration and auxiliary viewer application for the Sol og Yr Pebble watch face.  There is also a Sol og Yr widget for your home screen."
+        android:layout_marginTop="12dp" />
 
     <TextView
         android:text="Weather forecast from Yr, delivered by the Norwegian Meteorological Institute and NRK."
