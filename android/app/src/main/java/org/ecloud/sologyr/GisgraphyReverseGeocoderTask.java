@@ -62,7 +62,8 @@ public class GisgraphyReverseGeocoderTask extends AsyncTask<Location, Void, Void
 //                Log.d(TAG, obj.get("result").toString());
                 JSONArray localities = obj.getJSONArray("result");
                 JSONObject loc = (JSONObject)localities.get(0);
-                weatherService.setLocality(loc.getString("city"), loc.getString("countryCode"), loc.getDouble("distance"));
+                weatherService.setLocality(loc.getString("city"), loc.getString("countryCode"),
+                        loc.getDouble("lat"), loc.getDouble("lng"), loc.getDouble("distance"));
                 Log.d(TAG, loc.getString("formatedFull"));
             }
         } catch (Exception e) {

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.Address;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -62,6 +63,7 @@ public class WeatherService extends Service {
     ForecastTask forecastTask = null;
     DarkSkyCurrentTask darkSkyCurrentTask = null;
     GisgraphyReverseGeocoderTask geocoderTask = null;
+    DatabaseHelper m_database = new DatabaseHelper(this);
 
     public WeatherService() {
     }
@@ -160,13 +162,16 @@ public class WeatherService extends Service {
         darkSkyCurrentTask = null;
     }
 
-    void setLocality(String city, String country, double distance) {
+    void setLocality(String city, String country, double lat, double lon, double distance) {
         Log.d(TAG, "we seem to find ourselves " + (int)distance + "m from " + city + ", " + country);
+        if (curLocationDistance < 0 && m_database.openRW())
+            m_database.insertLocation(lat, lon, city, country);
         curLocationName = city;
         curLocationDistance = (int)Math.round(distance);
+        for (WeatherListener l : m_listeners)
+            l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
         updateWeather(true); // immediately because we know the location is different by at least 10km
     }
-
 
     public class LocalBinder extends Binder {
         WeatherService getService() {
@@ -264,17 +269,32 @@ public class WeatherService extends Service {
         sunriseMinute = sunrise.get(Calendar.MINUTE);
         sunsetHour = sunset.get(Calendar.HOUR_OF_DAY);
         sunsetMinute = sunset.get(Calendar.MINUTE);
-        curLocationName = String.format("%.4f,%.4f", curlat, curlon);
-        geocoderTask = new GisgraphyReverseGeocoderTask(this);
-        geocoderTask.start(curLocation);
-        for (WeatherListener l : m_listeners) {
-            l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
+        for (WeatherListener l : m_listeners)
             l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
+        boolean locationNameFound = false;
+        if (!m_database.openRW())
+            Log.d(TAG, "failed to open database");
+        else {
+            Address here = m_database.getNearestLocation(curlat, curlon);
+            if (here != null) {
+                setLocality(here.getLocality(), here.getCountryCode(), here.getLatitude(), here.getLongitude(),
+                        (int)Math.round(GeoUtils.distance(curlat, curlon, here.getLatitude(), here.getLongitude())));
+                locationNameFound = true;
+            }
+        }
+        if (!locationNameFound) {
+            curLocationName = String.format("%.4f,%.4f", curlat, curlon);
+            curLocationDistance = -1;
+            for (WeatherListener l : m_listeners)
+                l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
+            geocoderTask = new GisgraphyReverseGeocoderTask(this);
+            geocoderTask.start(curLocation);
         }
     }
 
     public void updateWeather(boolean immediately) {
-        if (curLocation != null && (immediately || (m_updateInterval > 0 && System.currentTimeMillis() - lastUpdateTime > m_updateInterval))) {
+        if (curLocation != null && (immediately || (m_updateInterval > 0 &&
+                System.currentTimeMillis() - lastUpdateTime > m_updateInterval))) {
             forecastTask = new ForecastTask(this);
             forecastTask.start(curLocation);
             nowCastTask = new NowCastTask(this);
