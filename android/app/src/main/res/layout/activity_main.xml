@@ -32,4 +32,10 @@
         android:layout_height="wrap_content"
         android:id="@+id/sunriseSunsetTextView" />
 
+    <view
+        android:layout_width="match_parent"
+        class="org.ecloud.sologyr.PebbleActivityView"
+        android:id="@+id/view"
+        android:layout_height="36dp" />
+
 </LinearLayout>
