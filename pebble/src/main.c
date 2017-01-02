@@ -191,13 +191,24 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 	graphics_context_set_stroke_color(ctx, COLOR_CHART_DAY_DIV);
 	time_t nextDay = startOfToday + SECONDS_PER_DAY;
 	int x = 0;
+	struct tm time;
+	memcpy(&time, currentTime, sizeof(time));
 	while (x < layerBounds.size.w) {
+		++time.tm_wday;
+		if (time.tm_wday > 6)
+			time.tm_wday = 0;
 		time_t minutesFromNow = (nextDay - now) / 60;
 		x = (int)(minutesFromNow / FORECAST_CHART_MINUTES_PER_PIXEL);
+		GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
 		if (x < layerBounds.size.w) {
 			GPoint p1 = GPoint(x, 0);
 			GPoint p2 = GPoint(x, layerBounds.size.h);
+			GRect textBounds = GRect(x + 2, 0, 60, 14);
+			static char dayText[4];
+			static const char *dateFormat = "%a";
+			strftime(dayText, sizeof(dayText), dateFormat, &time);
 			graphics_draw_line(ctx, p1, p2);
+			graphics_draw_text(ctx, dayText, font, textBounds, GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
 		}
 		nextDay += SECONDS_PER_DAY;
 	}
