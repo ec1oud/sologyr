@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.text.format.DateUtils;
 import android.util.Log;
 
 import com.getpebble.android.kit.PebbleKit;
@@ -41,8 +40,10 @@ public class PebbleUtil implements WeatherListener {
             KEY_NOWCAST_PRECIPITATION = 41,
             KEY_PRECIPITATION_MINUTES = 42, // minutes after last midnight (beginning of today)
             KEY_FORECAST_PRECIPITATION = 43, // tenths of mm
-            KEY_FORECAST_MINUTES = 44, // minutes after last midnight (beginning of today)
-            KEY_FORECAST_TEMPERATURE = 45, // tenths of degrees
+            KEY_FORECAST_PRECIPITATION_MIN = 44, // tenths of mm
+            KEY_FORECAST_PRECIPITATION_MAX = 45, // tenths of mm
+            KEY_FORECAST_MINUTES = 46, // minutes after last midnight (beginning of today)
+            KEY_FORECAST_TEMPERATURE = 47, // tenths of degrees
             KEY_PREF_UPDATE_FREQ = 100;
 
     private final String TAG = this.getClass().getSimpleName();
@@ -212,8 +213,9 @@ public class PebbleUtil implements WeatherListener {
             if (minInFuture < 4500) { // 144px, 1 px per half-hour period = 4320 minutes = 3 days
                 PebbleDictionary out = new PebbleDictionary();
                 out.addInt16(KEY_PRECIPITATION_MINUTES, (short)minInFuture);
-                out.addUint8(KEY_FORECAST_PRECIPITATION, (byte) Math.round(f.getPrecipitation().getPrecipitationDouble() * 10));
-                // TODO add min/max precipitation values (but the parser isn't even extracting them yet)
+                out.addUint8(KEY_FORECAST_PRECIPITATION, (byte) Math.round(f.getPrecipitation().getPrecipitation() * 10));
+                out.addUint8(KEY_FORECAST_PRECIPITATION_MIN, (byte) Math.round(f.getPrecipitation().getPrecipitationMin() * 10));
+                out.addUint8(KEY_FORECAST_PRECIPITATION_MAX, (byte) Math.round(f.getPrecipitation().getPrecipitationMax() * 10));
                 PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
             }
         }
@@ -248,7 +250,7 @@ public class PebbleUtil implements WeatherListener {
             if (f.getPrecipitation() == null) {
                 m_forecast.add(f);
                 Log.d(TAG, "forecast:" + f.toString());
-            } else if (f.getPrecipitation().getPrecipitationDouble() > 0 && precipCount < 128) {
+            } else if (f.getPrecipitation().getPrecipitation() > 0 && precipCount < 128) {
                 m_precipitation.add(f);
                 ++precipCount;
                 Log.d(TAG, f.getTimeFrom() + " precipitation: " + f.getPrecipitation());
@@ -270,7 +272,7 @@ public class PebbleUtil implements WeatherListener {
         byte[] minutesInFuture = new byte[len];
         int i = 0;
         for (Forecast f : m_nowcast) {
-            precipitation[i] = (byte) Math.round(f.getPrecipitation().getPrecipitationDouble() * 10);
+            precipitation[i] = (byte) Math.round(f.getPrecipitation().getPrecipitation() * 10);
             minutesInFuture[i] = (byte)((f.getTimeFrom().getTime() - now + utcOffset) / 60000);
             Log.d(TAG, "nowcast " + f.getTimeFrom() + " (" + minutesInFuture[i] + " min from now)" + ": " + f.getPrecipitation());
             ++i;

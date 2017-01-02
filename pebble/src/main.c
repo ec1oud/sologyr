@@ -94,6 +94,8 @@ static uint8_t nowcastPrecipitation[NOWCAST_MAX_INTERVALS]; // tenths of mm
 static int8_t nowcastLength;
 static int16_t forecastPrecipitationTimes[FORECAST_MAX_INTERVALS]; // minutes from the beginning of today
 static uint8_t forecastPrecipitation[FORECAST_MAX_INTERVALS]; // tenths of mm
+static uint8_t forecastPrecipitationMin[FORECAST_MAX_INTERVALS]; // tenths of mm
+static uint8_t forecastPrecipitationMax[FORECAST_MAX_INTERVALS]; // tenths of mm
 static uint8_t forecastPrecipitationLength;
 static int16_t forecastTimes[FORECAST_MAX_INTERVALS]; // minutes from the beginning of today
 static int16_t forecastTemperature[FORECAST_MAX_INTERVALS]; // tenths of degrees
@@ -200,12 +202,32 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 		nextDay += SECONDS_PER_DAY;
 	}
 
-	graphics_context_set_fill_color(ctx, COLOR_CHART_PRECIPITATION);
 	GRect precipitationBar = GRect(0, 0, 60 / FORECAST_CHART_MINUTES_PER_PIXEL, 0);
+	graphics_context_set_fill_color(ctx, COLOR_CHART_PRECIPITATION_MAX);
+	for (uint8_t i = 0; i < forecastPrecipitationLength; ++i) {
+		time_t minutesFromNow = ((forecastPrecipitationTimes[i] * 60) + startOfToday - now) / 60;
+		precipitationBar.origin.x = (int)(minutesFromNow / FORECAST_CHART_MINUTES_PER_PIXEL);
+		precipitationBar.size.h = (forecastPrecipitationMax[i] * FORECAST_CHART_PIXELS_PER_MM_PRECIPITATION) / 10;
+		precipitationBar.origin.y = layerBounds.size.h - precipitationBar.size.h;
+		//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip t %d x %d amount %d bar %d x %d",
+			//~ (int)minutesFromNow, precipitationBar.origin.x, forecastPrecipitation[i], precipitationBar.size.w, precipitationBar.size.h);
+		graphics_fill_rect(ctx, precipitationBar, 0, GCornerNone);
+	}
+	graphics_context_set_fill_color(ctx, COLOR_CHART_PRECIPITATION);
 	for (uint8_t i = 0; i < forecastPrecipitationLength; ++i) {
 		time_t minutesFromNow = ((forecastPrecipitationTimes[i] * 60) + startOfToday - now) / 60;
 		precipitationBar.origin.x = (int)(minutesFromNow / FORECAST_CHART_MINUTES_PER_PIXEL);
 		precipitationBar.size.h = (forecastPrecipitation[i] * FORECAST_CHART_PIXELS_PER_MM_PRECIPITATION) / 10;
+		precipitationBar.origin.y = layerBounds.size.h - precipitationBar.size.h;
+		//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip t %d x %d amount %d bar %d x %d",
+			//~ (int)minutesFromNow, precipitationBar.origin.x, forecastPrecipitation[i], precipitationBar.size.w, precipitationBar.size.h);
+		graphics_fill_rect(ctx, precipitationBar, 0, GCornerNone);
+	}
+	graphics_context_set_fill_color(ctx, COLOR_CHART_PRECIPITATION_MIN);
+	for (uint8_t i = 0; i < forecastPrecipitationLength; ++i) {
+		time_t minutesFromNow = ((forecastPrecipitationTimes[i] * 60) + startOfToday - now) / 60;
+		precipitationBar.origin.x = (int)(minutesFromNow / FORECAST_CHART_MINUTES_PER_PIXEL);
+		precipitationBar.size.h = (forecastPrecipitationMin[i] * FORECAST_CHART_PIXELS_PER_MM_PRECIPITATION) / 10;
 		precipitationBar.origin.y = layerBounds.size.h - precipitationBar.size.h;
 		//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip t %d x %d amount %d bar %d x %d",
 			//~ (int)minutesFromNow, precipitationBar.origin.x, forecastPrecipitation[i], precipitationBar.size.w, precipitationBar.size.h);
@@ -282,9 +304,26 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 
 	// render the forecast precipitation assuming that it's pre-sorted by time (the phone's responsibility)
 	// and assuming that each interval in which precipitation is predicted is one hour long.
-	graphics_context_set_fill_color(ctx, COLOR_PRECIPITATION);
 	if (forecastPrecipitationLength > 0) {
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip len %d", forecastPrecipitationLength);
+		graphics_context_set_fill_color(ctx, COLOR_PRECIPITATION_MAX);
+		for (int i = 0; i < (int)forecastPrecipitationLength && i < FORECAST_MAX_INTERVALS; ++i) {
+			if (forecastPrecipitationMax[i] > 0) {
+				time_t actualPrecipitationTime = forecastPrecipitationTimes[i] * 60 + startOfToday;
+				if (actualPrecipitationTime < now - SECONDS_PER_HOUR)
+					continue;
+				if (actualPrecipitationTime - now > SECONDS_PER_DAY - (SECONDS_PER_HOUR * 2))
+					break;
+				int startAngle = forecastPrecipitationTimes[i] * 360 / MINUTES_PER_DAY - 180;
+				int endAngle = (forecastPrecipitationTimes[i] + MINUTES_PER_HOUR) * 360 / MINUTES_PER_DAY - 180;
+				//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip %d angles %d %d amount %d",
+				//~ 	(int)forecastPrecipitationTimes[i], startAngle, endAngle, forecastPrecipitation[i]);
+				graphics_fill_radial(ctx, fillCircle, GCornerNone,
+					(forecastPrecipitationMax[i] * FORECAST_PIXELS_PER_MM_PRECIPITATION) / 10,
+					DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
+			}
+		}
+		graphics_context_set_fill_color(ctx, COLOR_PRECIPITATION);
 		for (int i = 0; i < (int)forecastPrecipitationLength && i < FORECAST_MAX_INTERVALS; ++i) {
 			if (forecastPrecipitation[i] > 0) {
 				time_t actualPrecipitationTime = forecastPrecipitationTimes[i] * 60 + startOfToday;
@@ -298,6 +337,23 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 				//~ 	(int)forecastPrecipitationTimes[i], startAngle, endAngle, forecastPrecipitation[i]);
 				graphics_fill_radial(ctx, fillCircle, GCornerNone,
 					(forecastPrecipitation[i] * FORECAST_PIXELS_PER_MM_PRECIPITATION) / 10,
+					DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
+			}
+		}
+		graphics_context_set_fill_color(ctx, COLOR_PRECIPITATION_MIN);
+		for (int i = 0; i < (int)forecastPrecipitationLength && i < FORECAST_MAX_INTERVALS; ++i) {
+			if (forecastPrecipitationMin[i] > 0) {
+				time_t actualPrecipitationTime = forecastPrecipitationTimes[i] * 60 + startOfToday;
+				if (actualPrecipitationTime < now - SECONDS_PER_HOUR)
+					continue;
+				if (actualPrecipitationTime - now > SECONDS_PER_DAY - (SECONDS_PER_HOUR * 2))
+					break;
+				int startAngle = forecastPrecipitationTimes[i] * 360 / MINUTES_PER_DAY - 180;
+				int endAngle = (forecastPrecipitationTimes[i] + MINUTES_PER_HOUR) * 360 / MINUTES_PER_DAY - 180;
+				//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip %d angles %d %d amount %d",
+				//~ 	(int)forecastPrecipitationTimes[i], startAngle, endAngle, forecastPrecipitation[i]);
+				graphics_fill_radial(ctx, fillCircle, GCornerNone,
+					(forecastPrecipitationMin[i] * FORECAST_PIXELS_PER_MM_PRECIPITATION) / 10,
 					DEG_TO_TRIGANGLE(startAngle),  DEG_TO_TRIGANGLE(endAngle));
 			}
 		}
@@ -506,6 +562,8 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 	Tuple *tuple = dict_read_first(iter);
 	int16_t currentForecastPrecipitationTime = 0;
 	uint8_t currentForecastPrecipitation = 0; // tenths of mm
+	uint8_t currentForecastPrecipitationMin = 0; // tenths of mm
+	uint8_t currentForecastPrecipitationMax = 0; // tenths of mm
 	int16_t currentForecastTime = 0;
 	int16_t currentForecastTemperature = 0; // tenths of degrees
 	while (tuple) {
@@ -605,6 +663,12 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 		case KEY_FORECAST_PRECIPITATION:
 			currentForecastPrecipitation = tuple->value->uint8;
 			break;
+		case KEY_FORECAST_PRECIPITATION_MIN:
+			currentForecastPrecipitationMin = tuple->value->uint8;
+			break;
+		case KEY_FORECAST_PRECIPITATION_MAX:
+			currentForecastPrecipitationMax = tuple->value->uint8;
+			break;
 		case KEY_FORECAST_MINUTES:
 			currentForecastTime = tuple->value->int16;
 			break;
@@ -635,6 +699,8 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 				//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast %d precip %d\n", (int)currentForecastPrecipitationTime, (int)currentForecastPrecipitation);
 			forecastPrecipitationTimes[forecastPrecipitationLength] = currentForecastPrecipitationTime;
 			forecastPrecipitation[forecastPrecipitationLength] = currentForecastPrecipitation;
+			forecastPrecipitationMin[forecastPrecipitationLength] = currentForecastPrecipitationMin;
+			forecastPrecipitationMax[forecastPrecipitationLength] = currentForecastPrecipitationMax;
 			++forecastPrecipitationLength;
 		}
 	} else if (currentForecastTime) {

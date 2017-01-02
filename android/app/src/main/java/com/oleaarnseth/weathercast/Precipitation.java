@@ -17,28 +17,31 @@ public class Precipitation implements Serializable {
     private int unit;
 
     // Nedbør:
-    private double precipitation;
+    private double precipitation, min, max;
 
     // Konstruktør:
-    public Precipitation (int unit, double precipitation) {
+    public Precipitation (int unit, double precipitation, double min, double max) {
         this.unit = unit;
         this.precipitation = precipitation;
+        this.min = min;
+        this.max = max;
     }
 
-    public double getPrecipitationDouble() { return precipitation; }
+    public double getPrecipitation() { return precipitation; }
+    public double getPrecipitationMin() { return min; }
+    public double getPrecipitationMax() { return max; }
     public void setPrecipitationDouble(double precipitation) { this.precipitation = precipitation; }
 
     @Override
     public String toString() {
+        String ret = min + "/" + precipitation + "/" + max + " ";
         switch (unit) {
             case UNIT_INCHES:
-                return precipitation
-                        + " "
-                        + STRING_INCHES;
+                ret += STRING_INCHES;
+                break;
             default:
-                return precipitation
-                        + " "
-                        + STRING_MILLIMETER;
+                ret+= STRING_MILLIMETER;
         }
+        return ret;
     }
 }

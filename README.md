@@ -24,7 +24,7 @@ What's working:
 - [x] today's total step count
 - [x] yesterday's step counts in dimmer green
 - [x] NowCast, the yr.no highly-localized prediction of upcoming precipitation for the next 2 hours.
-- [x] precipitation forecast beyond the next 2 hours
+- [x] precipitation forecast beyond the next 2 hours (min/likely/max)
 - [x] temperature forecast
 - [x] second screen (accessed via wrist flick/tap) showing longer forecast (full-width horizontal chart), and the time
 - [x] Android app includes and installs the Pebble watch face

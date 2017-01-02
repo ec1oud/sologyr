@@ -37,6 +37,7 @@ public class XMLParser {
     public static final String ATTRIBUTE_WINDSPEED = "mps";
     public static final String ATTRIBUTE_PRECIPITATION_VALUE = "value";
     public static final String ATTRIBUTE_PRECIPITATION_MAX_VALUE = "maxvalue";
+    public static final String ATTRIBUTE_PRECIPITATION_MIN_VALUE = "minvalue";
     public static final String ATTRIBUTE_SYMBOL_NUMBER = "number";
 
     // Måleenheter for temperature og XML-feeden:
@@ -154,17 +155,14 @@ public class XMLParser {
 
         String precipitationStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_PRECIPITATION_VALUE);
         String precipitationMaxStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_PRECIPITATION_MAX_VALUE);
+        String precipitationMinStr = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_PRECIPITATION_MIN_VALUE);
         double precipitation = Double.parseDouble(precipitationStr);
-        // TODO store min and max separately; for now I just want to see optimistic amounts of precipitation
-        if (precipitationMaxStr != null)
-            precipitation = Double.parseDouble(precipitationMaxStr);
         String unit = parser.getAttributeValue(NAMESPACE, ATTRIBUTE_UNIT);
-        if (unit.equals(PRECIPITATION_UNIT_INCHES)) {
-            return new Precipitation(Precipitation.UNIT_INCHES, precipitation);
-        }
-        else {
-            return new Precipitation(Precipitation.UNIT_MILLIMETER, precipitation);
-        }
+        return new Precipitation(
+                unit.equals(PRECIPITATION_UNIT_INCHES) ? Precipitation.UNIT_INCHES : Precipitation.UNIT_MILLIMETER,
+                precipitation,
+                precipitationMinStr == null ? precipitation : Double.parseDouble(precipitationMinStr),
+                precipitationMaxStr == null ? precipitation : Double.parseDouble(precipitationMaxStr));
     }
 
     private int readIconNumber(XmlPullParser parser) throws XmlPullParserException, IOException {
