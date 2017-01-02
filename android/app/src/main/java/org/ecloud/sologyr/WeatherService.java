@@ -233,16 +233,14 @@ public class WeatherService extends Service {
             Log.w(TAG, "requestRegularUpdates failed: provider " + m_periodicProvider);
         }
 
-        // TODO store last known location, restore here; using central Oslo for now
         Location savedLoc = new Location("saved");
-        savedLoc.setLatitude(59.9132694);
-        savedLoc.setLongitude(10.7391112);
+        savedLoc.setLatitude(m_prefs.getFloat("latitude", (float)59.9132694));
+        savedLoc.setLongitude(m_prefs.getFloat("longitude", (float)10.7391112));
         setLocation(savedLoc);
 
         m_prefs.registerOnSharedPreferenceChangeListener(
             new SharedPreferences.OnSharedPreferenceChangeListener() {
                 public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                    Log.d(TAG, "pref changed " + key + ":" + m_prefs.getString(key, ""));
                     if (key.equals("weather_update_frequency"))
                         m_updateInterval = Integer.parseInt(m_prefs.getString("weather_update_frequency", "180")) * 60000; // milliseconds
                     else if (key.equals("location_threshold")) {
@@ -259,6 +257,7 @@ public class WeatherService extends Service {
         curLocation = location;
         curlat = location.getLatitude();
         curlon = location.getLongitude();
+        m_prefs.edit().putFloat("latitude", (float)curlat).putFloat("longitude", (float)curlon).apply();
         Calendar today = Calendar.getInstance();
         com.luckycatlabs.sunrisesunset.dto.Location lcLocation = new com.luckycatlabs.sunrisesunset.dto.Location(curlat, curlon);
         SunriseSunsetCalculator calculator = new SunriseSunsetCalculator(lcLocation, today.getTimeZone());
