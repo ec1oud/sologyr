@@ -172,6 +172,8 @@ public class PebbleUtil implements WeatherListener {
 
     public void updateLocation(double lat, double lon, String name, int distance) {
         Log.d(TAG, "updateLocation " + lat + " " + lon + " '" + name + "'");
+        if (name.isEmpty())
+            name = String.format("%.4f,%.4f", lat, lon);
         PebbleDictionary out = new PebbleDictionary();
         out.addInt32(KEY_LAT, (int)Math.round(lat * 1000));
         out.addInt32(KEY_LON, (int)Math.round(lon * 1000));

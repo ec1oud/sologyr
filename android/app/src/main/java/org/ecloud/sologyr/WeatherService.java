@@ -282,7 +282,7 @@ public class WeatherService extends Service {
             }
         }
         if (!locationNameFound) {
-            curLocationName = String.format("%.4f,%.4f", curlat, curlon);
+            curLocationName = "";
             curLocationDistance = -1;
             for (WeatherListener l : m_listeners)
                 l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);

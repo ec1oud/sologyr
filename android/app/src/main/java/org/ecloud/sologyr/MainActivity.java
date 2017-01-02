@@ -170,8 +170,12 @@ public class MainActivity extends Activity implements WeatherListener {
             @Override
             public void run() {
                 TextView t = (TextView)findViewById(R.id.locationTextView);
-                t.setText(String.format(Locale.getDefault(), "as of %4$tH:%4$tM location %1$3.4f,%2$3.4f %5$d m from %3$s",
-                        lat, lon, name, Calendar.getInstance(), distance));
+                if (distance < 0 || name.isEmpty())
+                    t.setText(String.format(Locale.getDefault(), "as of %4$tH:%4$tM location %1$3.4f,%2$3.4f",
+                            lat, lon, name, Calendar.getInstance(), distance));
+                else
+                    t.setText(String.format(Locale.getDefault(), "as of %4$tH:%4$tM location %1$3.4f,%2$3.4f %5$d m from %3$s",
+                            lat, lon, name, Calendar.getInstance(), distance));
             }
         });
     }
