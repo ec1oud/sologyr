@@ -263,7 +263,7 @@ public class WeatherService extends Service {
         SunriseSunsetCalculator calculator = new SunriseSunsetCalculator(lcLocation, today.getTimeZone());
         Calendar sunrise = calculator.getOfficialSunriseCalendarForDate(today);
         Calendar sunset = calculator.getOfficialSunsetCalendarForDate(today);
-        Log.d(TAG, "sunrise " + sunrise.toString() + ", sunset " + sunset.toString());
+        Log.d(TAG, "sunrise " + sunrise.getTime() + ", sunset " + sunset.getTime());
         sunriseHour = sunrise.get(Calendar.HOUR_OF_DAY);
         sunriseMinute = sunrise.get(Calendar.MINUTE);
         sunsetHour = sunset.get(Calendar.HOUR_OF_DAY);
