@@ -222,6 +222,21 @@ uint16_t health_get_steps_for_interval(int i)
 	return s_steps_per_interval[i];
 }
 
+void sendVmc(int dayOffset)
+{
+	// TODO handle dayOffset? for now only today is supported
+	Tuplet value = TupletBytes(KEY_ACTIVITY, (uint8_t*)s_vmc_per_interval, sizeof(s_vmc_per_interval));
+	Tuplet len = TupletInteger(KEY_LEN, sizeof(s_vmc_per_interval));
+	DictionaryIterator *iter;
+	app_message_outbox_begin(&iter);
+	if (iter == NULL)
+		return;
+	dict_write_tuplet(iter, &len);
+	dict_write_tuplet(iter, &value);
+	dict_write_end(iter);
+	app_message_outbox_send();
+}
+
 static void health_handler(HealthEventType event, void *context)
 {
 	health_set_current_steps((int)health_service_sum_today(HealthMetricStepCount));

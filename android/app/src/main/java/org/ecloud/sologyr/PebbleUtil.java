@@ -25,6 +25,9 @@ public class PebbleUtil implements WeatherListener {
             KEY_HELLO = 1,
             KEY_ACTIVE_INTERVAL = 2, // inform phone that the watch usually sees activity, so keep data up-to-date
             KEY_TAP = 3,
+            KEY_REQ_ACTIVITY = 4,	// request active periods for today
+            KEY_ACTIVITY = 5,	// array of 16-bit words (vector magnitude counts for 15-min intervals)
+            KEY_LEN = 6, // length of an array of bytes
             KEY_LAT = 10,
             KEY_LON = 11,
             KEY_SUNRISE_HOUR = 12,
@@ -48,6 +51,7 @@ public class PebbleUtil implements WeatherListener {
 
     private final String TAG = this.getClass().getSimpleName();
     List<BroadcastReceiver> m_receivers = new ArrayList<>();
+    List<PebbleActivityListener> m_activityListeners = new ArrayList<>();
     int m_sendingTrans = -1;
     int m_nackCount = 0;
     boolean m_connected = false;
@@ -56,6 +60,10 @@ public class PebbleUtil implements WeatherListener {
     LinkedList<Forecast> m_forecast = new LinkedList<>();
     LinkedList<Forecast> m_precipitation = new LinkedList<>();
     LinkedList<Forecast> m_nowcast = new LinkedList<>();
+
+    private static PebbleUtil m_instance = null;
+
+    public static PebbleUtil instance() { return m_instance; }
 
     public void close() {
         for (BroadcastReceiver r : m_receivers)
@@ -74,6 +82,7 @@ public class PebbleUtil implements WeatherListener {
 
     public PebbleUtil(WeatherService ws) {
         Log.d(TAG, "created");
+        m_instance = this;
         m_weatherService = ws;
         BroadcastReceiver rcvr = new BroadcastReceiver() {
             @Override
@@ -147,6 +156,12 @@ public class PebbleUtil implements WeatherListener {
                     long axisDirn = data.getInteger(KEY_TAP);
                     Log.i(TAG, "Pebble reports tap: axis " + (axisDirn & 0x0F) + " direction " + (axisDirn >> 4));
                     m_weatherService.resendEverything(PebbleUtil.this);
+                } else if (data.contains(PebbleUtil.KEY_ACTIVITY)) {
+                    int len = data.getInteger(KEY_LEN).intValue();
+                    Log.i(TAG, "Pebble reports daily activity of length " + len);
+                    byte[] vmcData = data.getBytes(len);
+                    for (PebbleActivityListener l : m_activityListeners)
+                        l.updateDailyActivity(vmcData);
                 }
             }
         };
@@ -295,6 +310,16 @@ public class PebbleUtil implements WeatherListener {
         out.addInt8(KEY_SUNRISE_MINUTE, (byte)sunriseMinute);
         out.addInt8(KEY_SUNSET_HOUR, (byte)sunsetHour);
         out.addInt8(KEY_SUNSET_MINUTE, (byte)sunsetMinute);
+        PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
+    }
+
+    public void addActivityListener(PebbleActivityListener l) {
+        m_activityListeners.add(l);
+    }
+
+    public void requestDailyActivity(int day) {
+        PebbleDictionary out = new PebbleDictionary();
+        out.addInt8(KEY_REQ_ACTIVITY, (byte)day);
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
 }

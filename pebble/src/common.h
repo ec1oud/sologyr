@@ -47,6 +47,9 @@ enum DictKey {
 	KEY_HELLO = 1,
 	KEY_ACTIVE_INTERVAL = 2, // inform phone that the watch usually sees activity, so keep data up-to-date
 	KEY_TAP = 3,
+	KEY_REQ_ACTIVITY = 4,	// request active periods for today
+	KEY_ACTIVITY = 5,	// array of 16-bit words (vector magnitude counts for 15-min intervals)
+	KEY_LEN = 6, // length of an array of bytes
 	KEY_LAT = 10,
 	KEY_LON = 11,
 	KEY_SUNRISE_HOUR = 12,

@@ -21,3 +21,5 @@ void health_update_steps_interval();
 uint16_t health_get_steps_for_interval(int i);
 
 void health_update_weekday();
+
+void sendVmc(int dayOffset);

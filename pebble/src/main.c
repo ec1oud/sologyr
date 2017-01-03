@@ -699,6 +699,9 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 		case KEY_PREF_UPDATE_FREQ:
 			weatherUpdateFrequency = tuple->value->int16;
 			break;
+		case KEY_REQ_ACTIVITY:
+			sendVmc(tuple->value->int8);
+			break;
 		default:
 			APP_LOG(APP_LOG_LEVEL_WARNING, "unexpected key %d", (int)tuple->key);
 		}
