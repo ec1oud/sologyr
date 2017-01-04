@@ -6,9 +6,13 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.ResultReceiver;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
@@ -16,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +39,7 @@ public class MainActivity extends Activity implements WeatherListener {
 
     private final String TAG = this.getClass().getSimpleName();
     private static final String WATCHAPP_FILENAME = "sologyr.pbw";
+    public static final String ACTION_GOT_RADAR = "org.ecloud.sologyr.action.GOT_RADAR";
     private WeatherService m_weatherService = null;
     private ServiceConnection m_connection = null;
 
@@ -80,6 +86,7 @@ public class MainActivity extends Activity implements WeatherListener {
             startService(intent);
             bindService(intent, m_connection, Context.BIND_AUTO_CREATE);
         }
+        updateRadar();
     }
 
     @Override
@@ -122,6 +129,27 @@ public class MainActivity extends Activity implements WeatherListener {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    public class RadarReceiver extends ResultReceiver {
+        public RadarReceiver(Handler h) {
+            super(h);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+            super.onReceiveResult(resultCode, resultData);
+            Log.d(TAG, "got radar " + resultCode + " " + resultData);
+            ImageView r = (ImageView)findViewById(R.id.radarImageView);
+            Bitmap bm = resultData.getParcelable("bitmap");
+            r.setImageBitmap(bm); // CalledFromWrongThreadException: Only the original thread that created a view hierarchy can touch its views.
+        }
+    }
+
+    public void updateRadar() {
+        FetchService.startActionFetchPreferredBitmapUrl(this, "radar_url",
+                "http://api.met.no/weatherapi/radar/1.5/?radarsite=south_norway;type=reflectivity;content=animation;size=large",
+                new RadarReceiver(new Handler(Looper.getMainLooper())));
     }
 
     protected void showAbout() {
