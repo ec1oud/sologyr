@@ -4,6 +4,7 @@
     <string name="title_activity_main" translatable="false">Sol og Yr</string>
     <string name="action_install_pebble">Install Pebble watch face</string>
     <string name="action_settings">Settings</string>
+    <string name="action_refresh">Update location and refresh</string>
     <string name="pebble_install_toast">Installing Pebble watch face</string>
 
     <!-- General settings -->

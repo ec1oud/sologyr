@@ -50,6 +50,7 @@ public class WeatherService extends Service {
     PebbleUtil m_pebbleUtil;
     LocationManager m_locationManager;
     LocationListener m_locationListener;
+    String m_initialProvider = PASSIVE_PROVIDER;
     String m_periodicProvider = PASSIVE_PROVIDER;
     double curlat = 0, curlon = 0;
     Location curLocation = null;
@@ -191,14 +192,13 @@ public class WeatherService extends Service {
         m_prefs = getSharedPreferences("org.ecloud.sologyr_preferences", MODE_PRIVATE);
         m_updateInterval = Integer.parseInt(m_prefs.getString("weather_update_frequency", "180")) * 60000;
         m_locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        String initialProvider = null;
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             Criteria crit = new Criteria();
             crit.setAccuracy(Criteria.ACCURACY_COARSE);
             crit.setPowerRequirement(Criteria.POWER_LOW);
-            initialProvider = m_locationManager.getBestProvider(crit, false);
-            if (m_periodicProvider != null && initialProvider == null)
-                initialProvider = m_periodicProvider;
+            m_initialProvider = m_locationManager.getBestProvider(crit, false);
+            if (m_periodicProvider != null && m_initialProvider == null)
+                m_initialProvider = m_periodicProvider;
 //            if (m_periodicProvider != null)
 //                Log.d(TAG, "best low-power provider is " + m_periodicProvider + " from " + m_locationManager.getAllProviders() +
 //                        ", enabled? " + m_locationManager.isProviderEnabled(m_periodicProvider));
@@ -227,8 +227,8 @@ public class WeatherService extends Service {
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             m_locationManager.requestLocationUpdates(m_periodicProvider, 600000, m_locationThreshold, m_locationListener);
             Log.i(TAG, "location providers " + m_locationManager.getProviders(true));
-            if (initialProvider != null)
-                m_locationManager.requestSingleUpdate(initialProvider, m_locationListener, null);
+            if (m_initialProvider != null)
+                m_locationManager.requestSingleUpdate(m_initialProvider, m_locationListener, null);
         } else {
             Log.w(TAG, "requestRegularUpdates failed: provider " + m_periodicProvider);
         }
@@ -251,6 +251,12 @@ public class WeatherService extends Service {
                     }
                 }
             });
+    }
+
+    public void requestLocationUpdate() {
+        if (m_locationManager != null && m_initialProvider != null && ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+            m_locationManager.requestSingleUpdate(m_initialProvider, m_locationListener, null);
     }
 
     public void setLocation(Location location) {

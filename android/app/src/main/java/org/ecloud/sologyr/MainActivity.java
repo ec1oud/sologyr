@@ -113,6 +113,9 @@ public class MainActivity extends Activity implements WeatherListener {
                 intent = new Intent(this, SettingsActivity.class);
                 startActivity(intent);
                 return true;
+            case R.id.action_refresh:
+                m_weatherService.requestLocationUpdate();
+                return true;
             case R.id.action_about:
                 showAbout();
                 return true;
