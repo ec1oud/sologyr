@@ -36,8 +36,27 @@
         <item>50000</item>
     </string-array>
 
-    <string name="pref_title_meteogram_url">Meteogram URL</string>
     <string name="pref_title_radar_url">Radar URL</string>
+    <string-array name="pref_radar_url_titles">
+        <item>Norway</item>
+        <item>Northern Norway</item>
+        <item>Central Norway</item>
+        <item>Western Norway</item>
+        <item>Eastern Norway</item>
+        <item>Southern Norway</item>
+        <item>Arizona</item>
+    </string-array>
+    <string-array name="pref_radar_url_values" translatable="false">
+        <item>http://api.met.no/weatherapi/radar/1.5/?radarsite=norway;type=reflectivity;content=animation;size=normal</item>
+        <item>http://api.met.no/weatherapi/radar/1.5/?radarsite=troms_finnmark;type=reflectivity;content=animation;size=normal</item>
+        <item>http://api.met.no/weatherapi/radar/1.5/?radarsite=central_norway;type=reflectivity;content=animation;size=normal</item>
+        <item>http://api.met.no/weatherapi/radar/1.5/?radarsite=western_norway;type=reflectivity;content=animation;size=normal</item>
+        <item>http://api.met.no/weatherapi/radar/1.5/?radarsite=east_norway;type=reflectivity;content=animation;size=normal</item>
+        <item>http://api.met.no/weatherapi/radar/1.5/?radarsite=south_norway;type=reflectivity;content=animation;size=normal</item>
+        <item>http://sirocco.accuweather.com/nx_mosaic_640x480c/SIR/inmaSIRAZ_.gif</item>
+    </string-array>
+
+    <string name="pref_title_meteogram_url">Meteogram URL</string>
 
     <string name="add_widget">Add widget</string>
 

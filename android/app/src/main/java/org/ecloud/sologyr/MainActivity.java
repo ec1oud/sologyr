@@ -6,6 +6,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -40,6 +41,7 @@ public class MainActivity extends Activity implements WeatherListener {
     private final String TAG = this.getClass().getSimpleName();
     private static final String WATCHAPP_FILENAME = "sologyr.pbw";
     public static final String ACTION_GOT_RADAR = "org.ecloud.sologyr.action.GOT_RADAR";
+    SharedPreferences m_prefs = null;
     private WeatherService m_weatherService = null;
     private ServiceConnection m_connection = null;
 
@@ -75,6 +77,14 @@ public class MainActivity extends Activity implements WeatherListener {
                 m_weatherService = null;
             }
         };
+        m_prefs = getSharedPreferences("org.ecloud.sologyr_preferences", MODE_PRIVATE);
+        m_prefs.registerOnSharedPreferenceChangeListener(
+                new SharedPreferences.OnSharedPreferenceChangeListener() {
+                    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                        if (key.equals("pref_title_radar_url"))
+                            MainActivity.this.updateRadar();
+                    }
+                });
     }
 
     @Override

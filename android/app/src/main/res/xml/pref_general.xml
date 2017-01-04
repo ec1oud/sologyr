@@ -17,17 +17,22 @@
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
         android:title="@string/pref_title_location_threshold" />
+
     <EditTextPreference
         android:defaultValue="http://www.yr.no/sted/Norge/Oslo/Oslo/Oslo/meteogram.png"
         android:selectAllOnFocus="true"
         android:singleLine="true"
         android:title="@string/pref_title_meteogram_url"
         android:key="meteogram_url" />
-    <EditTextPreference
+
+    <ListPreference
         android:defaultValue="http://api.met.no/weatherapi/radar/1.5/?radarsite=south_norway;type=reflectivity;content=animation;size=large"
-        android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:title="@string/pref_title_radar_url"
-        android:key="radar_url" />
+        android:entries="@array/pref_radar_url_titles"
+        android:entryValues="@array/pref_radar_url_values"
+        android:key="radar_url"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_title_radar_url" />
+
 
 </PreferenceScreen>
