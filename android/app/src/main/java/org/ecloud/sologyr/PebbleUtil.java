@@ -47,6 +47,8 @@ public class PebbleUtil implements WeatherListener {
             KEY_FORECAST_PRECIPITATION_MAX = 45, // tenths of mm
             KEY_FORECAST_MINUTES = 46, // minutes after last midnight (beginning of today)
             KEY_FORECAST_TEMPERATURE = 47, // tenths of degrees
+            KEY_ACTIVITY_INTERVAL = 60, // quarter-hour of the day (0 - 96)
+            KEY_ACTIVITY_VMC = 61,
             KEY_PREF_UPDATE_FREQ = 100;
 
     private final String TAG = this.getClass().getSimpleName();
@@ -60,6 +62,7 @@ public class PebbleUtil implements WeatherListener {
     LinkedList<Forecast> m_forecast = new LinkedList<>();
     LinkedList<Forecast> m_precipitation = new LinkedList<>();
     LinkedList<Forecast> m_nowcast = new LinkedList<>();
+    int lastLenReceived = -1;
 
     private static PebbleUtil m_instance = null;
 
@@ -135,11 +138,14 @@ public class PebbleUtil implements WeatherListener {
         m_receivers.add(pnrcvr);
 
         PebbleKit.PebbleDataReceiver pdrcvr = new PebbleKit.PebbleDataReceiver(PebbleUtil.WATCHAPP_UUID) {
+            private int lastActivityInterval = -1;
+            private int lastActivitVmc = -1;
+
             @Override
             public void receiveData(final Context context, final int transactionId, final PebbleDictionary data) {
                 PebbleKit.sendAckToPebble(m_weatherService.getApplicationContext(), transactionId);
                 m_nackCount = 0;
-//                Log.i(TAG, "Received txn " + transactionId + ": " + data.toJsonString());
+                Log.i(TAG, "Received txn " + transactionId + ": " + data.toJsonString());
                 PebbleKit.sendAckToPebble(context, transactionId);
                 if (data.contains(PebbleUtil.KEY_HELLO)) {
                     Log.i(TAG, "Pebble says hello");
@@ -156,10 +162,21 @@ public class PebbleUtil implements WeatherListener {
                     long axisDirn = data.getInteger(KEY_TAP);
                     Log.i(TAG, "Pebble reports tap: axis " + (axisDirn & 0x0F) + " direction " + (axisDirn >> 4));
                     m_weatherService.resendEverything(PebbleUtil.this);
-                } else if (data.contains(PebbleUtil.KEY_ACTIVITY)) {
-                    int len = data.getInteger(KEY_LEN).intValue();
-                    Log.i(TAG, "Pebble reports daily activity of length " + len);
-                    byte[] vmcData = data.getBytes(len);
+                } else if (data.contains(PebbleUtil.KEY_LEN)) {
+                    lastLenReceived = data.getUnsignedIntegerAsLong(KEY_LEN).intValue();
+                    Log.i(TAG, "Pebble will report daily activity of length " + lastLenReceived);
+                } else if (data.contains(PebbleUtil.KEY_ACTIVITY_INTERVAL)) {
+                    lastActivityInterval = data.getInteger(KEY_ACTIVITY_INTERVAL).intValue();
+                    if (!(lastActivityInterval < 0 || lastActivitVmc < 0))
+                        Log.i(TAG, "Pebble reports activity " + lastActivitVmc + " for interval " + lastActivityInterval);
+                } else if (data.contains(PebbleUtil.KEY_ACTIVITY_VMC)) {
+                    lastActivitVmc = data.getInteger(KEY_ACTIVITY_VMC).intValue();
+                    if (!(lastActivityInterval < 0 || lastActivitVmc < 0))
+                        Log.i(TAG, "Pebble reports activity " + lastActivitVmc + " for interval " + lastActivityInterval);
+                }
+                if (data.contains(PebbleUtil.KEY_ACTIVITY)) {
+                    Log.i(TAG, "Pebble reports daily activity of length " + lastLenReceived);
+                    byte[] vmcData = data.getBytes(KEY_ACTIVITY);
                     for (PebbleActivityListener l : m_activityListeners)
                         l.updateDailyActivity(vmcData);
                 }
@@ -318,6 +335,7 @@ public class PebbleUtil implements WeatherListener {
     }
 
     public void requestDailyActivity(int day) {
+        Log.d(TAG, "requestDailyActivity " + day);
         PebbleDictionary out = new PebbleDictionary();
         out.addInt8(KEY_REQ_ACTIVITY, (byte)day);
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);

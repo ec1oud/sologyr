@@ -69,6 +69,8 @@ enum DictKey {
 	KEY_FORECAST_PRECIPITATION_MAX = 45,
 	KEY_FORECAST_MINUTES = 46, // minutes after last midnight (beginning of today)
 	KEY_FORECAST_TEMPERATURE = 47, // tenths of degrees
+	KEY_ACTIVITY_INTERVAL = 60, // quarter-hour of the day (0 - 96)
+	KEY_ACTIVITY_VMC = 61,
     KEY_PREF_UPDATE_FREQ = 100
 };
 

@@ -224,17 +224,20 @@ uint16_t health_get_steps_for_interval(int i)
 
 void sendVmc(int dayOffset)
 {
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "sendVmc %d size %d", dayOffset, sizeof(s_vmc_per_interval));
+	for (int i = 0; i < 1; ++i) {
+		Tuplet interval = TupletInteger(KEY_ACTIVITY_INTERVAL, i);
+		Tuplet vmc = TupletInteger(KEY_ACTIVITY_VMC, s_vmc_per_interval[i]);
+		DictionaryIterator *iter;
+		app_message_outbox_begin(&iter);
+		if (iter == NULL)
+			return;
+		dict_write_tuplet(iter, &interval);
+		dict_write_tuplet(iter, &vmc);
+		dict_write_end(iter);
+		app_message_outbox_send();
+	}
 	// TODO handle dayOffset? for now only today is supported
-	Tuplet value = TupletBytes(KEY_ACTIVITY, (uint8_t*)s_vmc_per_interval, sizeof(s_vmc_per_interval));
-	Tuplet len = TupletInteger(KEY_LEN, sizeof(s_vmc_per_interval));
-	DictionaryIterator *iter;
-	app_message_outbox_begin(&iter);
-	if (iter == NULL)
-		return;
-	dict_write_tuplet(iter, &len);
-	dict_write_tuplet(iter, &value);
-	dict_write_end(iter);
-	app_message_outbox_send();
 }
 
 static void health_handler(HealthEventType event, void *context)

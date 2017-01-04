@@ -700,6 +700,7 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 			weatherUpdateFrequency = tuple->value->int16;
 			break;
 		case KEY_REQ_ACTIVITY:
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "KEY_REQ_ACTIVITY %d", tuple->value->int8);
 			sendVmc(tuple->value->int8);
 			break;
 		default:
