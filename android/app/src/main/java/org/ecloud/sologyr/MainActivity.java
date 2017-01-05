@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,7 +20,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -150,9 +148,10 @@ public class MainActivity extends Activity implements WeatherListener {
         protected void onReceiveResult(int resultCode, Bundle resultData) {
             super.onReceiveResult(resultCode, resultData);
             Log.d(TAG, "got radar " + resultCode + " " + resultData);
-            ImageView r = (ImageView)findViewById(R.id.radarImageView);
-            Bitmap bm = resultData.getParcelable("bitmap");
-            r.setImageBitmap(bm); // CalledFromWrongThreadException: Only the original thread that created a view hierarchy can touch its views.
+            AnimationView v = (AnimationView)findViewById(R.id.radarImageView);
+            byte[] imageData = resultData.getByteArray("byteArray");
+            Log.d(TAG, "got a byte array with len " + imageData.length);
+            v.setByteArray(imageData);
         }
     }
 

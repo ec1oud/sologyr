@@ -2,22 +2,17 @@ package org.ecloud.sologyr;
 
 import android.app.IntentService;
 import android.app.PendingIntent;
-import android.content.Intent;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.util.Log;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Hashtable;
 
 public class FetchService extends IntentService {
 
@@ -57,13 +52,8 @@ public class FetchService extends IntentService {
      */
     private void handleActionFetchBitmap(ResultReceiver resultReceiver, String url) {
         if (resultReceiver != null) {
-            Bitmap bm = getImageBitmap(url);
-            if (bm == null) {
-                Log.e(TAG, "got null bitmap for " + url);
-                return;
-            }
             Bundle bundle = new Bundle();
-            bundle.putParcelable("bitmap", bm);
+            bundle.putByteArray("byteArray", getByteArray(url));
             resultReceiver.send(0, bundle);
         } else {
             final Intent doneIntent = new Intent(ACTION_FETCH_DONE);
@@ -76,24 +66,6 @@ public class FetchService extends IntentService {
                 Log.i(TAG, "onHandleIntent: Exception: "+ce.toString());
             }
         }
-    }
-
-    // from https://groups.google.com/forum/?fromgroups=#!topic/android-developers/jupslaeAEuo
-    private Bitmap getImageBitmap(String url) {
-        Bitmap bm = null;
-        try {
-            URL aURL = new URL(url);
-            URLConnection conn = aURL.openConnection();
-            conn.connect();
-            InputStream is = conn.getInputStream();
-            BufferedInputStream bis = new BufferedInputStream(is);
-            bm = BitmapFactory.decodeStream(bis);
-            bis.close();
-            is.close();
-        } catch (IOException e) {
-            Log.e(TAG, "Error getting bitmap", e);
-        }
-        return bm;
     }
 
     // from http://stackoverflow.com/questions/2295221/java-net-url-read-stream-to-byte

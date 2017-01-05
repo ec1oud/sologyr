@@ -2,6 +2,7 @@ fonts_get_system_font etc. ahead of time
 figure out why forecast temperatures are only 2 days' worth
 weather icons on the main screen
 replace Example image for widget
+don't refresh meteogram and radar too often
 
 done
 ----

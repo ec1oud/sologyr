@@ -32,10 +32,10 @@
         android:layout_height="wrap_content"
         android:id="@+id/sunriseSunsetTextView" />
 
-    <ImageView
+    <org.ecloud.sologyr.AnimationView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:src="@android:color/transparent"
+        android:background="@android:color/transparent"
         android:id="@+id/radarImageView"
         android:scaleType="fitCenter"
         android:adjustViewBounds="true"
