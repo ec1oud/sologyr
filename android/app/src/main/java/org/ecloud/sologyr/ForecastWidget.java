@@ -6,11 +6,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.widget.RemoteViews;
 
 /**
-    Widget which uses MeteogramService to get the latest "meteogram" image from yr.no.
+    Widget which uses FetchService to get the latest "meteogram" image from yr.no.
  */
 public class ForecastWidget extends AppWidgetProvider { 
 
@@ -37,8 +38,9 @@ public class ForecastWidget extends AppWidgetProvider {
         for (int appWidgetId : appWidgetIds)
             updateAppWidget(ctx, appWidgetManager, appWidgetId);
         Log.i(TAG, "requesting meteogram");
-        MeteogramService.startActionGetMeteogram(ctx.getApplicationContext());
-
+        FetchService.startActionFetchPreferredBitmapUrl(ctx.getApplicationContext(), "meteogram_url",
+                "http://api.met.no/weatherapi/radar/1.5/?radarsite=south_norway;type=reflectivity;content=animation;size=large",
+                null);
     }
 
     @Override
@@ -56,9 +58,12 @@ public class ForecastWidget extends AppWidgetProvider {
     @Override
     public void onReceive(Context ctx, Intent intent) {
         final String action = intent.getAction();
-//        Log.i(TAG, "onReceive " + action);
-        if (action.equals(ACTION_GOT_METEOGRAM)) {
-            m_bitmap = MeteogramService.getBitmap();
+        Log.i(TAG, "onReceive " + action);
+        if (action.equals(FetchService.ACTION_FETCH_DONE)) {
+            byte[] imageData = intent.getByteArrayExtra("byteArray");
+            Log.d(TAG, "got a byte array with len " + imageData.length);
+            m_bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
+            Log.d(TAG, "got a bitmap " + m_bitmap.getWidth() + "x" + m_bitmap.getHeight());
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(ctx);
             RemoteViews rv = new RemoteViews(ctx.getPackageName(),  R.layout.forecast_widget);
             rv.setImageViewBitmap(R.id.imageView, m_bitmap);

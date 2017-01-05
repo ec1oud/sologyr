@@ -12,15 +12,18 @@ import android.os.ResultReceiver;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Hashtable;
 
 public class FetchService extends IntentService {
 
     private final String TAG = this.getClass().getSimpleName();
     public static final String ACTION_FETCH_PREFERRED_BITMAP = "org.ecloud.sologyr.action.ACTION_FETCH_PREFERRED_BITMAP";
+    public static final String ACTION_FETCH_DONE = "org.ecloud.sologyr.action.ACTION_FETCH_DONE";
 
     public FetchService() {
         super("FetchService");
@@ -53,10 +56,26 @@ public class FetchService extends IntentService {
         Handle action in the provided background thread
      */
     private void handleActionFetchBitmap(ResultReceiver resultReceiver, String url) {
-        Bitmap bm = getImageBitmap(url);
-        Bundle bundle = new Bundle();
-        bundle.putParcelable("bitmap", bm);
-        resultReceiver.send(0, bundle);
+        if (resultReceiver != null) {
+            Bitmap bm = getImageBitmap(url);
+            if (bm == null) {
+                Log.e(TAG, "got null bitmap for " + url);
+                return;
+            }
+            Bundle bundle = new Bundle();
+            bundle.putParcelable("bitmap", bm);
+            resultReceiver.send(0, bundle);
+        } else {
+            final Intent doneIntent = new Intent(ACTION_FETCH_DONE);
+            doneIntent.putExtra("byteArray", getByteArray(url));
+            final PendingIntent donePendingIntent = PendingIntent.getBroadcast(this, 0, doneIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            try {
+                donePendingIntent.send();
+            }
+            catch (PendingIntent.CanceledException ce) {
+                Log.i(TAG, "onHandleIntent: Exception: "+ce.toString());
+            }
+        }
     }
 
     // from https://groups.google.com/forum/?fromgroups=#!topic/android-developers/jupslaeAEuo
@@ -75,5 +94,26 @@ public class FetchService extends IntentService {
             Log.e(TAG, "Error getting bitmap", e);
         }
         return bm;
+    }
+
+    // from http://stackoverflow.com/questions/2295221/java-net-url-read-stream-to-byte
+    private byte[] getByteArray(String url) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        InputStream is = null;
+        try {
+            URL aURL = new URL(url);
+            URLConnection conn = aURL.openConnection();
+            conn.connect();
+            is = conn.getInputStream();
+            byte[] byteChunk = new byte[4096];
+            int n;
+            while ( (n = is.read(byteChunk)) > 0 )
+                baos.write(byteChunk, 0, n);
+            is.close();
+        }
+        catch (IOException e) {
+            Log.e(TAG, "Error getting byte array", e);
+        }
+        return baos.toByteArray();
     }
 }
