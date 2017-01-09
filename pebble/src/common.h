@@ -72,15 +72,15 @@ enum DictKey {
 // Colors for the central 24-hour disk
 #define COLOR_SUN GColorWindsorTan
 #define COLOR_PRECIPITATION_MAX GColorCobaltBlue
-#define COLOR_PRECIPITATION GColorPictonBlue
-#define COLOR_PRECIPITATION_MIN GColorCyan
+#define COLOR_PRECIPITATION GColorCyan
+#define COLOR_PRECIPITATION_MIN GColorPictonBlue
 #define COLOR_NOWCAST GColorBlue
 #define COLOR_CLOCK_RING GColorWhite
 #define COLOR_CLOCK_POINTER GColorOrange
 #define COLOR_CLOCK_POINTER_SHADOW GColorBlack
 #define COLOR_STEPS_DAY GColorInchworm
 #define COLOR_STEPS_NIGHT GColorJaegerGreen
-#define COLOR_STEPS_YESTERDAY GColorKellyGreen
+#define COLOR_STEPS_YESTERDAY GColorLimerick
 #define COLOR_STEPS_YESTERDAY_NIGHT GColorMidnightGreen
 
 // Colors for the battery graph
@@ -90,15 +90,15 @@ enum DictKey {
 
 // Colors for various labels
 #define COLOR_TEMPERATURE GColorWhite
-#define COLOR_TIME GColorCeleste
+#define COLOR_TIME GColorWhite
 #define COLOR_DATE GColorLimerick
 #define COLOR_STEPS GColorInchworm
 #define COLOR_LOCATION GColorBrass
 
 // Colors for the yr forecast chart
 #define COLOR_CHART_PRECIPITATION_MAX GColorCobaltBlue
-#define COLOR_CHART_PRECIPITATION GColorPictonBlue
-#define COLOR_CHART_PRECIPITATION_MIN GColorCyan
+#define COLOR_CHART_PRECIPITATION GColorCyan
+#define COLOR_CHART_PRECIPITATION_MIN GColorPictonBlue
 #define COLOR_CHART_TEMPERATURE_POSITIVE GColorRajah
 #define COLOR_CHART_TEMPERATURE_NEGATIVE GColorElectricBlue
 #define COLOR_CHART_AXIS GColorLightGray

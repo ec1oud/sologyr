@@ -28,6 +28,7 @@ What's working:
 - [x] temperature forecast
 - [x] second screen (accessed via wrist flick/tap) showing longer forecast (full-width horizontal chart), and the time
 - [x] Android app includes and installs the Pebble watch face
+- [x] weather radar in the Android app (main activity)
 
 In progress:
 - [ ] learning the user's active periods of day, so as to ask the phone to fetch weather updates during that time only.  That plus a frequency limit should keep API calls to a minimum.
@@ -44,7 +45,5 @@ Not started yet:
   - [ ] what to show and where?
 - [ ] Android: show time since weather update, expected active periods today (or even all week)
 - [ ] get real-time weather from some other source, preferably an open source where users' weather station data is contributed
-- [ ] Android widget for weather radar?
-- [ ] weather radar in the Android app (main activity)
 - [ ] yr.no forecast chart / meteogram: zoomed view, accessed from main activity or by clicking the home screen widget
 
