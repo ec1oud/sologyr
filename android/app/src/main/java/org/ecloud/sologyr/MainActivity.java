@@ -95,12 +95,14 @@ public class MainActivity extends Activity implements WeatherListener {
             bindService(intent, m_connection, Context.BIND_AUTO_CREATE);
         }
         updateRadar();
+        ((AnimationView)findViewById(R.id.radarImageView)).start();
     }
 
     @Override
     protected void onStop() {
         Log.d(TAG, "onStop");
         super.onStop();
+        ((AnimationView)findViewById(R.id.radarImageView)).stop();
         if (m_weatherService != null) {
             m_weatherService.removeWeatherListener(this);
             m_weatherService = null;

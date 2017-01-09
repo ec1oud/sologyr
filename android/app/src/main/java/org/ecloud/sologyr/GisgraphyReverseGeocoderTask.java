@@ -67,7 +67,7 @@ public class GisgraphyReverseGeocoderTask extends AsyncTask<Location, Void, Void
                 Log.d(TAG, loc.getString("formatedFull"));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         } finally {
             if (connection != null)
                 connection.disconnect();

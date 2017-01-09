@@ -14,35 +14,62 @@ import android.view.View;
  */
 public class AnimationView extends View {
     private final String TAG = this.getClass().getSimpleName();
-    private Movie mMovie = null;
+    private Movie m_movie = null;
     Handler m_handler = new Handler();
     RefreshThread m_refresher = null;
+    int m_waited = 0; // count in seconds during which m_refresher sees that there's no movie
 
     public AnimationView(Context context) {
         super(context);
-        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        init();
     }
 
     public AnimationView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        init();
     }
 
     public AnimationView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init();
+    }
+
+    private void init() {
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+    }
+
+    public void stop() {
+        Log.d(TAG, "stop");
+        if (m_refresher != null) {
+            m_refresher.interrupt();
+            m_refresher = null;
+        }
+    }
+
+    public void start() {
+        Log.d(TAG, "start");
+        // TODO get appropriate frame rate from movie?
+        m_refresher = new RefreshThread();
+        m_refresher.start();
     }
 
     public class RefreshThread extends Thread {
         @Override public void run() {
             while (!Thread.currentThread().isInterrupted()) {
-                m_handler.post(new Runnable() {
-                    public void run() {
-                        AnimationView.this.invalidate();
+                if (m_movie == null) {
+                    if (m_waited++ > 60) {
+                        Log.d(TAG, "refresh thread: no movie, giving up on rendering");
+                        return;
                     }
-                });
+                } else {
+                    m_handler.post(new Runnable() {
+                        public void run() {
+                            AnimationView.this.invalidate();
+                        }
+                    });
+                }
                 try {
-                    Thread.sleep(250); // 4 fps
+                    Thread.sleep(m_movie == null ? 1000 : 250); // 4 fps
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
@@ -51,27 +78,24 @@ public class AnimationView extends View {
     }
 
     public void setByteArray(byte[] b) {
-        if (m_refresher != null)
-            m_refresher.interrupt();
-        mMovie = Movie.decodeByteArray(b, 0, b.length);
-        Log.d(TAG, "decoded " + b.length + " bytes to " + mMovie.duration() + " msecs, " +
-            mMovie.width() + "x" + mMovie.height());
-        // TODO get appropriate frame rate from movie?
-        m_refresher = new RefreshThread();
-        m_refresher.start();
-        invalidate();
+        m_movie = Movie.decodeByteArray(b, 0, b.length);
+        if (b != null && m_movie != null) {
+            Log.d(TAG, "decoded " + b.length + " bytes to " + m_movie.duration() + " msecs, " +
+                    m_movie.width() + "x" + m_movie.height());
+            invalidate();
+        }
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (mMovie == null)
+        if (m_movie == null)
             return;
-        int dur = mMovie.duration();
+        int dur = m_movie.duration();
         if (dur == 0)
             dur = 1000;
-        mMovie.setTime((int) SystemClock.uptimeMillis() % dur);
+        m_movie.setTime((int) SystemClock.uptimeMillis() % dur);
 //        Log.d(TAG, "rendering @time " + (SystemClock.uptimeMillis() % dur) + " of " + dur + " canvas " + canvas);
         // TODO scale to the display
-        mMovie.draw(canvas, getWidth() / 2 - mMovie.width() / 2, 0);
+        m_movie.draw(canvas, getWidth() / 2 - m_movie.width() / 2, 0);
     }
 }
