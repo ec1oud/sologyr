@@ -30,13 +30,6 @@ public class GisgraphyReverseGeocoderTask extends AsyncTask<Location, Void, Void
         weatherService = ws;
     }
 
-    public void start(Location location) {
-        if (location == null || getStatus() == AsyncTask.Status.RUNNING)
-            return;
-
-        execute(location);
-    }
-
     @Override
     protected Void doInBackground(Location... params) {
         HttpURLConnection connection = null;

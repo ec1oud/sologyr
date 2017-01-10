@@ -20,7 +20,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "locations.db";
     private static final int DATABASE_VERSION = 1;
     public SQLiteDatabase m_database = null;
-    private static final int LOCATION_TOLERANCE = 500; // meters
+    private static final int LOCATION_TOLERANCE = 5000; // meters
 
     private static DatabaseHelper m_instance = null;
 

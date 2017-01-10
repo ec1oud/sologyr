@@ -174,10 +174,12 @@ public class WeatherService extends Service {
 
     void setLocality(String city, String country, double lat, double lon, double distance) {
         Log.d(TAG, "we seem to find ourselves " + (int)distance + "m from " + city + ", " + country);
-        if (curLocationDistance < 0 && m_database.openRW())
-            m_database.insertLocation(lat, lon, city, country);
+        if (curLocationDistance < 0) {
+            if (m_database.openRW())
+                m_database.insertLocation(lat, lon, city, country);
+            curLocationDistance = (int) Math.round(distance);
+        }
         curLocationName = city;
-        curLocationDistance = (int)Math.round(distance);
         for (WeatherListener l : m_listeners)
             l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
         updateWeather(true); // immediately because we know the location is different by at least 10km
@@ -302,19 +304,21 @@ public class WeatherService extends Service {
             Log.d(TAG, "failed to open database");
         else {
             Address here = m_database.getNearestLocation(curlat, curlon);
+            Log.d(TAG, "locality from database: " + here);
             if (here != null) {
-                setLocality(here.getLocality(), here.getCountryCode(), here.getLatitude(), here.getLongitude(),
-                        (int)Math.round(GeoUtils.distance(curlat, curlon, here.getLatitude(), here.getLongitude())));
+                curLocationDistance = (int)Math.round(GeoUtils.distance(curlat, curlon, here.getLatitude(), here.getLongitude()));
+                setLocality(here.getLocality(), here.getCountryCode(), here.getLatitude(), here.getLongitude(), curLocationDistance);
                 locationNameFound = true;
             }
         }
         if (!locationNameFound) {
+            Log.d(TAG, "locality unknown, asking Gisgrahy");
             curLocationName = "";
             curLocationDistance = -1;
             for (WeatherListener l : m_listeners)
                 l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
             geocoderTask = new GisgraphyReverseGeocoderTask(this);
-            geocoderTask.start(curLocation);
+            geocoderTask.execute(curLocation);
         }
         ++m_locationUpdateCount;
     }
