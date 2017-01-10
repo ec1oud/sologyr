@@ -34,7 +34,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public boolean isExisting(ContextWrapper context) {
         File dbFile = context.getDatabasePath(DATABASE_NAME);
         if (!dbFile.exists())
-            Log.d("isExisting", dbFile.toString());
+            Log.d(TAG, "isExisting: doesn't exist " + dbFile.toString());
         return dbFile.exists();
     }
 
@@ -77,6 +77,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Address getNearestLocation(double lat, double lon) {
         Cursor cur = getNearbyLocations(lat, lon);
+        Log.d(TAG, "getNearestLocation " + lat + "," + lon);
         cur.moveToFirst();
         double minDistance = 99999;
         String retCity = null;
@@ -112,6 +113,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor cur = m_database.query("locations", null,
                     "city='" + city + "' and country='" + country + "'",
                     null, null, null, null);
+        Log.d(TAG, "locationId " + lat + "," + lon + " " + city + ", " + country);
         cur.moveToFirst();
         while (!cur.isAfterLast()) {
             double clat = cur.getDouble(cur.getColumnIndex("lat"));
