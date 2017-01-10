@@ -136,6 +136,10 @@ public class MainActivity extends Activity implements WeatherListener {
             case R.id.action_about:
                 showAbout();
                 return true;
+            case R.id.action_debug:
+                intent = new Intent(this, DebugActivity.class);
+                startActivity(intent);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }

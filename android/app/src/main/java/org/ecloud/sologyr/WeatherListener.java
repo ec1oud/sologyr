@@ -4,10 +4,6 @@ import com.oleaarnseth.weathercast.Forecast;
 
 import java.util.LinkedList;
 
-/**
- * Created by rutledge on 12/3/16.
- */
-
 public interface WeatherListener {
 
     public enum WeatherIcon {

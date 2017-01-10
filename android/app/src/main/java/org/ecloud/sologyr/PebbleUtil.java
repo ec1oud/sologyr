@@ -285,7 +285,8 @@ public class PebbleUtil implements WeatherListener {
     public void updateNowCast(LinkedList<Forecast> nowcast)
     {
         m_nowcast = nowcast;
-        sendNowCast();
+        if (m_nowcast != null)
+            sendNowCast();
     }
 
     public void updateSunriseSunset(int sunriseHour, int sunriseMinute, int sunsetHour, int sunsetMinute) {

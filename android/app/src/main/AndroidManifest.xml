@@ -41,6 +41,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".DebugActivity"
+            android:label="Debug">
+        </activity>
+
         <receiver android:name=".ForecastWidget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

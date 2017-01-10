@@ -42,11 +42,11 @@ import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Wind;
 
 public class WeatherService extends Service {
 
-    private List<WeatherListener> m_listeners = new ArrayList<>(2);
-    private final String TAG = this.getClass().getSimpleName();
+    final String TAG = this.getClass().getSimpleName();
+    List<WeatherListener> m_listeners = new ArrayList<>(2);
     SharedPreferences m_prefs = null;
-    private long m_updateInterval = 10800000; // 3 hours in milliseconds
-    private long m_locationThreshold = 10000; // 10 km in meters
+    long m_updateInterval = 10800000; // 3 hours in milliseconds
+    long m_locationThreshold = 10000; // 10 km in meters
     PebbleUtil m_pebbleUtil;
     LocationManager m_locationManager;
     LocationListener m_locationListener;
@@ -65,6 +65,12 @@ public class WeatherService extends Service {
     DarkSkyCurrentTask darkSkyCurrentTask = null;
     GisgraphyReverseGeocoderTask geocoderTask = null;
     DatabaseHelper m_database = new DatabaseHelper(this);
+    long m_startTime = System.currentTimeMillis();
+    int m_darkSkyUpdateCount = 0;
+    int m_locationUpdateCount = 0;
+    int m_localityUpdateCount = 0;
+    int m_forecastUpdateCount = 0;
+    int m_nowcastUpdateCount = 0;
 
     public WeatherService() {
     }
@@ -75,6 +81,7 @@ public class WeatherService extends Service {
 //        for (Forecast f : forecast)
 //            Log.d(TAG, "forecast:" + f.toString());
         forecastTask = null;
+        ++m_forecastUpdateCount;
     }
 
     public void setNowCast(LinkedList<Forecast> nowcast) {
@@ -83,6 +90,7 @@ public class WeatherService extends Service {
 //        for (Forecast f : nowcast)
 //            Log.d(TAG, "nowcast " + f.getTimeFrom() + ": " + f.getPrecipitation());
         nowCastTask = null;
+        ++m_nowcastUpdateCount;
     }
 
     public void setDarkSkyForecast(ForecastIO fio) {
@@ -161,6 +169,7 @@ public class WeatherService extends Service {
             l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
         lastUpdateTime = System.currentTimeMillis();
         darkSkyCurrentTask = null;
+        ++m_darkSkyUpdateCount;
     }
 
     void setLocality(String city, String country, double lat, double lon, double distance) {
@@ -172,6 +181,7 @@ public class WeatherService extends Service {
         for (WeatherListener l : m_listeners)
             l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
         updateWeather(true); // immediately because we know the location is different by at least 10km
+        ++m_localityUpdateCount;
     }
 
     public class LocalBinder extends Binder {
@@ -260,6 +270,7 @@ public class WeatherService extends Service {
     }
 
     public void setLocation(Location location) {
+        Log.d(TAG, "setLocation " + location);
         curLocation = location;
         curlat = location.getLatitude();
         curlon = location.getLongitude();
@@ -269,11 +280,21 @@ public class WeatherService extends Service {
         SunriseSunsetCalculator calculator = new SunriseSunsetCalculator(lcLocation, today.getTimeZone());
         Calendar sunrise = calculator.getOfficialSunriseCalendarForDate(today);
         Calendar sunset = calculator.getOfficialSunsetCalendarForDate(today);
-        Log.d(TAG, "sunrise " + sunrise.getTime() + ", sunset " + sunset.getTime());
-        sunriseHour = sunrise.get(Calendar.HOUR_OF_DAY);
-        sunriseMinute = sunrise.get(Calendar.MINUTE);
-        sunsetHour = sunset.get(Calendar.HOUR_OF_DAY);
-        sunsetMinute = sunset.get(Calendar.MINUTE);
+        if (sunrise == null) {
+            sunriseHour = 0;
+            sunsetMinute = 0;
+        } else {
+            Log.d(TAG, "sunrise " + sunrise.getTime() + ", sunset " + sunset.getTime());
+            sunriseHour = sunrise.get(Calendar.HOUR_OF_DAY);
+            sunriseMinute = sunrise.get(Calendar.MINUTE);
+        }
+        if (sunset == null) {
+            sunsetHour = 0;
+            sunsetMinute = 0;
+        } else {
+            sunsetHour = sunset.get(Calendar.HOUR_OF_DAY);
+            sunsetMinute = sunset.get(Calendar.MINUTE);
+        }
         for (WeatherListener l : m_listeners)
             l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
         boolean locationNameFound = false;
@@ -295,6 +316,7 @@ public class WeatherService extends Service {
             geocoderTask = new GisgraphyReverseGeocoderTask(this);
             geocoderTask.start(curLocation);
         }
+        ++m_locationUpdateCount;
     }
 
     public void updateWeather(boolean immediately) {
@@ -328,5 +350,14 @@ public class WeatherService extends Service {
         l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
         l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
         l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
+    }
+
+    public void resetUpdateCounters() {
+        m_darkSkyUpdateCount = 0;
+        m_locationUpdateCount = 0;
+        m_localityUpdateCount = 0;
+        m_forecastUpdateCount = 0;
+        m_nowcastUpdateCount = 0;
+        m_startTime = System.currentTimeMillis();
     }
 }
