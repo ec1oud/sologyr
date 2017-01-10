@@ -17,6 +17,13 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:id="@+id/sologyrUrlText"
+        android:text="https://github.com/ec1oud/sologyr" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:id="@+id/aboutSolOgYrText"
         android:text="This is a configuration and auxiliary viewer application for the Sol og Yr Pebble watch face.  There is also a Sol og Yr widget for your home screen."
         android:layout_marginTop="12dp" />

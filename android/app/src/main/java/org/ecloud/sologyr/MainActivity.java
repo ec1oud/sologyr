@@ -176,6 +176,12 @@ public class MainActivity extends Activity implements WeatherListener {
         t.setText(Html.fromHtml(
                 "The real-time weather data is <a href=\"https://darksky.net/poweredby/\">powered by Dark Sky.</a>"));
 
+
+        t = (TextView)messageView.findViewById(R.id.sologyrUrlText);
+        t.setMovementMethod(LinkMovementMethod.getInstance());
+        t.setText(Html.fromHtml(
+                "<a href=\"https://github.com/ec1oud/sologyr\">Sol og Yr on Github</a>"));
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 //        builder.setIcon(R.drawable.app_icon);
         builder.setTitle(R.string.app_name);
