@@ -104,6 +104,8 @@ public class DebugActivity extends Activity  {
             ((TextView) findViewById(R.id.currentWeatherUpdateCount))
                     .setText(String.valueOf(m_weatherService.m_darkSkyUpdateCount));
         }
+        ((TextView) findViewById(R.id.storedLocationsCount))
+                .setText(String.valueOf(DatabaseHelper.instance().totalLocations()));
     }
 
     protected void teleport(double lat, double lon) {
@@ -128,5 +130,10 @@ public class DebugActivity extends Activity  {
 
     public void teleportPhoenix(View view) {
         teleport(33.4355, -111.9981);
+    }
+
+    public void clearDatabase(View view) {
+        DatabaseHelper.instance().clear();
+        update(view);
     }
 }

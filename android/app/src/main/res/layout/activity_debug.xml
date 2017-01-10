@@ -96,4 +96,16 @@
         android:onClick="teleportPhoenix"
         android:textSize="12sp" />
 
+    <TextView
+        android:text="Misc:"
+        android:layout_columnSpan="4" />
+
+    <Button
+        android:text="Clear stored locations"
+        android:onClick="clearDatabase"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/storedLocationsCount" />
+
 </GridLayout>

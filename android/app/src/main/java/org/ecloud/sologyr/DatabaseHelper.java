@@ -140,4 +140,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         v.put("country", country);
         return m_database.insert("locations", null, v);
     }
+
+    public void clear() {
+        m_database.execSQL("delete from locations;");
+    }
+
+    public int totalLocations() {
+        Cursor cur = m_database.query("locations", null, null, null, null, null, null);
+        return cur.getCount();
+    }
 }
