@@ -39,20 +39,20 @@ public class GisgraphyReverseGeocoderTask extends AsyncTask<Location, Void, Void
                     + params[0].getLatitude()
                     + SERVICE_ATTRIBUTE_LON
                     + params[0].getLongitude());
-//            Log.d(TAG, url.toString());
+            Log.d(TAG, url.toString());
             connection = (HttpURLConnection) url.openConnection();
             connection.setReadTimeout(READ_TIMEOUT);
             connection.setConnectTimeout(CONNECT_TIMEOUT);
             int responseCode = connection.getResponseCode();
 
             if (responseCode == HTTP_OK || responseCode == HTTP_DEPRECATED) {
-//                Log.d(TAG, "got a response" + responseCode);
+                Log.d(TAG, "got a response" + responseCode);
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
                 JSONTokener tok = new JSONTokener(reader.readLine());
                 JSONObject obj = (JSONObject)tok.nextValue();
 //                Log.d(TAG, obj.toString());
-//                Log.d(TAG, obj.get("result").toString());
+                Log.d(TAG, obj.get("result").toString());
                 JSONArray localities = obj.getJSONArray("result");
                 JSONObject loc = (JSONObject)localities.get(0);
                 weatherService.setLocality(loc.getString("city"), loc.getString("countryCode"),
