@@ -4,7 +4,7 @@
     android:initialLayout="@layout/forecast_widget"
     android:minHeight="40dp"
     android:minWidth="110dp"
-    android:previewImage="@drawable/example_appwidget_preview"
+    android:previewImage="@drawable/meteogram_preview"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="10800000"
     android:widgetCategory="home_screen"></appwidget-provider>
