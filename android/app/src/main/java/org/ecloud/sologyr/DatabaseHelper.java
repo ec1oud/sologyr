@@ -12,7 +12,7 @@ import android.util.Log;
 import java.io.File;
 import java.util.Locale;
 
-/*
+/**
     Database for storing stuff we learned from web services, to avoid asking again.
  */
 public class DatabaseHelper extends SQLiteOpenHelper {

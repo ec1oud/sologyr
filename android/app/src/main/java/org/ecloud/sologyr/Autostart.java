@@ -5,6 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+/**
+    Starts background service at device startup
+ */
 public class Autostart extends BroadcastReceiver {
     public Autostart() {
         Log.d("Autostart", "constructor");

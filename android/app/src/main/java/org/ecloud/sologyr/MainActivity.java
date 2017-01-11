@@ -34,6 +34,9 @@ import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.Locale;
 
+/**
+    Activity for the main Android app screen (the one you launch from the icon)
+ */
 public class MainActivity extends Activity implements WeatherListener {
 
     private final String TAG = this.getClass().getSimpleName();

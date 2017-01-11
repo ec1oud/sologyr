@@ -122,7 +122,7 @@ public class XMLParser {
             }
         }
 
-        return new Forecast(timeFrom, timeTo, temperature, windspeed, precipitation, new WeatherIcon(iconNumber));
+        return new Forecast(timeFrom, timeTo, temperature, windspeed, precipitation, iconNumber);
     }
 
     private Temperature readTemperature(XmlPullParser parser) throws XmlPullParserException, IOException {

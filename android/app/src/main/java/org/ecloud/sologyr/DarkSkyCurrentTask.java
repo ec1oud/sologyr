@@ -2,25 +2,12 @@ package org.ecloud.sologyr;
 
 import android.location.Location;
 import android.os.AsyncTask;
-import android.util.Log;
 
-import com.github.dvdme.ForecastIOLib.FIOCurrently;
 import com.github.dvdme.ForecastIOLib.ForecastIO;
-import com.oleaarnseth.weathercast.Forecast;
-import com.oleaarnseth.weathercast.XMLParser;
 
-import org.ecloud.sologyr.R;
-import org.ecloud.sologyr.WeatherService;
-
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Iterator;
-import java.util.LinkedList;
-
-import static java.net.HttpURLConnection.HTTP_OK;
-
+/**
+    Task to get current weather conditions from darksky.net
+ */
 public class DarkSkyCurrentTask extends AsyncTask<Location, Void, ForecastIO>
 {
     private final String TAG = this.getClass().getSimpleName();
@@ -33,7 +20,7 @@ public class DarkSkyCurrentTask extends AsyncTask<Location, Void, ForecastIO>
 
     @Override
     protected ForecastIO doInBackground(Location... params) {
-        ForecastIO fio = new ForecastIO("5d3f78b4a7ddcbf231e66e9db97841fb");
+        ForecastIO fio = new ForecastIO(API_KEY);
         fio.setUnits(ForecastIO.UNITS_SI);
         fio.setLang(ForecastIO.LANG_ENGLISH);
         fio.setExcludeURL("hourly,minutely");

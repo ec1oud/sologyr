@@ -17,14 +17,14 @@ public class Forecast implements Serializable, Comparable<Forecast> {
 
     private Temperature temperature;
     private Precipitation precipitation;
-    private WeatherIcon weatherIcon;
+    private int weatherIcon;
 
     // example datetime: 2016-12-18T01:15:00Z
     private static final SimpleDateFormat timeFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
 
     // Konstruktør:
     public Forecast(String timeFrom, String timeTo, Temperature temperature, double windspeed,
-                    Precipitation precipitation, WeatherIcon weatherIcon) throws ParseException {
+                    Precipitation precipitation, int weatherIcon) throws ParseException {
         this.timeFrom = timeFormatter.parse(timeFrom);
         this.timeTo = timeFormatter.parse(timeTo);
         this.temperature = temperature;
@@ -43,7 +43,7 @@ public class Forecast implements Serializable, Comparable<Forecast> {
 
     public Precipitation getPrecipitation() { return precipitation; }
 
-    public WeatherIcon getWeatherIcon() {
+    public int getWeatherIcon() {
         return weatherIcon;
     }
 

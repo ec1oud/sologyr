@@ -7,18 +7,13 @@ import android.util.Log;
 import com.oleaarnseth.weathercast.Forecast;
 import com.oleaarnseth.weathercast.XMLParser;
 
-import org.ecloud.sologyr.R;
-import org.ecloud.sologyr.WeatherService;
-
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Iterator;
 import java.util.LinkedList;
 
-import static java.net.HttpURLConnection.HTTP_OK;
-
+/**
+    Task to get weather forecast by location from api.met.no
+ */
 public class ForecastTask extends AsyncTask<Location, Void, LinkedList<Forecast>>
 {
     private final String TAG = this.getClass().getSimpleName();
@@ -29,9 +24,6 @@ public class ForecastTask extends AsyncTask<Location, Void, LinkedList<Forecast>
 
     private static final int HTTP_OK = 200, HTTP_DEPRECATED = 203;
     private static final int READ_TIMEOUT = 10000, CONNECT_TIMEOUT = 15000;
-
-    // Formateringsstreng for SimpleDateFormat tilpasset datoformatet i XML-dataene:
-    public static final String XML_DATE_FORMAT = "yyyy-MM-dd";
 
     // where to send results
     private WeatherService weatherService;
@@ -84,9 +76,4 @@ public class ForecastTask extends AsyncTask<Location, Void, LinkedList<Forecast>
         weatherService.setForecast(forecasts);
         return forecasts;
     }
-
-//    @Override
-//    protected void onPostExecute(Forecast[] result) {
-//            weatherService.setNowCast(result);
-//    }
 }

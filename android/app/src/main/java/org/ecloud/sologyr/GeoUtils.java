@@ -1,5 +1,8 @@
 package org.ecloud.sologyr;
 
+/**
+    A set of reusable geography-related utility functions
+ */
 public class GeoUtils {
     // http://stackoverflow.com/questions/3694380/calculating-distance-between-two-points-using-latitude-longitude-what-am-i-doi
     // converted to meters here

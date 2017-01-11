@@ -14,6 +14,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
+/**
+    A service for fetching anything from the net... but mainly bitmaps so far
+ */
 public class FetchService extends IntentService {
 
     private final String TAG = this.getClass().getSimpleName();
@@ -24,7 +27,8 @@ public class FetchService extends IntentService {
         super("FetchService");
     }
 
-    public static void startActionFetchPreferredBitmapUrl(Context context, String preferenceId, String defaultUrl, ResultReceiver resultReceiver) {
+    public static void startActionFetchPreferredBitmapUrl(Context context, String preferenceId,
+                                                          String defaultUrl, ResultReceiver resultReceiver) {
         Intent intent = new Intent(context, FetchService.class);
         intent.setAction(ACTION_FETCH_PREFERRED_BITMAP);
         intent.putExtra("prefId", preferenceId);
