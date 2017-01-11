@@ -16,7 +16,6 @@ import android.widget.RemoteViews;
 public class ForecastWidget extends AppWidgetProvider { 
 
     private final String TAG = this.getClass().getSimpleName();
-    public static final String ACTION_GOT_METEOGRAM = "org.ecloud.sologyr.action.GOT_METEOGRAM";
     private static Bitmap m_bitmap = null;
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,

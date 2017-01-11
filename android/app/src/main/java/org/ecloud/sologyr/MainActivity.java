@@ -37,17 +37,12 @@ import java.util.Locale;
 public class MainActivity extends Activity implements WeatherListener {
 
     private final String TAG = this.getClass().getSimpleName();
+    private final long RADAR_REFRESH_AGE = 15 * 60 * 1000;
     private static final String WATCHAPP_FILENAME = "sologyr.pbw";
-    public static final String ACTION_GOT_RADAR = "org.ecloud.sologyr.action.GOT_RADAR";
     SharedPreferences m_prefs = null;
     private WeatherService m_weatherService = null;
     private ServiceConnection m_connection = null;
-
-    double m_lat, m_lon;
-    String m_locationName;
-    double m_temperature, m_cloudCover;
-    WeatherIcon m_weatherIcon;
-    int m_sunriseHour, m_sunriseMinute, m_sunsetHour, m_sunsetMinute;
+    private long m_lastRadarTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +75,7 @@ public class MainActivity extends Activity implements WeatherListener {
                 new SharedPreferences.OnSharedPreferenceChangeListener() {
                     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
                         if (key.equals("pref_title_radar_url"))
-                            MainActivity.this.updateRadar();
+                            MainActivity.this.updateRadar(true);
                     }
                 });
     }
@@ -94,7 +89,7 @@ public class MainActivity extends Activity implements WeatherListener {
             startService(intent);
             bindService(intent, m_connection, Context.BIND_AUTO_CREATE);
         }
-        updateRadar();
+        updateRadar(false);
         ((AnimationView)findViewById(R.id.radarImageView)).start();
     }
 
@@ -161,10 +156,13 @@ public class MainActivity extends Activity implements WeatherListener {
         }
     }
 
-    public void updateRadar() {
-        FetchService.startActionFetchPreferredBitmapUrl(this, "radar_url",
-                "http://api.met.no/weatherapi/radar/1.5/?radarsite=south_norway;type=reflectivity;content=animation;size=large",
-                new RadarReceiver(new Handler(Looper.getMainLooper())));
+    public void updateRadar(boolean immediately) {
+        if (immediately || System.currentTimeMillis() - m_lastRadarTime > RADAR_REFRESH_AGE) {
+            m_lastRadarTime = System.currentTimeMillis();
+            FetchService.startActionFetchPreferredBitmapUrl(this, "radar_url",
+                    "http://api.met.no/weatherapi/radar/1.5/?radarsite=south_norway;type=reflectivity;content=animation;size=large",
+                    new RadarReceiver(new Handler(Looper.getMainLooper())));
+        }
     }
 
     protected void showAbout() {
