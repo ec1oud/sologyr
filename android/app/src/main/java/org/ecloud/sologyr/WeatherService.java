@@ -55,7 +55,7 @@ public class WeatherService extends Service implements LocalityListener {
     double curlat = 0, curlon = 0;
     Location curLocation = null;
     String curLocationName = "";
-    int curLocationDistance = 0;
+    int curLocationDistance = -1;
     WeatherListener.WeatherIcon curWeatherIcon;
     double curTemperature = 0, curCloudCover = 0;
     int sunriseHour = 0, sunriseMinute = 0, sunsetHour = 0, sunsetMinute = 0;
@@ -175,20 +175,23 @@ public class WeatherService extends Service implements LocalityListener {
     public void addLocality(String name, String country, double lat, double lon, double distance) {
         // TODO can be called multiple times: pick the closest to present location
         Log.d(TAG, "we seem to find ourselves " + (int)distance + "m from " + name + ", " + country);
-        if (curLocationDistance < 0) {
-            if (m_database.openRW())
-                m_database.insertLocation(lat, lon, name, country);
+        if (curLocationDistance < 0 || curLocationDistance > distance) {
+            if (curLocationDistance < 0)
+                updateWeather(true); // immediately because we know the location has changed, probably substantially
             curLocationDistance = (int) Math.round(distance);
+            curLocationName = name;
+            for (WeatherListener l : m_listeners)
+                l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
+            ++m_localityUpdateCount;
         }
-        curLocationName = name;
-        for (WeatherListener l : m_listeners)
-            l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
-        updateWeather(true); // immediately because we know the location is different by at least 10km
-        ++m_localityUpdateCount;
     }
 
     public void addLocality(double distance, Address address) {
-        addLocality(address.getLocality(), address.getCountryCode(), address.getLatitude(), address.getLongitude(), distance);
+        addLocality(address.getLocality(), address.getCountryCode(),
+                address.getLatitude(), address.getLongitude(), distance);
+        if (m_database.openRW())
+            m_database.insertLocation(address.getLatitude(), address.getLongitude(),
+                    address.getLocality(), address.getCountryCode());
     }
 
     public class LocalBinder extends Binder {
@@ -304,23 +307,21 @@ public class WeatherService extends Service implements LocalityListener {
         for (WeatherListener l : m_listeners)
             l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
         boolean locationNameFound = false;
+        curLocationName = "";
+        curLocationDistance = -1;
         if (!m_database.openRW())
             Log.e(TAG, "failed to open database");
         else {
             Address here = m_database.getNearestLocation(curlat, curlon);
             Log.d(TAG, "locality from database: " + here);
             if (here != null) {
-                curLocationDistance = (int)Math.round(GeoUtils.distance(curlat, curlon, here.getLatitude(), here.getLongitude()));
-                addLocality(here.getLocality(), here.getCountryCode(), here.getLatitude(), here.getLongitude(), curLocationDistance);
+                addLocality(here.getLocality(), here.getCountryCode(), here.getLatitude(), here.getLongitude(),
+                        (int)Math.round(GeoUtils.distance(curlat, curlon, here.getLatitude(), here.getLongitude())));
                 locationNameFound = true;
             }
         }
         if (!locationNameFound) {
             Log.d(TAG, "locality unknown, asking Gisgrahy");
-            curLocationName = "";
-            curLocationDistance = -1;
-            for (WeatherListener l : m_listeners)
-                l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
             geocoderTask = new GisgraphySearchTask(this) {
                 @Override
                 protected void onPostExecute(List<Address> addrs) {
