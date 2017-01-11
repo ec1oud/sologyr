@@ -40,7 +40,7 @@ import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Sun;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.WEATHERUNKNOWN;
 import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Wind;
 
-public class WeatherService extends Service {
+public class WeatherService extends Service implements LocalityListener {
 
     final String TAG = this.getClass().getSimpleName();
     List<WeatherListener> m_listeners = new ArrayList<>(2);
@@ -63,7 +63,7 @@ public class WeatherService extends Service {
     NowCastTask nowCastTask = null;
     ForecastTask forecastTask = null;
     DarkSkyCurrentTask darkSkyCurrentTask = null;
-    GisgraphyReverseGeocoderTask geocoderTask = null;
+    GisgraphySearchTask geocoderTask = null;
     DatabaseHelper m_database = new DatabaseHelper(this);
     long m_startTime = System.currentTimeMillis();
     int m_darkSkyUpdateCount = 0;
@@ -172,7 +172,8 @@ public class WeatherService extends Service {
         ++m_darkSkyUpdateCount;
     }
 
-    void setLocality(String city, String country, double lat, double lon, double distance) {
+    public void addLocality(String city, String country, double lat, double lon, double distance) {
+        // TODO can be called multiple times: pick the closest to present location
         Log.d(TAG, "we seem to find ourselves " + (int)distance + "m from " + city + ", " + country);
         if (curLocationDistance < 0) {
             if (m_database.openRW())
@@ -307,7 +308,7 @@ public class WeatherService extends Service {
             Log.d(TAG, "locality from database: " + here);
             if (here != null) {
                 curLocationDistance = (int)Math.round(GeoUtils.distance(curlat, curlon, here.getLatitude(), here.getLongitude()));
-                setLocality(here.getLocality(), here.getCountryCode(), here.getLatitude(), here.getLongitude(), curLocationDistance);
+                addLocality(here.getLocality(), here.getCountryCode(), here.getLatitude(), here.getLongitude(), curLocationDistance);
                 locationNameFound = true;
             }
         }
@@ -317,7 +318,7 @@ public class WeatherService extends Service {
             curLocationDistance = -1;
             for (WeatherListener l : m_listeners)
                 l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
-            geocoderTask = new GisgraphyReverseGeocoderTask(this);
+            geocoderTask = new GisgraphySearchTask(this);
             geocoderTask.execute(curLocation);
         }
         ++m_locationUpdateCount;

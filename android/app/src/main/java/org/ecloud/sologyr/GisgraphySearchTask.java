@@ -13,7 +13,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class GisgraphyReverseGeocoderTask extends AsyncTask<Location, Void, Void>
+public class GisgraphySearchTask extends AsyncTask<Location, Void, Void>
 {
     private final String TAG = this.getClass().getSimpleName();
     private static final String SERVICE_URL = "http://services.gisgraphy.com/reversegeocoding/search?format=json";
@@ -24,10 +24,10 @@ public class GisgraphyReverseGeocoderTask extends AsyncTask<Location, Void, Void
     private static final int READ_TIMEOUT = 10000, CONNECT_TIMEOUT = 15000;
 
     // where to send results
-    private WeatherService weatherService;
+    private LocalityListener m_caller;
 
-    GisgraphyReverseGeocoderTask(WeatherService ws) {
-        weatherService = ws;
+    GisgraphySearchTask(LocalityListener l) {
+        m_caller = l;
     }
 
     @Override
@@ -54,10 +54,12 @@ public class GisgraphyReverseGeocoderTask extends AsyncTask<Location, Void, Void
 //                Log.d(TAG, obj.toString());
                 Log.d(TAG, obj.get("result").toString());
                 JSONArray localities = obj.getJSONArray("result");
-                JSONObject loc = (JSONObject)localities.get(0);
-                weatherService.setLocality(loc.getString("city"), loc.getString("countryCode"),
-                        loc.getDouble("lat"), loc.getDouble("lng"), loc.getDouble("distance"));
-                Log.d(TAG, loc.getString("formatedFull"));
+                for (int i = 0; i < localities.length(); ++i) {
+                    JSONObject loc = (JSONObject) localities.get(i);
+                    m_caller.addLocality(loc.getString("city"), loc.getString("countryCode"),
+                            loc.getDouble("lat"), loc.getDouble("lng"), loc.getDouble("distance"));
+                    Log.d(TAG, loc.getString("formatedFull"));
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
