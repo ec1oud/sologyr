@@ -73,7 +73,6 @@ public class PebbleUtil implements WeatherListener {
     }
 
     public PebbleUtil(WeatherService ws) {
-        Log.d(TAG, "created");
         m_weatherService = ws;
         BroadcastReceiver rcvr = new BroadcastReceiver() {
             @Override
@@ -156,7 +155,7 @@ public class PebbleUtil implements WeatherListener {
         m_weatherService.m_prefs.registerOnSharedPreferenceChangeListener(
                 new SharedPreferences.OnSharedPreferenceChangeListener() {
                     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                        Log.d(TAG, "pref changed: " + key);
+//                        Log.d(TAG, "pref changed: " + key);
                         if (key.equals("weather_update_frequency"))
                             sendPreferences();
                     }
@@ -172,7 +171,7 @@ public class PebbleUtil implements WeatherListener {
     }
 
     public void updateLocation(double lat, double lon, String name, int distance) {
-        Log.d(TAG, "updateLocation " + lat + " " + lon + " '" + name + "'");
+//        Log.d(TAG, "updateLocation " + lat + " " + lon + " '" + name + "'");
         if (name.isEmpty())
             name = String.format("%.4f,%.4f", lat, lon);
         PebbleDictionary out = new PebbleDictionary();
@@ -186,7 +185,7 @@ public class PebbleUtil implements WeatherListener {
         String tempStr = Math.round(temperature) + "°";
         if (icon == null)
             return;
-        Log.d(TAG, "updateCurrentWeather " + tempStr + " " + cloudCover + "% " + icon.getValue());
+//        Log.d(TAG, "updateCurrentWeather " + tempStr + " " + cloudCover + "% " + icon.getValue());
         PebbleDictionary out = new PebbleDictionary();
         out.addString(KEY_TEMPERATURE, tempStr);
         out.addUint8(KEY_CLOUD_COVER, (byte)Math.round(cloudCover * 100)); // from fraction (e.g. 0.25) to int percent, so it fits in a byte
@@ -249,11 +248,11 @@ public class PebbleUtil implements WeatherListener {
         for (Forecast f : fs)
             if (f.getPrecipitation() == null) {
                 m_forecast.add(f);
-                Log.d(TAG, "forecast:" + f.toString());
+//                Log.d(TAG, "forecast:" + f.toString());
             } else if (f.getPrecipitation().getPrecipitation() > 0 && precipCount < 128) {
                 m_precipitation.add(f);
                 ++precipCount;
-                Log.d(TAG, f.getTimeFrom() + " precipitation: " + f.getPrecipitation());
+//                Log.d(TAG, f.getTimeFrom() + " precipitation: " + f.getPrecipitation());
             }
         PebbleDictionary out = new PebbleDictionary();
         out.addUint8(KEY_FORECAST_BEGIN, (byte)0);

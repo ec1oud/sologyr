@@ -67,7 +67,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public Cursor getNearbyLocations(double lat, double lon) {
         final double dLatMax = LOCATION_TOLERANCE / GeoUtils.metersPerDegreeLat(lat);
         final double dLonMax = LOCATION_TOLERANCE / GeoUtils.metersPerDegreeLon(lat);
-        Log.d(TAG, "getNearbyLocations " + lat + "," + lon + " dLatMax " + dLatMax + " dLonMax " + dLonMax);
+//        Log.d(TAG, "getNearbyLocations " + lat + "," + lon + " dLatMax " + dLatMax + " dLonMax " + dLonMax);
         //  public Cursor query (String table, String[] columns, String selection, String[] selectionArgs, String groupBy, String having, String orderBy)
         return m_database.query("locations", null,
                 "lat > " + (lat - dLatMax) + " and lat < " + (lat + dLatMax) +
@@ -77,7 +77,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Address getNearestLocation(double lat, double lon) {
         Cursor cur = getNearbyLocations(lat, lon);
-        Log.d(TAG, "getNearestLocation " + lat + "," + lon);
+//        Log.d(TAG, "getNearestLocation " + lat + "," + lon);
         cur.moveToFirst();
         double minDistance = 99999;
         String retCity = null;
@@ -103,7 +103,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             ret.setLongitude(retLon);
             ret.setLocality(retCity);
             ret.setCountryCode(retCountry);
-            Log.d(TAG, "getNearestLocation " + lat + "," + lon + " came up with " + retCity + " @ " + retLat + "," + retLon);
+//            Log.d(TAG, "getNearestLocation " + lat + "," + lon + " came up with " + retCity + " @ " + retLat + "," + retLon);
             return ret;
         }
         return null;
@@ -113,7 +113,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor cur = m_database.query("locations", null,
                     "city='" + city + "' and country='" + country + "'",
                     null, null, null, null);
-        Log.d(TAG, "locationId " + lat + "," + lon + " " + city + ", " + country);
+//        Log.d(TAG, "locationId " + lat + "," + lon + " " + city + ", " + country);
         cur.moveToFirst();
         while (!cur.isAfterLast()) {
             double clat = cur.getDouble(cur.getColumnIndex("lat"));
@@ -130,7 +130,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (!openRW())
             return -1;
         long id = locationId(lat, lon, city, country);
-        Log.d(TAG, "insertLocation " + lat + "," + lon + " " + city + ", " + country + "; existing? " + id);
+//        Log.d(TAG, "insertLocation " + lat + "," + lon + " " + city + ", " + country + "; existing? " + id);
         if (id >= 0)
             return id;
         ContentValues v = new ContentValues(4);

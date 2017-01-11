@@ -227,7 +227,6 @@ public class WeatherService extends Service implements LocalityListener {
 
         m_locationListener = new LocationListener() {
             public void onLocationChanged(Location location) {
-                Log.d(TAG, location.toString());
                 setLocation(location);
             }
 
@@ -306,7 +305,7 @@ public class WeatherService extends Service implements LocalityListener {
             l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
         boolean locationNameFound = false;
         if (!m_database.openRW())
-            Log.d(TAG, "failed to open database");
+            Log.e(TAG, "failed to open database");
         else {
             Address here = m_database.getNearestLocation(curlat, curlon);
             Log.d(TAG, "locality from database: " + here);
