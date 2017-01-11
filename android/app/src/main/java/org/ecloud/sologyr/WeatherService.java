@@ -172,19 +172,23 @@ public class WeatherService extends Service implements LocalityListener {
         ++m_darkSkyUpdateCount;
     }
 
-    public void addLocality(String city, String country, double lat, double lon, double distance) {
+    public void addLocality(String name, String country, double lat, double lon, double distance) {
         // TODO can be called multiple times: pick the closest to present location
-        Log.d(TAG, "we seem to find ourselves " + (int)distance + "m from " + city + ", " + country);
+        Log.d(TAG, "we seem to find ourselves " + (int)distance + "m from " + name + ", " + country);
         if (curLocationDistance < 0) {
             if (m_database.openRW())
-                m_database.insertLocation(lat, lon, city, country);
+                m_database.insertLocation(lat, lon, name, country);
             curLocationDistance = (int) Math.round(distance);
         }
-        curLocationName = city;
+        curLocationName = name;
         for (WeatherListener l : m_listeners)
             l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
         updateWeather(true); // immediately because we know the location is different by at least 10km
         ++m_localityUpdateCount;
+    }
+
+    public void addLocality(double distance, Address address) {
+        addLocality(address.getLocality(), address.getCountryCode(), address.getLatitude(), address.getLongitude(), distance);
     }
 
     public class LocalBinder extends Binder {
@@ -318,7 +322,13 @@ public class WeatherService extends Service implements LocalityListener {
             curLocationDistance = -1;
             for (WeatherListener l : m_listeners)
                 l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
-            geocoderTask = new GisgraphySearchTask(this);
+            geocoderTask = new GisgraphySearchTask(this) {
+                @Override
+                protected void onPostExecute(List<Address> addrs) {
+                    super.onPostExecute(addrs);
+                    geocoderTask = null;
+                }
+            };
             geocoderTask.execute(curLocation);
         }
         ++m_locationUpdateCount;

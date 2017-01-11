@@ -1,5 +1,7 @@
 package org.ecloud.sologyr;
 
+import android.location.Address;
+
 public interface LocalityListener {
-    void addLocality(String city, String country, double lat, double lon, double distance);
+    void addLocality(double distance, Address address);
 }

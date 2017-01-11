@@ -1,5 +1,6 @@
 package org.ecloud.sologyr;
 
+import android.location.Address;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -12,11 +13,14 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
-public class GisgraphySearchTask extends AsyncTask<Location, Void, Void>
+public class GisgraphySearchTask extends AsyncTask<Location, Void, List<Address> >
 {
     private final String TAG = this.getClass().getSimpleName();
-    private static final String SERVICE_URL = "http://services.gisgraphy.com/reversegeocoding/search?format=json";
+    private static final String SERVICE_URL = "http://services.gisgraphy.com/geoloc/search?format=json";
     private static final String SERVICE_ATTRIBUTE_LAT = "&lat=";
     private static final String SERVICE_ATTRIBUTE_LON = "&lng=";
 
@@ -31,8 +35,9 @@ public class GisgraphySearchTask extends AsyncTask<Location, Void, Void>
     }
 
     @Override
-    protected Void doInBackground(Location... params) {
+    protected List<Address> doInBackground(Location... params) {
         HttpURLConnection connection = null;
+        ArrayList<Address> ret = new ArrayList<>();
         try {
             URL url = new URL(SERVICE_URL
                     + SERVICE_ATTRIBUTE_LAT
@@ -56,9 +61,15 @@ public class GisgraphySearchTask extends AsyncTask<Location, Void, Void>
                 JSONArray localities = obj.getJSONArray("result");
                 for (int i = 0; i < localities.length(); ++i) {
                     JSONObject loc = (JSONObject) localities.get(i);
-                    m_caller.addLocality(loc.getString("city"), loc.getString("countryCode"),
-                            loc.getDouble("lat"), loc.getDouble("lng"), loc.getDouble("distance"));
-                    Log.d(TAG, loc.getString("formatedFull"));
+                    Address addr = new Address(Locale.getDefault());
+                    addr.setLatitude(loc.getDouble("lat"));
+                    addr.setLongitude(loc.getDouble("lng"));
+                    addr.setCountryCode(loc.getString("countryCode"));
+                    addr.setLocality(loc.getString("name"));
+                    addr.setUrl(loc.getString("openstreetmap_map_url"));
+                    ret.add(addr);
+                    if (m_caller != null)
+                        m_caller.addLocality(loc.getDouble("distance"), addr);
                 }
             }
         } catch (Exception e) {
@@ -67,6 +78,6 @@ public class GisgraphySearchTask extends AsyncTask<Location, Void, Void>
             if (connection != null)
                 connection.disconnect();
         }
-        return null;
+        return ret;
     }
 }
