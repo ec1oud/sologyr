@@ -95,7 +95,9 @@ public class AnimationView extends View {
             dur = 1000;
         m_movie.setTime((int) SystemClock.uptimeMillis() % dur);
 //        Log.d(TAG, "rendering @time " + (SystemClock.uptimeMillis() % dur) + " of " + dur + " canvas " + canvas);
-        // TODO scale to the display
-        m_movie.draw(canvas, getWidth() / 2 - m_movie.width() / 2, 0);
+        float scale = Math.min((float)this.getWidth() / (float)m_movie.width(),
+                (float)this.getHeight() / (float)m_movie.height());
+        canvas.scale(scale, scale);
+        m_movie.draw(canvas, getWidth() / 2 - m_movie.width() * scale / 2, 0);
     }
 }
