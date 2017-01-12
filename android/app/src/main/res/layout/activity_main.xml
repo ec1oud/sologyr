@@ -10,26 +10,31 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <LinearLayout
-            android:orientation="vertical"
+        <GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:useDefaultMargins="true"
+            android:columnCount="3"
             android:layout_weight="1">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/sunriseSunsetTextView"
-                android:layout_weight="1" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/currentWeatherTextView"
-                android:layout_weight="1"
+            <TextView android:id="@+id/temperatureTextView"
+                android:textAppearance="@android:style/TextAppearance.Holo.Medium" />
+            <TextView android:id="@+id/humidityTextView"
+                android:textAppearance="@android:style/TextAppearance.Holo.Medium" />
+            <TextView android:id="@+id/pressureTextView"
                 android:textAppearance="@android:style/TextAppearance.Holo.Medium" />
 
-        </LinearLayout>
+            <TextView android:id="@+id/precipOrCloudCoverTextView"
+                android:textAppearance="@android:style/TextAppearance.Holo.Medium" />
+            <TextView android:id="@+id/windSpeedTextView"
+                android:textAppearance="@android:style/TextAppearance.Holo.Medium" />
+            <TextView android:id="@+id/ozoneTextView"
+                android:textAppearance="@android:style/TextAppearance.Holo.Medium" />
+
+            <TextView android:id="@+id/sunriseTextView" />
+            <TextView android:id="@+id/sunsetTextView" />
+
+        </GridLayout>
 
         <ImageView
             android:layout_height="match_parent"

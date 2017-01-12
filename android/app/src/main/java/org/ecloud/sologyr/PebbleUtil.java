@@ -181,7 +181,10 @@ public class PebbleUtil implements WeatherListener {
         PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
     }
 
-    public void updateCurrentWeather(double temperature, double cloudCover, WeatherIcon icon) {
+    public void updateCurrentWeather(double temperature, double cloudCover, WeatherIcon icon,
+                                     double windSpeed, double windBearing, double humidity, double dewPoint,
+                                     double pressure, double ozone, double precipIntensity) {
+        // TODO send more to the pebble
         String tempStr = Math.round(temperature) + "°";
         if (icon == null)
             return;

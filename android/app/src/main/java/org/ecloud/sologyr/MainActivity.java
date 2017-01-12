@@ -250,16 +250,33 @@ public class MainActivity extends Activity implements WeatherListener {
     }
 
     @Override
-    public void updateCurrentWeather(final double temperature, final double cloudCover, final WeatherIcon icon) {
+    public void updateCurrentWeather(final double temperature, final double cloudCover, final WeatherIcon icon,
+                                     final double windSpeed, final double windBearing, final double humidity, final double dewPoint,
+                                     final double pressure, final double ozone, final double precipIntensity) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                TextView t = (TextView) findViewById(R.id.currentWeatherTextView);
-                if (cloudCover < 0.5)
-                    t.setText(String.format(Locale.getDefault(), "%1$3.2f°C", temperature));
+                TextView t = (TextView) findViewById(R.id.temperatureTextView);
+                t.setText(String.format(Locale.getDefault(), "%1$3.2f°C", temperature));
+
+                t = (TextView) findViewById(R.id.precipOrCloudCoverTextView);
+                if (precipIntensity > 0)
+                    t.setText(String.format(Locale.getDefault(), "%1$5.2f precipitation", precipIntensity));
                 else
-                    t.setText(String.format(Locale.getDefault(), "%1$3.2f°C   %2$2.0f%% cloudy",
-                            temperature, cloudCover));
+                    t.setText(String.format(Locale.getDefault(), "%1$3.0f%% cloudy", cloudCover));
+
+                t = (TextView) findViewById(R.id.windSpeedTextView);
+                t.setText(String.format(Locale.getDefault(), "%1$5.2f wind", windSpeed));
+
+                t = (TextView) findViewById(R.id.humidityTextView);
+                t.setText(String.format(Locale.getDefault(), "%1$3.0f%% RH", humidity));
+
+                t = (TextView) findViewById(R.id.pressureTextView);
+                t.setText(String.format(Locale.getDefault(), "%1$5.0f mbar", pressure));
+
+                t = (TextView) findViewById(R.id.ozoneTextView);
+                t.setText(String.format(Locale.getDefault(), "%1$5.0f ozone", ozone));
+
                 ImageView i = (ImageView) findViewById(R.id.weatherIconView);
                 int iconId = -1;
                 // TODO pay attention to time of day or night - use night icons
@@ -320,9 +337,10 @@ public class MainActivity extends Activity implements WeatherListener {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                TextView t = (TextView) findViewById(R.id.sunriseSunsetTextView);
-                t.setText(String.format(Locale.getDefault(), "sunrise %1$d:%2$02d sunset %3$d:%4$02d",
-                        sunriseHour, sunriseMinute, sunsetHour, sunsetMinute));
+                ((TextView) findViewById(R.id.sunriseTextView)).setText(String.format(Locale.getDefault(),
+                        "sunrise %1$d:%2$02d", sunriseHour, sunriseMinute));
+                ((TextView) findViewById(R.id.sunsetTextView)).setText(String.format(Locale.getDefault(),
+                        "sunset %1$d:%2$02d", sunsetHour, sunsetMinute));
             }
         });
     }

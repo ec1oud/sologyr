@@ -56,8 +56,9 @@ public class WeatherService extends Service implements LocalityListener {
     Location curLocation = null;
     String curLocationName = "";
     int curLocationDistance = -1;
-    WeatherListener.WeatherIcon curWeatherIcon;
-    double curTemperature = 0, curCloudCover = 0;
+    WeatherListener.WeatherIcon m_weatherIcon;
+    double m_temperature = 0, m_cloudCover = 0, m_windSpeed = 0, m_windBearing = 0;
+    double m_humidity = 0, m_dewPoint = 0, m_pressure = 0, m_ozone = 0, m_precipIntensity = 0;
     int sunriseHour = 0, sunriseMinute = 0, sunsetHour = 0, sunsetMinute = 0;
     long lastUpdateTime = 0;
     NowCastTask nowCastTask = null;
@@ -102,73 +103,44 @@ public class WeatherService extends Service implements LocalityListener {
         String [] f  = currently.get().getFieldsArray();
         for(int i = 0; i < f.length; i++)
             Log.d(TAG, "curr " + f[i] + ": " + currently.get().getByKey(f[i]));
-        curTemperature = Double.valueOf(currently.get().getByKey("temperature"));
-        curCloudCover = Double.valueOf(currently.get().getByKey("cloudCover"));
+        m_temperature = Double.valueOf(currently.get().getByKey("temperature"));
+        m_cloudCover = Double.valueOf(currently.get().getByKey("cloudCover"));
+        m_windSpeed = Double.valueOf(currently.get().getByKey("windSpeed"));
+        m_windBearing = Double.valueOf(currently.get().getByKey("windBearing"));
+        m_humidity = Double.valueOf(currently.get().getByKey("humidity"));
+        m_dewPoint = Double.valueOf(currently.get().getByKey("dewPoint"));
+        m_ozone = Double.valueOf(currently.get().getByKey("ozone"));
+        m_pressure = Double.valueOf(currently.get().getByKey("pressure"));
+        m_precipIntensity = Double.valueOf(currently.get().getByKey("precipIntensity"));
+
         String icon = currently.get().getByKey("icon");
-        /* oughtta work, but partly-cloudy-night turns into unknown
-        switch(icon) {
-            case "clear-day":
-                curWeatherIcon = Sun;
-                break;
-            case "clear-night":
-                curWeatherIcon = DarkSun;
-                break;
-            case "rain":
-                curWeatherIcon = Rain;
-                break;
-            case "snow":
-                curWeatherIcon = Snow;
-                break;
-            case "sleet":
-                curWeatherIcon = Sleet;
-                break;
-            case "wind":
-                curWeatherIcon = Wind; // doesn't match the Yr icon set
-                break;
-            case "fog":
-                curWeatherIcon = Fog;
-                break;
-            case "cloudy":
-                curWeatherIcon = Cloud;
-                break;
-            case "partly-cloudy-day":
-                curWeatherIcon = PartlyCloud;
-                break;
-            case "partly-cloudy-night":
-                curWeatherIcon = DarkPartlyCloud;
-                break;
-            default:
-                curWeatherIcon = WEATHERUNKNOWN;
-                break;
-        }
-        */
-
         if (icon.contains("clear-day"))
-            curWeatherIcon = Sun;
+            m_weatherIcon = Sun;
         else if (icon.contains("clear-night"))
-            curWeatherIcon = DarkSun;
+            m_weatherIcon = DarkSun;
         else if (icon.contains("partly-cloudy-day"))
-            curWeatherIcon = PartlyCloud;
+            m_weatherIcon = PartlyCloud;
         else if (icon.contains("partly-cloudy-night"))
-            curWeatherIcon = DarkPartlyCloud;
+            m_weatherIcon = DarkPartlyCloud;
         else if (icon.contains("rain"))
-            curWeatherIcon = Rain;
+            m_weatherIcon = Rain;
         else if (icon.contains("snow"))
-            curWeatherIcon = Snow;
+            m_weatherIcon = Snow;
         else if (icon.contains("sleet"))
-            curWeatherIcon = Sleet;
+            m_weatherIcon = Sleet;
         else if (icon.contains("wind"))
-            curWeatherIcon = Wind; // doesn't match the Yr icon set
+            m_weatherIcon = Wind; // doesn't match the Yr icon set
         else if (icon.contains("fog"))
-            curWeatherIcon = Fog;
+            m_weatherIcon = Fog;
         else if (icon.contains("cloudy"))
-            curWeatherIcon = Cloud;
+            m_weatherIcon = Cloud;
         else
-            curWeatherIcon = WEATHERUNKNOWN;
+            m_weatherIcon = WEATHERUNKNOWN;
 
-//        Log.d(TAG, "for icon " + icon + " got enum " + curWeatherIcon);
+//        Log.d(TAG, "for icon " + icon + " got enum " + m_weatherIcon);
         for (WeatherListener l : m_listeners)
-            l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
+            l.updateCurrentWeather(m_temperature, m_cloudCover, m_weatherIcon, m_windSpeed, m_windBearing,
+                    m_humidity, m_dewPoint, m_pressure, m_ozone, m_precipIntensity);
         lastUpdateTime = System.currentTimeMillis();
         darkSkyCurrentTask = null;
         ++m_darkSkyUpdateCount;
@@ -366,7 +338,8 @@ public class WeatherService extends Service implements LocalityListener {
     public void resendEverything(WeatherListener l) {
         l.updateLocation(curlat, curlon, curLocationName, curLocationDistance);
         l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
-        l.updateCurrentWeather(curTemperature, curCloudCover, curWeatherIcon);
+        l.updateCurrentWeather(m_temperature, m_cloudCover, m_weatherIcon, m_windSpeed, m_windBearing,
+                m_humidity, m_dewPoint, m_pressure, m_ozone, m_precipIntensity);
     }
 
     public void resetUpdateCounters() {
