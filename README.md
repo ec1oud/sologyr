@@ -1,4 +1,4 @@
-a "circadian" Pebble watch face with weather from yr.no and darksky.net
+a "circadian" Pebble watch face, companion Android app and widgets with weather forecast from yr.no and current conditions from darksky.net
 
 <img src="doc/screenshot-pebble.png"> <img src="doc/screenshot-pebble-precipitation-and-nowcast.png"> <img src="doc/screenshot-pebble-tap-screen.png"> <img src="doc/screenshot-pebble-temperature-transitions.png">
 
@@ -10,9 +10,7 @@ To install:
 - Download and install [the APK](android/app/sologyr-release.apk)
 - Select "Install Pebble watch face" from the menu
 
-yr.no provides nice forecasts, but not real-time sensor readings AFAICT.
-So, using darksky.net for now, but perhaps not for the long term
-(using it too much will cost money).
+yr.no provides nice forecasts, but not real-time sensor readings, so using darksky.net for now.
 
 What's working:
 - [x] real-time temperature and cloudy/sunny icons from darksky.net
@@ -22,7 +20,7 @@ What's working:
 - [x] 24-hour dial with highlighted region for daylight hours
 - [x] today's step counts as a radial bar graph, in green
 - [x] today's total step count
-- [x] yesterday's step counts in dimmer green
+- [x] yesterday's step counts in dimmer colors
 - [x] NowCast, the yr.no highly-localized prediction of upcoming precipitation for the next 2 hours.
 - [x] precipitation forecast beyond the next 2 hours (min/likely/max)
 - [x] temperature forecast
@@ -35,7 +33,7 @@ In progress:
 - [ ] learning the user's active periods of day, so as to ask the phone to fetch weather updates during that time only.  That plus a frequency limit should keep API calls to a minimum.
 
 Not started yet:
-- [ ] Android widget for yr.no "meteogram" - currently has hard-coded location, need to figure out how to get suitable location by reverse-geocoding
+- [ ] yr.no "meteogram" widget: need to figure out how to get suitable location by reverse-geocoding; have to input the URL manually for now
 - [ ] calculate sunrise/sunset in the Pebble app, based on current location; persist current location on Pebble.  (The problem now is that every time you leave the watch screen, it loses those times.)
 - [ ] label the temperature range on the forecast chart
 - [ ] send the rest of the forecast across to the Pebble (wind? cloud level?)
@@ -47,4 +45,5 @@ Not started yet:
 - [ ] get real-time weather from some other source, preferably an open source where users' weather station data is contributed
 - [ ] yr.no forecast chart / meteogram: zoomed view, accessed from main activity or by clicking the home screen widget
 - [ ] help screen on Android
+- [ ] port and test on Pebble Time Round and classic Pebble
 
