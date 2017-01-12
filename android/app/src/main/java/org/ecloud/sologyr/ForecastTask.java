@@ -65,7 +65,7 @@ public class ForecastTask extends AsyncTask<Location, Void, LinkedList<Forecast>
             }
         }
         catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
         finally {
             if (connection != null) {

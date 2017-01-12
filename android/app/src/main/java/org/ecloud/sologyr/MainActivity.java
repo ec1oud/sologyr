@@ -20,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -224,10 +225,10 @@ public class MainActivity extends Activity implements WeatherListener {
             public void run() {
                 TextView t = (TextView)findViewById(R.id.locationTextView);
                 if (distance < 0 || name.isEmpty())
-                    t.setText(String.format(Locale.getDefault(), "as of %4$tH:%4$tM location %1$3.4f,%2$3.4f",
+                    t.setText(String.format(Locale.getDefault(), "location %1$3.4f,%2$3.4f",
                             lat, lon, name, Calendar.getInstance(), distance));
                 else
-                    t.setText(String.format(Locale.getDefault(), "as of %4$tH:%4$tM location %1$3.4f,%2$3.4f %5$d m from %3$s",
+                    t.setText(String.format(Locale.getDefault(), "location %1$3.4f,%2$3.4f - %5$d m from %3$s",
                             lat, lon, name, Calendar.getInstance(), distance));
             }
         });
@@ -239,8 +240,52 @@ public class MainActivity extends Activity implements WeatherListener {
             @Override
             public void run() {
                 TextView t = (TextView) findViewById(R.id.currentWeatherTextView);
-                t.setText(String.format(Locale.getDefault(), "%1$3.2f°C %2$2.0f%% cloudy; icon '%3$s'",
-                        temperature, cloudCover, icon == null ? "" : icon.name()));
+                if (cloudCover < 0.5)
+                    t.setText(String.format(Locale.getDefault(), "%1$3.2f°C", temperature));
+                else
+                    t.setText(String.format(Locale.getDefault(), "%1$3.2f°C   %2$2.0f%% cloudy",
+                            temperature, cloudCover));
+                ImageView i = (ImageView) findViewById(R.id.weatherIconView);
+                int iconId = -1;
+                // TODO pay attention to time of day or night - use night icons
+                try {
+                    switch (icon) {
+                    case Sun:
+                        iconId = R.mipmap.weather_clear;
+                        break;
+                    case PartlyCloud:
+                        iconId = R.mipmap.weather_few_clouds;
+                        break;
+                    case Cloud:
+                        iconId = R.mipmap.weather_overcast;
+                        break;
+                    case Rain:
+                        iconId = R.mipmap.weather_showers;
+                        break;
+                    case Sleet:
+                        iconId = R.mipmap.weather_sleet;
+                        break;
+                    case Snow:
+                        iconId = R.mipmap.weather_snow;
+                        break;
+                    case Fog:
+                        iconId = R.mipmap.weather_fog;
+                        break;
+                    case DarkSun:
+                        iconId = R.mipmap.weather_clear_night;
+                        break;
+                    case DarkPartlyCloud:
+                        iconId = R.mipmap.weather_few_clouds_night;
+                        break;
+                    case Wind:
+                        iconId = R.mipmap.weather_wind;
+                        break;
+                    }
+                } catch (NullPointerException e) { }
+                if (iconId < 0)
+                    i.setImageDrawable(null);
+                else
+                    i.setImageResource(iconId);
             }
         });
     }

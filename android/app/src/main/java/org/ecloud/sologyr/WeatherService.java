@@ -76,6 +76,8 @@ public class WeatherService extends Service implements LocalityListener {
     }
 
     public void setForecast(LinkedList<Forecast> forecast) {
+        if (forecast == null)
+            return;
         for (WeatherListener el : m_listeners)
             el.updateForecast(forecast);
 //        for (Forecast f : forecast)

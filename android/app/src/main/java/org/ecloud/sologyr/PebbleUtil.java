@@ -239,6 +239,8 @@ public class PebbleUtil implements WeatherListener {
 
     public void updateForecast(LinkedList<Forecast> fs)
     {
+        if (fs == null)
+            return;
         // Some Forecast objects have both times and precipitation;
         // others have everything else and only timeFrom.
         m_forecast = new LinkedList<>();
