@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.graphics.Movie;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -41,15 +42,24 @@ import java.util.Locale;
 public class MainActivity extends Activity implements WeatherListener {
 
     private final String TAG = this.getClass().getSimpleName();
-    private final long RADAR_REFRESH_AGE = 15 * 60 * 1000;
+    private static final long RADAR_REFRESH_AGE = 15 * 60 * 1000;
     private static final String WATCHAPP_FILENAME = "sologyr.pbw";
     SharedPreferences m_prefs = null;
     private WeatherService m_weatherService = null;
     private ServiceConnection m_connection = null;
+
     private long m_lastRadarTime = 0;
+    private byte[] m_radar = null;
+
+    @Override
+    protected void onSaveInstanceState (Bundle outState) {
+        outState.putByteArray("radar", m_radar);
+        outState.putLong("lastRadarTime", m_lastRadarTime);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate " + savedInstanceState);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         m_connection = new ServiceConnection() {
@@ -82,6 +92,11 @@ public class MainActivity extends Activity implements WeatherListener {
                             MainActivity.this.updateRadar(true);
                     }
                 });
+        if (savedInstanceState != null) {
+            m_lastRadarTime = savedInstanceState.getLong("lastRadarTime");
+            m_radar = savedInstanceState.getByteArray("radar");
+            ((AnimationView)findViewById(R.id.radarImageView)).setByteArray(m_radar);
+        }
     }
 
     @Override
@@ -154,9 +169,9 @@ public class MainActivity extends Activity implements WeatherListener {
             super.onReceiveResult(resultCode, resultData);
             Log.d(TAG, "got radar " + resultCode + " " + resultData);
             AnimationView v = (AnimationView)findViewById(R.id.radarImageView);
-            byte[] imageData = resultData.getByteArray("byteArray");
-            Log.d(TAG, "got a byte array with len " + imageData.length);
-            v.setByteArray(imageData);
+            m_radar = resultData.getByteArray("byteArray");
+            Log.d(TAG, "got a byte array with len " + m_radar.length);
+            v.setByteArray(m_radar);
         }
     }
 
