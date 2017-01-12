@@ -528,8 +528,10 @@ static void handle_weather_icon(uint8_t icon)
 			resource = RESOURCE_ID_IMAGE_WEATHER_FEW_CLOUDS;
 			break;
 		case Cloud:
-		case Fog:
 			resource = RESOURCE_ID_IMAGE_WEATHER_OVERCAST;
+			break;
+		case Fog:
+			resource = RESOURCE_ID_IMAGE_WEATHER_FOG;
 			break;
 		//~ case ?:
 			//~ resource = RESOURCE_ID_IMAGE_WEATHER_SEVERE_ALERT;
@@ -541,6 +543,8 @@ static void handle_weather_icon(uint8_t icon)
 			//~ resource = RESOURCE_ID_IMAGE_WEATHER_SHOWERS_SCATTERED;
 			//~ break;
 		case Sleet:
+			resource = RESOURCE_ID_IMAGE_WEATHER_SLEET;
+			break;
 		case Snow:
 			resource = RESOURCE_ID_IMAGE_WEATHER_SNOW;
 			break;
