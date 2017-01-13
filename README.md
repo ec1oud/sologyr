@@ -1,11 +1,12 @@
-a "circadian" Pebble watch face, companion Android app and widgets with weather forecast from yr.no and current conditions from darksky.net
+a "circadian" Pebble watch face, [Android app and widgets](https://github.com/ec1oud/sologyr/raw/master/android/app/sologyr-release.apk)
+with current weather from darksky.net and forecast from yr.no
+
+<img src="doc/screenshot-pebble.png"> <img src="doc/screenshot-pebble-precipitation-and-nowcast.png"> <img src="doc/screenshot-pebble-tap-screen.png"> <img src="doc/screenshot-pebble-temperature-transitions.png">
 
 To install:
 
 - Download and install [the APK](https://github.com/ec1oud/sologyr/raw/master/android/app/sologyr-release.apk)
 - Select "Install Pebble watch face" from the menu
-
-<img src="doc/screenshot-pebble.png"> <img src="doc/screenshot-pebble-precipitation-and-nowcast.png"> <img src="doc/screenshot-pebble-tap-screen.png"> <img src="doc/screenshot-pebble-temperature-transitions.png">
 
 Intended for use with [GadgetBridge](https://github.com/Freeyourgadget/Gadgetbridge),
 thus it has its own Android companion app rather than relying on Javascript.
