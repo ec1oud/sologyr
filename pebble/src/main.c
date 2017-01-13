@@ -395,11 +395,11 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_POINTER_SHADOW);
 	graphics_context_set_stroke_width(ctx, 7);
 	graphics_draw_line(ctx, pointerInner, pointerOuter);
-	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_POINTER);
+	graphics_context_set_stroke_color(ctx, PBL_IF_COLOR_ELSE(COLOR_CLOCK_POINTER, GColorWhite));
 	graphics_context_set_stroke_width(ctx, 3);
 	graphics_draw_line(ctx, pointerInner, pointerOuter);
 
-	// render the activity record; TODO move it to another layer?
+	// render the activity record; TODO move it to another layer?(
 	innerCircle = grect_crop(fillCircle, layerBounds.size.w / 3);
 	graphics_context_set_stroke_width(ctx, 3);
 	int currentInterval = (now - startOfToday) / (MINUTES_PER_HEALTH_INTERVAL * SECONDS_PER_MINUTE);
@@ -416,15 +416,15 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 			if (i > currentInterval) {
 				// yesterday's data: use faded colors
 				if (angle > sunriseAngle && angle < sunsetAngle)
-					graphics_context_set_stroke_color(ctx, COLOR_STEPS_YESTERDAY);
+					graphics_context_set_stroke_color(ctx, PBL_IF_COLOR_ELSE(COLOR_STEPS_YESTERDAY, GColorBlack));
 				else
-					graphics_context_set_stroke_color(ctx, COLOR_STEPS_YESTERDAY_NIGHT);
+					graphics_context_set_stroke_color(ctx, PBL_IF_COLOR_ELSE(COLOR_STEPS_YESTERDAY_NIGHT, GColorWhite));
 			} else {
 				// today
 				if (angle > sunriseAngle && angle < sunsetAngle)
-					graphics_context_set_stroke_color(ctx, COLOR_STEPS_DAY);
+					graphics_context_set_stroke_color(ctx, PBL_IF_COLOR_ELSE(COLOR_STEPS_DAY, GColorBlack));
 				else
-					graphics_context_set_stroke_color(ctx, COLOR_STEPS_NIGHT);
+					graphics_context_set_stroke_color(ctx, PBL_IF_COLOR_ELSE(COLOR_STEPS_NIGHT, GColorWhite));
 			}
 			graphics_draw_line(ctx, pointerInner, pointerOuter);
 		}
