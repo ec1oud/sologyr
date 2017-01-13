@@ -1,7 +1,8 @@
 a "circadian" Pebble watch face, [Android app and widgets](https://github.com/ec1oud/sologyr/raw/master/android/app/sologyr-release.apk)
 with current weather from darksky.net and forecast from yr.no
 
-<img src="doc/screenshot-android.png"> <img src="doc/screenshot-pebble.png"> <img src="doc/screenshot-pebble-tap-screen.png">
+<img src="doc/screenshot-android.png"> <img src="doc/screenshot-pebble.png">
+<img src="doc/screenshot-pebble-tap-screen.png">
 
 To install:
 
