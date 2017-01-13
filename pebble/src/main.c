@@ -74,7 +74,7 @@ static Layer *batteryGraphLayer;
 static Layer *circleLayer;
 static Layer *weatherPlotLayer;
 static int batteryPct = 0;
-struct tm *currentTime;
+struct tm currentTime;
 static int curLat = 59913; // degrees * 1000
 static int curLon = 10739; // degrees * 1000
 static char curLocationName[32];
@@ -125,7 +125,7 @@ void dateLayerUpdate()
 {
 	static char date_text[24];
 	static const char *date_format = "%a %e %b";
-	strftime(date_text, sizeof(date_text), date_format, currentTime);
+	strftime(date_text, sizeof(date_text), date_format, &currentTime);
 	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "tick %s", time_text);
 	text_layer_set_text(dateLayer, date_text);
 }
@@ -134,7 +134,7 @@ void timeLayerUpdate()
 {
 	static char time_text[] = "00:00";
 	static const char *time_format = "%H:%M";  //:%S";
-	strftime(time_text, sizeof(time_text), time_format, currentTime);
+	strftime(time_text, sizeof(time_text), time_format, &currentTime);
 	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "tick %s", time_text);
 	text_layer_set_text(text_time_layer, time_text);
 	text_layer_set_text(tapTimeLayer, time_text);
@@ -154,7 +154,7 @@ void circleLayerUpdate()
 
 static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
 {
-	*currentTime = *tick_time;
+	memcpy(&currentTime, tick_time, sizeof(struct tm));
 	if (units_changed & MINUTE_UNIT) {
 		timeLayerUpdate();
 		circleLayerUpdate();
@@ -192,7 +192,7 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 	time_t nextDay = startOfToday + SECONDS_PER_DAY;
 	int x = 0;
 	struct tm time;
-	memcpy(&time, currentTime, sizeof(time));
+	memcpy(&time, &currentTime, sizeof(struct tm));
 	while (x < layerBounds.size.w) {
 		++time.tm_wday;
 		if (time.tm_wday > 6)
@@ -389,7 +389,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 
 	// render the clock pointer
 	GRect innerCircle = grect_crop(fillCircle, layerBounds.size.w / 4);
-	int32_t currentTimeAngle = (currentTime->tm_hour * 60 + currentTime->tm_min) * 360 / MINUTES_PER_DAY - 180;
+	int32_t currentTimeAngle = (currentTime.tm_hour * 60 + currentTime.tm_min) * 360 / MINUTES_PER_DAY - 180;
 	GPoint pointerInner = gpoint_from_polar(innerCircle, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
 	GPoint pointerOuter = gpoint_from_polar(layerBounds, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
 	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_POINTER_SHADOW);
@@ -884,7 +884,7 @@ static void window_unload(Window *window) {
 
 static void window_init(void) {
     time_t tt = time(NULL);
-    currentTime = localtime(&tt);
+	memcpy(&currentTime, localtime(&tt), sizeof(struct tm));
 	window = window_create();
 	window_set_background_color(window, GColorBlack);
 	window_set_window_handlers(window, (WindowHandlers) {

@@ -17,7 +17,7 @@ static time_t s_last_interval_load_time;
 
 extern void circleLayerUpdate();
 extern void handleCurrentIntervalChanged(uint8_t interval, uint16_t expectedVmc);
-extern struct tm *currentTime;
+extern struct tm currentTime;
 
 static void update_average(AverageType type)
 {
@@ -156,7 +156,7 @@ void health_update_steps_interval()
 		s_steps_per_interval[s_current_interval_idx] = stepAcc;
 		s_vmc_per_interval[s_current_interval_idx] = (uint16_t)vmcAcc; // TODO ensure that it stops at the max 16-bit value instead of overflowing
 		persist_write_data(AppKeyStepIntervals, s_steps_per_interval, sizeof(s_steps_per_interval));
-		persist_write_data(AppKeyVmcSunday + currentTime->tm_wday, s_vmc_per_interval, sizeof(s_vmc_per_interval));
+		persist_write_data(AppKeyVmcSunday + currentTime.tm_wday, s_vmc_per_interval, sizeof(s_vmc_per_interval));
 		if (s_last_interval_load_time > 0) {
 			s_last_interval_load_time = time(NULL);
 			persist_write_int(AppKeyLastIntervalLoad, s_last_interval_load_time);
@@ -167,7 +167,7 @@ void health_update_steps_interval()
 
 void health_update_weekday()
 {
-	persist_read_data(AppKeyVmcSunday + currentTime->tm_wday, s_vmc_per_interval, sizeof(s_vmc_per_interval));
+	persist_read_data(AppKeyVmcSunday + currentTime.tm_wday, s_vmc_per_interval, sizeof(s_vmc_per_interval));
 }
 
 static void load_health_data(void *context)
@@ -206,7 +206,7 @@ static void load_health_data(void *context)
 		}
 		s_last_interval_load_time = time(NULL);
 		persist_write_data(AppKeyStepIntervals, s_steps_per_interval, sizeof(s_steps_per_interval));
-		persist_write_data(AppKeyVmcSunday + currentTime->tm_wday, s_vmc_per_interval, sizeof(s_vmc_per_interval));
+		persist_write_data(AppKeyVmcSunday + currentTime.tm_wday, s_vmc_per_interval, sizeof(s_vmc_per_interval));
 		persist_write_int(AppKeyLastIntervalLoad, s_last_interval_load_time);
 	} else if (DEBUG) {
 		for (int i = 0; i < HEALTH_INTERVAL_COUNT; ++i)
