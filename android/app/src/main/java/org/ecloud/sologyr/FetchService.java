@@ -61,13 +61,18 @@ public class FetchService extends IntentService {
             resultReceiver.send(0, bundle);
         } else {
             final Intent doneIntent = new Intent(ACTION_FETCH_DONE);
-            doneIntent.putExtra("byteArray", getByteArray(url));
+            byte[] data = getByteArray(url);
+            if (data == null) {
+                Log.e(TAG, "failed to fetch " + url);
+                return;
+            }
+            doneIntent.putExtra("byteArray", data);
             final PendingIntent donePendingIntent = PendingIntent.getBroadcast(this, 0, doneIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             try {
                 donePendingIntent.send();
             }
-            catch (PendingIntent.CanceledException ce) {
-                Log.i(TAG, "onHandleIntent: Exception: "+ce.toString());
+            catch (Exception e) {
+                Log.e(TAG, "send PendingIntent: " + e.getMessage() + " while attempting to fetch " + url);
             }
         }
     }

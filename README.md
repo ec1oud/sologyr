@@ -35,7 +35,8 @@ In progress:
 - [ ] learning the user's active periods of day, so as to ask the phone to fetch weather updates during that time only.  That plus a frequency limit should keep API calls to a minimum.
 
 Not started yet:
-- [ ] yr.no "meteogram" widget: need to figure out how to get suitable location by reverse-geocoding; have to input the URL manually for now
+- [ ] yr.no "meteogram" widget: regenerate from forecast instead of fetching the PNG (it's too hard to get the right one automatically)
+- [ ] add a widget which resembles the watch face
 - [ ] calculate sunrise/sunset in the Pebble app, based on current location; persist current location on Pebble.  (The problem now is that every time you leave the watch screen, it loses those times.)
 - [ ] label the temperature range on the forecast chart
 - [ ] send the rest of the forecast across to the Pebble (wind? cloud level?)
