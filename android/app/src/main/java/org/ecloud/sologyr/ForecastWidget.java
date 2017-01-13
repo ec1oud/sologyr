@@ -62,6 +62,10 @@ public class ForecastWidget extends AppWidgetProvider {
             byte[] imageData = intent.getByteArrayExtra("byteArray");
             Log.d(TAG, "got a byte array with len " + imageData.length);
             m_bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
+            if (m_bitmap == null) {
+                Log.e(TAG, "failed to decode bitmap");
+                return;
+            }
             Log.d(TAG, "got a bitmap " + m_bitmap.getWidth() + "x" + m_bitmap.getHeight());
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(ctx);
             RemoteViews rv = new RemoteViews(ctx.getPackageName(),  R.layout.forecast_widget);
