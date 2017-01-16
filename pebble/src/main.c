@@ -393,9 +393,8 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	}
 
 	// render the clock pointer
-	GRect innerCircle = grect_crop(fillCircle, layerBounds.size.w / 4);
 	int32_t currentTimeAngle = (currentTime.tm_hour * 60 + currentTime.tm_min) * 360 / MINUTES_PER_DAY - 180;
-	GPoint pointerInner = gpoint_from_polar(innerCircle, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
+	GPoint pointerInner = grect_center_point(&layerBounds);
 	GPoint pointerOuter = gpoint_from_polar(layerBounds, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
 	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_POINTER_SHADOW);
 	graphics_context_set_stroke_width(ctx, 11);
@@ -406,7 +405,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 
 #ifdef PBL_HEALTH
 	// render the activity record; TODO move it to another layer?(
-	innerCircle = grect_crop(fillCircle, layerBounds.size.w / 3);
+	GRect innerCircle = grect_crop(fillCircle, layerBounds.size.w / 3);
 	graphics_context_set_stroke_width(ctx, 3);
 	int currentInterval = (now - startOfToday) / (MINUTES_PER_HEALTH_INTERVAL * SECONDS_PER_MINUTE);
 	for (int i = 0; i < HEALTH_INTERVAL_COUNT; ++i) {
@@ -440,7 +439,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	GFont font = fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS);
 	GRect text_time_rect = GRect(0, 0, layerBounds.size.w, 50);
 	grect_align(&text_time_rect, &layerBounds, GAlignCenter, false);
-	text_time_rect.origin.y += 12;
+	text_time_rect.origin.y += 16;
 
 	graphics_context_set_text_color(ctx, GColorBlack);
 	text_time_rect.origin.x += 2;
@@ -837,7 +836,7 @@ static void window_load(Window *window) {
 	grect_align(&text_time_rect, &bounds, GAlignCenter, false);
 
 #ifdef PBL_HEALTH
-	text_time_rect.origin.y += 40;
+	text_time_rect.origin.y += 48;
 	stepsLayer = text_layer_create(text_time_rect);
 	text_layer_set_text_color(stepsLayer, COLOR_STEPS);
 	text_layer_set_background_color(stepsLayer, GColorClear);
