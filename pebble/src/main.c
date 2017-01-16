@@ -198,13 +198,13 @@ static void paintWeatherPlot(Layer *layer, GContext* ctx)
 	int x = 0;
 	struct tm time;
 	memcpy(&time, &currentTime, sizeof(struct tm));
+	GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
 	while (x < layerBounds.size.w) {
 		++time.tm_wday;
 		if (time.tm_wday > 6)
 			time.tm_wday = 0;
 		time_t minutesFromNow = (nextDay - now) / 60;
 		x = (int)(minutesFromNow / FORECAST_CHART_MINUTES_PER_PIXEL);
-		GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_14);
 		if (x < layerBounds.size.w) {
 			GPoint p1 = GPoint(x, 0);
 			GPoint p2 = GPoint(x, layerBounds.size.h);
@@ -794,6 +794,7 @@ static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reas
 static void window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_bounds(window_layer);
+	GFont smallishFont = fonts_get_system_font(FONT_KEY_GOTHIC_24);
 
 	main_layer = layer_create(bounds);
 	layer_add_child(window_layer, main_layer);
@@ -819,7 +820,7 @@ static void window_load(Window *window) {
 	//~ temperatureLayer = text_layer_create(GRect(bounds.size.w - 50, -4, 50, 22));
 	text_layer_set_text_color(temperatureLayer, COLOR_TEMPERATURE);
 	text_layer_set_background_color(temperatureLayer, GColorClear);
-	text_layer_set_font(temperatureLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
+	text_layer_set_font(temperatureLayer, smallishFont);
 	layer_add_child(main_layer, text_layer_get_layer(temperatureLayer));
 
 	weather_icon_layer = bitmap_layer_create(GRect(bounds.size.w - 22, -1, 22, 22));
@@ -857,7 +858,7 @@ static void window_load(Window *window) {
 	tapLocationLayer = text_layer_create(text_time_rect);
 	text_layer_set_text_color(tapLocationLayer, COLOR_LOCATION);
 	text_layer_set_background_color(tapLocationLayer, GColorClear);
-	text_layer_set_font(tapLocationLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
+	text_layer_set_font(tapLocationLayer, smallishFont);
 	text_layer_set_text_alignment(tapLocationLayer, GTextAlignmentCenter);
 	layer_add_child(tap_layer, text_layer_get_layer(tapLocationLayer));
 
