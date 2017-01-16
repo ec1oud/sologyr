@@ -78,7 +78,8 @@ public class AnimationView extends View {
     }
 
     public void setByteArray(byte[] b) {
-        m_movie = Movie.decodeByteArray(b, 0, b.length);
+        if (b != null)
+            m_movie = Movie.decodeByteArray(b, 0, b.length);
         if (b != null && m_movie != null) {
             Log.d(TAG, "decoded " + b.length + " bytes to " + m_movie.duration() + " msecs, " +
                     m_movie.width() + "x" + m_movie.height());
