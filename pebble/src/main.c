@@ -61,7 +61,6 @@ enum WeatherIcon {
 static Window *window;
 static Layer *main_layer;
 static Layer *tap_layer;
-static TextLayer *text_time_layer;
 static TextLayer *tapTimeLayer;
 static TextLayer *tapLocationLayer;
 static TextLayer *stepsLayer;
@@ -75,6 +74,7 @@ static Layer *circleLayer;
 static Layer *weatherPlotLayer;
 static int batteryPct = 0;
 struct tm currentTime;
+static char currentTimeText[] = "00:00";
 static int curLat = 59913; // degrees * 1000
 static int curLon = 10739; // degrees * 1000
 static char curLocationName[32];
@@ -126,18 +126,15 @@ void dateLayerUpdate()
 	static char date_text[24];
 	static const char *date_format = "%a %e %b";
 	strftime(date_text, sizeof(date_text), date_format, &currentTime);
-	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "tick %s", time_text);
 	text_layer_set_text(dateLayer, date_text);
 }
 
 void timeLayerUpdate()
 {
-	static char time_text[] = "00:00";
 	static const char *time_format = "%H:%M";  //:%S";
-	strftime(time_text, sizeof(time_text), time_format, &currentTime);
-	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "tick %s", time_text);
-	text_layer_set_text(text_time_layer, time_text);
-	text_layer_set_text(tapTimeLayer, time_text);
+	strftime(currentTimeText, sizeof(currentTimeText), time_format, &currentTime);
+	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "tick %s", currentTimeText);
+	text_layer_set_text(tapTimeLayer, currentTimeText);
 }
 
 #ifdef PBL_HEALTH
@@ -439,6 +436,32 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 		}
 	}
 #endif
+
+	GFont font = fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS);
+	GRect text_time_rect = GRect(0, 0, layerBounds.size.w, 50);
+	grect_align(&text_time_rect, &layerBounds, GAlignCenter, false);
+	text_time_rect.origin.y += 12;
+
+	graphics_context_set_text_color(ctx, GColorBlack);
+	text_time_rect.origin.x += 2;
+	text_time_rect.origin.y -= 2;
+	graphics_draw_text(ctx, currentTimeText, font,
+		text_time_rect, GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+	text_time_rect.origin.x -= 4;
+	graphics_draw_text(ctx, currentTimeText, font,
+		text_time_rect, GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+	text_time_rect.origin.y += 4;
+	graphics_draw_text(ctx, currentTimeText, font,
+		text_time_rect, GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+	text_time_rect.origin.x += 4;
+	graphics_draw_text(ctx, currentTimeText, font,
+		text_time_rect, GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+
+	graphics_context_set_text_color(ctx, COLOR_TIME);
+	text_time_rect.origin.x -= 2;
+	text_time_rect.origin.y -= 2;
+	graphics_draw_text(ctx, currentTimeText, font,
+		text_time_rect, GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
 }
 
 static void updateBatteryGraphLayer(Layer *layer, GContext* ctx)
@@ -812,12 +835,6 @@ static void window_load(Window *window) {
 
 	GRect text_time_rect = GRect(0, 0, bounds.size.w, 50);
 	grect_align(&text_time_rect, &bounds, GAlignCenter, false);
-	text_time_layer = text_layer_create(text_time_rect);
-	text_layer_set_text_color(text_time_layer, COLOR_TIME);
-	text_layer_set_background_color(text_time_layer, GColorClear);
-	text_layer_set_font(text_time_layer, fonts_get_system_font(FONT_KEY_LECO_42_NUMBERS));
-	text_layer_set_text_alignment(text_time_layer, GTextAlignmentCenter);
-	layer_add_child(main_layer, text_layer_get_layer(text_time_layer));
 
 #ifdef PBL_HEALTH
 	text_time_rect.origin.y += 40;
@@ -884,7 +901,6 @@ static void window_unload(Window *window) {
 	layer_destroy(weatherPlotLayer);
 	layer_destroy(main_layer);
 	layer_destroy(tap_layer);
-	text_layer_destroy(text_time_layer);
 	text_layer_destroy(tapTimeLayer);
 	text_layer_destroy(tapLocationLayer);
 	bitmap_layer_destroy(bluetooth_layer);
