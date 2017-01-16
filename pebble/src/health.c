@@ -1,6 +1,7 @@
 #include "health.h"
 #include "common.h"
 
+#ifdef PBL_HEALTH
 typedef enum
 {
 	AverageTypeCurrent = 0,
@@ -258,3 +259,4 @@ void health_deinit()
 {
 	// could persist stuff here but we've been doing it often enough as it is
 }
+#endif

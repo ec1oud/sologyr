@@ -140,12 +140,14 @@ void timeLayerUpdate()
 	text_layer_set_text(tapTimeLayer, time_text);
 }
 
+#ifdef PBL_HEALTH
 void stepsLayerUpdate()
 {
 	static char buf[] = "000000";
 	snprintf(buf, sizeof(buf), "%d", health_get_current_steps());
 	text_layer_set_text(stepsLayer, buf);
 }
+#endif
 
 void circleLayerUpdate()
 {
@@ -158,16 +160,21 @@ static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
 	if (units_changed & MINUTE_UNIT) {
 		timeLayerUpdate();
 		circleLayerUpdate();
+#ifdef PBL_HEALTH
 		stepsLayerUpdate();
 		health_update_steps_interval();
+#endif
 	}
 	if (units_changed & DAY_UNIT) {
 		dateLayerUpdate();
 		layer_mark_dirty(window_get_root_layer(window));
+#ifdef PBL_HEALTH
 		health_update_weekday();
+#endif
 	}
 }
 
+#ifdef PBL_HEALTH
 void handleCurrentIntervalChanged(uint8_t interval, uint16_t expectedVmc)
 {
 	if (!expectedVmc)
@@ -181,6 +188,7 @@ void handleCurrentIntervalChanged(uint8_t interval, uint16_t expectedVmc)
 	dict_write_end(iter);
 	app_message_outbox_send();
 }
+#endif
 
 static void paintWeatherPlot(Layer *layer, GContext* ctx)
 {
@@ -399,6 +407,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	graphics_context_set_stroke_width(ctx, 3);
 	graphics_draw_line(ctx, pointerInner, pointerOuter);
 
+#ifdef PBL_HEALTH
 	// render the activity record; TODO move it to another layer?(
 	innerCircle = grect_crop(fillCircle, layerBounds.size.w / 3);
 	graphics_context_set_stroke_width(ctx, 3);
@@ -429,6 +438,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 			graphics_draw_line(ctx, pointerInner, pointerOuter);
 		}
 	}
+#endif
 }
 
 static void updateBatteryGraphLayer(Layer *layer, GContext* ctx)
@@ -809,6 +819,7 @@ static void window_load(Window *window) {
 	text_layer_set_text_alignment(text_time_layer, GTextAlignmentCenter);
 	layer_add_child(main_layer, text_layer_get_layer(text_time_layer));
 
+#ifdef PBL_HEALTH
 	text_time_rect.origin.y += 40;
 	stepsLayer = text_layer_create(text_time_rect);
 	text_layer_set_text_color(stepsLayer, COLOR_STEPS);
@@ -816,6 +827,7 @@ static void window_load(Window *window) {
 	text_layer_set_font(stepsLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 	text_layer_set_text_alignment(stepsLayer, GTextAlignmentCenter);
 	layer_add_child(main_layer, text_layer_get_layer(stepsLayer));
+#endif
 
 	text_time_rect.origin.y = bounds.size.h / 2;
 	tapTimeLayer = text_layer_create(text_time_rect);
@@ -848,7 +860,9 @@ static void window_load(Window *window) {
 
 	dateLayerUpdate();
 	timeLayerUpdate();
+#ifdef PBL_HEALTH
 	stepsLayerUpdate();
+#endif
 
 	tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
 	bluetooth_connection_service_subscribe(&handle_bluetooth);
@@ -904,12 +918,16 @@ static void window_init(void) {
 	app_message_register_outbox_failed(out_failed_handler);
 	Tuplet value = TupletInteger(KEY_NONE, 0);
 	app_message_open(1024, dict_calc_buffer_size_from_tuplets(&value, 1));
+#ifdef PBL_HEALTH
 	health_init();
+#endif
 }
 
 static void window_deinit(void) {
 	window_destroy(window);
+#ifdef PBL_HEALTH
 	health_deinit();
+#endif
 }
 
 int main(void) {
