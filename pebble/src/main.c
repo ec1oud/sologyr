@@ -401,10 +401,10 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	GPoint pointerInner = gpoint_from_polar(innerCircle, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
 	GPoint pointerOuter = gpoint_from_polar(layerBounds, GCornerNone, DEG_TO_TRIGANGLE(currentTimeAngle));
 	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_POINTER_SHADOW);
-	graphics_context_set_stroke_width(ctx, 7);
+	graphics_context_set_stroke_width(ctx, 11);
 	graphics_draw_line(ctx, pointerInner, pointerOuter);
 	graphics_context_set_stroke_color(ctx, PBL_IF_COLOR_ELSE(COLOR_CLOCK_POINTER, GColorWhite));
-	graphics_context_set_stroke_width(ctx, 3);
+	graphics_context_set_stroke_width(ctx, 5);
 	graphics_draw_line(ctx, pointerInner, pointerOuter);
 
 #ifdef PBL_HEALTH
