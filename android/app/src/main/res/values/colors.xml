@@ -3,4 +3,10 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="colorPrecipitationMax">#0055AA</color>
+    <color name="colorPrecipitation">#00FFFF</color>
+    <color name="colorPrecipitationMin">#55AAFF</color>
+    <color name="colorPositiveTemperature">#FFAA55</color>
+    <color name="colorNegativeTemperature">#55FFFF</color>
 </resources>
