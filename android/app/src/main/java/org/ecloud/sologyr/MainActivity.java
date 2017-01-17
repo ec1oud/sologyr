@@ -323,7 +323,7 @@ public class MainActivity extends Activity implements WeatherListener {
     }
 
     @Override
-    public void updateForecast(LinkedList<Forecast> nowcast) {
+    public void updateForecast(LinkedList<Forecast> forecast) {
         // TODO
     }
 

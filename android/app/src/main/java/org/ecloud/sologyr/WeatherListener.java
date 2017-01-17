@@ -66,7 +66,7 @@ public interface WeatherListener {
     public void updateCurrentWeather(double temperature, double cloudCover, WeatherIcon icon,
                                      double windSpeed, double windBearing, double humidity, double dewPoint,
                                      double pressure, double ozone, double precipIntensity);
-    public void updateForecast(LinkedList<Forecast> nowcast);
+    public void updateForecast(LinkedList<Forecast> forecast);
     public void updateNowCast(LinkedList<Forecast> nowcast);
     public void updateSunriseSunset(int sunriseHour, int sunriseMinute, int sunsetHour, int sunsetMinute);
 }
