@@ -2,10 +2,15 @@ package org.ecloud.sologyr;
 
 import android.Manifest;
 import android.app.Service;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Point;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Location;
@@ -16,6 +21,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 import com.github.dvdme.ForecastIOLib.FIOCurrently;
 import com.github.dvdme.ForecastIOLib.ForecastIO;
@@ -72,19 +78,51 @@ public class WeatherService extends Service implements LocalityListener {
     int m_localityUpdateCount = 0;
     int m_forecastUpdateCount = 0;
     int m_nowcastUpdateCount = 0;
+    LinkedList<Forecast> m_forecast;
+    ArrayList<Point> m_meteogramDimensions = new ArrayList<>();
+    ArrayList<Bitmap> m_meteograms = new ArrayList<>();
+    ForecastView m_forecastView = null;
 
     public WeatherService() {
+        m_meteogramDimensions.add(new Point(640, 240));
+    }
+
+    public Bitmap getMeteogram() {
+        return m_meteograms.size() > 0 ? m_meteograms.get(0) : null;
     }
 
     public void setForecast(LinkedList<Forecast> forecast) {
         if (forecast == null)
             return;
+        m_forecast = forecast;
         for (WeatherListener el : m_listeners)
             el.updateForecast(forecast);
 //        for (Forecast f : forecast)
 //            Log.d(TAG, "forecast:" + f.toString());
         forecastTask = null;
         ++m_forecastUpdateCount;
+
+        m_meteograms.clear();
+        if (m_forecastView == null)
+            m_forecastView = new ForecastView(this);
+        m_forecastView.updateForecast(curLocationName, m_forecast);
+        for (Point dim : m_meteogramDimensions) {
+            Bitmap bm = Bitmap.createBitmap(dim.x, dim.y, Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(bm);
+            m_forecastView.draw(c);
+            m_meteograms.add(bm);
+        }
+
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
+        int[] allWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(getApplicationContext(), ForecastWidget.class));
+        for (int widgetId : allWidgetIds) {
+            Log.d(TAG, "updating ForecastWidget " + widgetId);
+            RemoteViews remoteViews = new RemoteViews(this
+                    .getApplicationContext().getPackageName(),
+                    R.layout.forecast_widget);
+            remoteViews.setImageViewBitmap(R.id.imageView, m_meteograms.get(0));
+            appWidgetManager.updateAppWidget(widgetId, remoteViews);
+        }
     }
 
     public void setNowCast(LinkedList<Forecast> nowcast) {

@@ -49,7 +49,6 @@
         <receiver android:name=".ForecastWidget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="org.ecloud.sologyr.action.ACTION_FETCH_DONE" />
             </intent-filter>
 
             <meta-data

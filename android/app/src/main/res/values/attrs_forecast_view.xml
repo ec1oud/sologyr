@@ -1,6 +1,6 @@
 <resources>
     <declare-styleable name="ForecastView">
-        <attr name="exampleDimension" format="dimension" />
+        <attr name="textSize" format="dimension" />
         <attr name="gridColor" format="color" />
     </declare-styleable>
 </resources>
