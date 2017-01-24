@@ -79,16 +79,22 @@ public class WeatherService extends Service implements LocalityListener {
     int m_forecastUpdateCount = 0;
     int m_nowcastUpdateCount = 0;
     LinkedList<Forecast> m_forecast;
-    ArrayList<Point> m_meteogramDimensions = new ArrayList<>();
-    ArrayList<Bitmap> m_meteograms = new ArrayList<>();
+    int m_largestWidgetWidth = 640;
+    int m_largestWidgetHeight = 240;
+    Bitmap m_meteogram = null;
     ForecastView m_forecastView = null;
 
-    public WeatherService() {
-        m_meteogramDimensions.add(new Point(640, 240));
-    }
+    public WeatherService() { }
 
     public Bitmap getMeteogram() {
-        return m_meteograms.size() > 0 ? m_meteograms.get(0) : null;
+        return m_meteogram;
+    }
+
+    public void reportWidgetSize(int width, int height) {
+        if (width > m_largestWidgetWidth)
+            m_largestWidgetWidth = width;
+        if (height > m_largestWidgetHeight)
+            m_largestWidgetHeight = height;
     }
 
     public void setForecast(LinkedList<Forecast> forecast) {
@@ -102,16 +108,12 @@ public class WeatherService extends Service implements LocalityListener {
         forecastTask = null;
         ++m_forecastUpdateCount;
 
-        m_meteograms.clear();
         if (m_forecastView == null)
             m_forecastView = new ForecastView(this);
         m_forecastView.updateForecast(curLocationName, m_forecast);
-        for (Point dim : m_meteogramDimensions) {
-            Bitmap bm = Bitmap.createBitmap(dim.x, dim.y, Bitmap.Config.ARGB_8888);
-            Canvas c = new Canvas(bm);
-            m_forecastView.draw(c);
-            m_meteograms.add(bm);
-        }
+        m_meteogram = Bitmap.createBitmap(m_largestWidgetWidth, m_largestWidgetHeight, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(m_meteogram);
+        m_forecastView.draw(c);
 
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
         int[] allWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(getApplicationContext(), ForecastWidget.class));
@@ -120,7 +122,7 @@ public class WeatherService extends Service implements LocalityListener {
             RemoteViews remoteViews = new RemoteViews(this
                     .getApplicationContext().getPackageName(),
                     R.layout.forecast_widget);
-            remoteViews.setImageViewBitmap(R.id.imageView, m_meteograms.get(0));
+            remoteViews.setImageViewBitmap(R.id.imageView, m_meteogram);
             appWidgetManager.updateAppWidget(widgetId, remoteViews);
         }
     }

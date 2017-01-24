@@ -7,7 +7,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.RemoteViews;
 
@@ -25,7 +27,7 @@ public class ForecastWidget extends AppWidgetProvider {
         if (m_weatherService != null) {
             // Construct the RemoteViews object
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.forecast_widget);
-            Bitmap bm = m_weatherService.getMeteogram(); // TODO get size from resize event
+            Bitmap bm = m_weatherService.getMeteogram();
             if (bm == null) {
                 Log.w("ForecastWidget", "WeatherService doesn't have a meteogram available yet");
                 return;
@@ -72,5 +74,24 @@ public class ForecastWidget extends AppWidgetProvider {
         Intent intent = new Intent(context.getApplicationContext(), WeatherService.class);
         context.startService(intent);
         context.getApplicationContext().bindService(intent, m_connection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onAppWidgetOptionsChanged (Context context, AppWidgetManager appWidgetManager,
+                                    int appWidgetId, Bundle options) {
+        // Get min width and height.
+        int minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH);
+        int minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT);
+        DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+
+        // TODO persist it?
+
+        Log.i(TAG, "onAppWidgetOptionsChanged " + minWidth + "x" + minHeight + " density " + displayMetrics.density);
+
+        if (m_weatherService != null)
+            m_weatherService.reportWidgetSize(Math.round(minWidth * displayMetrics.density),
+                    Math.round(minHeight * displayMetrics.density));
+
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, options);
     }
 }
