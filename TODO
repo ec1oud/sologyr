@@ -1,5 +1,5 @@
 figure out why forecast temperatures are only 2 days' worth
-fix default URL for radar
+come up with a way to store and recall widget size (as reported to onAppWidgetOptionsChanged)
 de-duplicate preference defaults
 fix crash on 4.3 firmware if possible
 

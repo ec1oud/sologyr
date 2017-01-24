@@ -30,12 +30,12 @@ What's working:
 - [x] Android app includes and installs the Pebble watch face
 - [x] weather radar in the Android app (main activity)
 - [x] show name of the current location
+- [x] Android widget with forecast temperature and precipitation (3 days)
 
 In progress:
 - [ ] learning the user's active periods of day, so as to ask the phone to fetch weather updates during that time only.  That plus a frequency limit should keep API calls to a minimum.
 
 Not started yet:
-- [ ] yr.no "meteogram" widget: regenerate from forecast instead of fetching the PNG (it's too hard to get the right one automatically)
 - [ ] add a widget which resembles the watch face
 - [ ] calculate sunrise/sunset in the Pebble app, based on current location; persist current location on Pebble.  (The problem now is that every time you leave the watch screen, it loses those times.)
 - [ ] label the temperature range on the forecast chart
@@ -46,7 +46,6 @@ Not started yet:
   - [ ] what to show and where?
 - [ ] Android: show time since weather update, expected active periods today (or even all week)
 - [ ] get real-time weather from some other source, preferably an open source where users' weather station data is contributed
-- [ ] yr.no forecast chart / meteogram: zoomed view, accessed from main activity or by clicking the home screen widget
 - [ ] help screen on Android
 - [ ] port and test on Pebble Time Round and classic Pebble
 
