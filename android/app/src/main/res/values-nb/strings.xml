@@ -15,6 +15,5 @@
     </string-array>
     <string name="action_refresh">Oppdater posisjonsdata</string>
     <string name="pref_title_radar_url">Radar URL</string>
-    <string name="pref_title_meteogram_url">Meteogram URL</string>
     <string name="app_version">Versjon 0.6.0</string>
 </resources>

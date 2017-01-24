@@ -56,8 +56,6 @@
         <item>http://sirocco.accuweather.com/nx_mosaic_640x480c/SIR/inmaSIRAZ_.gif</item>
     </string-array>
 
-    <string name="pref_title_meteogram_url">Meteogram URL</string>
-
     <string name="add_widget">Add widget</string>
 
 </resources>
