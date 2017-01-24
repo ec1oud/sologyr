@@ -93,8 +93,8 @@ public class WeatherService extends Service implements LocalityListener {
 
         Log.d(TAG, "getMeteogram: all known prefs " + m_prefs.getAll());
 
-        Bitmap ret =  Bitmap.createBitmap(m_prefs.getInt(PREF_WIDGET_WIDTH, 320),
-                m_prefs.getInt(PREF_WIDGET_HEIGHT, 120), Bitmap.Config.ARGB_8888);
+        Bitmap ret =  Bitmap.createBitmap(m_prefs.getInt(PREF_WIDGET_WIDTH, 748),
+                m_prefs.getInt(PREF_WIDGET_HEIGHT, 210), Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(ret);
         m_forecastView.draw(c);
 
