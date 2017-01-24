@@ -6,12 +6,16 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.RemoteViews;
+
+import static android.content.Context.MODE_PRIVATE;
 
 /**
     Widget which uses FetchService to get the latest "meteogram" image from yr.no.
@@ -42,7 +46,8 @@ public class ForecastWidget extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context ctx, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        Log.i(TAG, "onUpdate " + appWidgetIds);
+        Log.i(TAG, "onUpdate");
+        SharedPreferences prefs = ctx.getSharedPreferences(WeatherService.PREFERENCES_NAME, MODE_PRIVATE);
         // There may be multiple widgets active, so update all of them
         for (int appWidgetId : appWidgetIds)
             updateAppWidget(ctx, appWidgetManager, appWidgetId);
@@ -77,20 +82,30 @@ public class ForecastWidget extends AppWidgetProvider {
     }
 
     @Override
+    public void onDisabled(final Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(WeatherService.PREFERENCES_NAME, MODE_PRIVATE);
+        prefs.edit().remove(WeatherService.PREF_WIDGET_WIDTH);
+        prefs.edit().remove(WeatherService.PREF_WIDGET_HEIGHT);
+    }
+
+    @Override
     public void onAppWidgetOptionsChanged (Context context, AppWidgetManager appWidgetManager,
                                     int appWidgetId, Bundle options) {
         // Get min width and height.
-        int minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH);
-        int minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT);
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+        int minWidth = Math.round(displayMetrics.density * options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH));
+        int minHeight = Math.round(displayMetrics.density * options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT));
 
-        // TODO persist it?
+//        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(WeatherService.PREFERENCES_NAME, MODE_PRIVATE);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        Log.i(TAG, "onAppWidgetOptionsChanged " + minWidth + "x" + minHeight + " density " + displayMetrics.density +
+         " ws " + m_weatherService + " prefs " + prefs.getAll());
 
-        Log.i(TAG, "onAppWidgetOptionsChanged " + minWidth + "x" + minHeight + " density " + displayMetrics.density);
-
-        if (m_weatherService != null)
-            m_weatherService.reportWidgetSize(Math.round(minWidth * displayMetrics.density),
-                    Math.round(minHeight * displayMetrics.density));
+        // TODO these don't actually persist, for whatever reason
+        if (!prefs.contains(WeatherService.PREF_WIDGET_WIDTH) || minWidth > prefs.getInt(WeatherService.PREF_WIDGET_WIDTH, 320))
+            prefs.edit().putInt(WeatherService.PREF_WIDGET_WIDTH, minWidth);
+        if (!prefs.contains(WeatherService.PREF_WIDGET_HEIGHT) || minHeight > prefs.getInt(WeatherService.PREF_WIDGET_HEIGHT, 120))
+            prefs.edit().putInt(WeatherService.PREF_WIDGET_HEIGHT, minHeight);
 
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, options);
     }

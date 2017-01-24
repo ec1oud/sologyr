@@ -49,6 +49,9 @@ import static org.ecloud.sologyr.WeatherListener.WeatherIcon.Wind;
 public class WeatherService extends Service implements LocalityListener {
 
     final String TAG = this.getClass().getSimpleName();
+    public static final String PREFERENCES_NAME = "org.ecloud.sologyr_preferences";
+    public static final String PREF_WIDGET_WIDTH = "widgetWidth";
+    public static final String PREF_WIDGET_HEIGHT = "widgetHeight";
     List<WeatherListener> m_listeners = new ArrayList<>(2);
     SharedPreferences m_prefs = null;
     long m_updateInterval = 10800000; // 3 hours in milliseconds
@@ -79,22 +82,37 @@ public class WeatherService extends Service implements LocalityListener {
     int m_forecastUpdateCount = 0;
     int m_nowcastUpdateCount = 0;
     LinkedList<Forecast> m_forecast;
-    int m_largestWidgetWidth = 640;
-    int m_largestWidgetHeight = 240;
-    Bitmap m_meteogram = null;
     ForecastView m_forecastView = null;
 
     public WeatherService() { }
 
     public Bitmap getMeteogram() {
-        return m_meteogram;
+        if (m_forecastView == null)
+            m_forecastView = new ForecastView(this);
+        m_forecastView.updateForecast(curLocationName, m_forecast);
+
+        Log.d(TAG, "getMeteogram: all known prefs " + m_prefs.getAll());
+
+        Bitmap ret =  Bitmap.createBitmap(m_prefs.getInt(PREF_WIDGET_WIDTH, 320),
+                m_prefs.getInt(PREF_WIDGET_HEIGHT, 120), Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(ret);
+        m_forecastView.draw(c);
+
+        return ret;
     }
 
-    public void reportWidgetSize(int width, int height) {
-        if (width > m_largestWidgetWidth)
-            m_largestWidgetWidth = width;
-        if (height > m_largestWidgetHeight)
-            m_largestWidgetHeight = height;
+    public void updateMeteogramWidgets() {
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
+        int[] allWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(getApplicationContext(), ForecastWidget.class));
+        Bitmap bm = getMeteogram();
+        for (int widgetId : allWidgetIds) {
+            Log.d(TAG, "updating ForecastWidget " + widgetId);
+            RemoteViews remoteViews = new RemoteViews(this
+                    .getApplicationContext().getPackageName(),
+                    R.layout.forecast_widget);
+            remoteViews.setImageViewBitmap(R.id.imageView, bm);
+            appWidgetManager.updateAppWidget(widgetId, remoteViews);
+        }
     }
 
     public void setForecast(LinkedList<Forecast> forecast) {
@@ -107,24 +125,7 @@ public class WeatherService extends Service implements LocalityListener {
 //            Log.d(TAG, "forecast:" + f.toString());
         forecastTask = null;
         ++m_forecastUpdateCount;
-
-        if (m_forecastView == null)
-            m_forecastView = new ForecastView(this);
-        m_forecastView.updateForecast(curLocationName, m_forecast);
-        m_meteogram = Bitmap.createBitmap(m_largestWidgetWidth, m_largestWidgetHeight, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(m_meteogram);
-        m_forecastView.draw(c);
-
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(getApplicationContext());
-        int[] allWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(getApplicationContext(), ForecastWidget.class));
-        for (int widgetId : allWidgetIds) {
-            Log.d(TAG, "updating ForecastWidget " + widgetId);
-            RemoteViews remoteViews = new RemoteViews(this
-                    .getApplicationContext().getPackageName(),
-                    R.layout.forecast_widget);
-            remoteViews.setImageViewBitmap(R.id.imageView, m_meteogram);
-            appWidgetManager.updateAppWidget(widgetId, remoteViews);
-        }
+        updateMeteogramWidgets();
     }
 
     public void setNowCast(LinkedList<Forecast> nowcast) {
@@ -223,7 +224,7 @@ public class WeatherService extends Service implements LocalityListener {
     }
 
     public void onCreate() {
-        m_prefs = getSharedPreferences("org.ecloud.sologyr_preferences", MODE_PRIVATE);
+        m_prefs = getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE);
         m_updateInterval = Integer.parseInt(m_prefs.getString("weather_update_frequency", "180")) * 60000;
         m_locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
