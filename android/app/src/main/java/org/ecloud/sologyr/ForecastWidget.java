@@ -98,8 +98,8 @@ public class ForecastWidget extends AppWidgetProvider {
 
 //        SharedPreferences prefs = context.getApplicationContext().getSharedPreferences(WeatherService.PREFERENCES_NAME, MODE_PRIVATE);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        Log.i(TAG, "onAppWidgetOptionsChanged " + minWidth + "x" + minHeight + " density " + displayMetrics.density +
-         " ws " + m_weatherService + " prefs " + prefs.getAll());
+        Log.i(TAG, "onAppWidgetOptionsChanged " + minWidth + "x" + minHeight + " density " + displayMetrics.density);
+        // + " ws " + m_weatherService + " prefs " + prefs.getAll());
 
         // TODO these don't actually persist, for whatever reason
         if (!prefs.contains(WeatherService.PREF_WIDGET_WIDTH) || minWidth > prefs.getInt(WeatherService.PREF_WIDGET_WIDTH, 320))
