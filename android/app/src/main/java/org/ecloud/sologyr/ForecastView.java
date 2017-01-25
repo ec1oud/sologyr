@@ -29,7 +29,7 @@ public class ForecastView extends View /* implements WeatherListener */ {
     private int m_colorNegativeTemperature;
     private float m_textSize = 24;
     private static final long MILLISECONDS_PER_DAY = 86400000;
-    private float m_millisecondsWidth = 259200000; // 3 days
+    private float m_millisecondsWidth = 432000000; // 5 days
     private float m_pixelsPerMmPrecipitation = 10;
     private String m_locationName = "";
     private Paint m_paint;
