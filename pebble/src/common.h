@@ -39,7 +39,10 @@ typedef enum {
 	AppKeyVmcWednesday,
 	AppKeyVmcThursday,
 	AppKeyVmcFriday,
-	AppKeyVmcSaturday
+	AppKeyVmcSaturday,
+	AppKeyLat,
+	AppKeyLon,
+	AppKeyLocationName
 } AppKey;
 
 enum DictKey {

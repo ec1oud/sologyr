@@ -915,6 +915,11 @@ static void window_unload(Window *window) {
 static void window_init(void) {
     time_t tt = time(NULL);
 	memcpy(&currentTime, localtime(&tt), sizeof(struct tm));
+	curLat = persist_read_int(AppKeyLat);
+	curLon = persist_read_int(AppKeyLon);
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "window_init: restored lat %d lon %d" , curLat, curLon);
+	// TODO read AppKeyLocationName; use GPS coords only if empty? OTOH this is a nice way to check what's stored
+	snprintf(curLocationName, sizeof(curLocationName), "%d.%d,%d.%d", curLat / 1000, curLat % 1000, curLon / 1000, curLon % 1000);
 	window = window_create();
 	window_set_background_color(window, GColorBlack);
 	window_set_window_handlers(window, (WindowHandlers) {
@@ -944,6 +949,9 @@ static void window_deinit(void) {
 #ifdef PBL_HEALTH
 	health_deinit();
 #endif
+	persist_write_int(AppKeyLat, curLat);
+	persist_write_int(AppKeyLon, curLon);
+	// TODO AppKeyLocationName ?
 }
 
 int main(void) {
