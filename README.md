@@ -37,8 +37,7 @@ In progress:
 
 Not started yet:
 - [ ] add a widget which resembles the watch face
-- [ ] calculate sunrise/sunset in the Pebble app, based on current location; persist current location on Pebble.  (The problem now is that every time you leave the watch screen, it loses those times.)
-- [ ] label the temperature range on the forecast chart
+- [ ] auto-scale and label the temperature range on the forecast chart (Pebble and Android)
 - [ ] send the rest of the forecast across to the Pebble (wind? cloud level?)
 - [ ] show moonrise/set - second screen
 - [ ] preferences on Android

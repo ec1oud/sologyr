@@ -153,43 +153,48 @@ void circleLayerUpdate()
 	layer_mark_dirty(circleLayer);
 }
 
-void adjustTimezone(float* time)
+void adjustTimeRange(float* time)
 {
-    while (*time > 24) *time -= 24;
-    while (*time < 0) *time += 24;
+    if (*time > 24) *time -= 24;
+    if (*time < 0) *time += 24;
 }
 
 void updateSunriseSunset()
 {
+	// get sunrise/set times in decimal hours UTC
 	float sunriseTime = calcSunRise(currentTime.tm_year, currentTime.tm_mon+1, currentTime.tm_mday, curLat / 1000.0, curLon / 1000.0, ZENITH_OFFICIAL);
 	float sunsetTime = calcSunSet(currentTime.tm_year, currentTime.tm_mon+1, currentTime.tm_mday, curLat / 1000.0, curLon / 1000.0, ZENITH_OFFICIAL);
 
-	adjustTimezone(&sunriseTime);
-	adjustTimezone(&sunsetTime);
+	adjustTimeRange(&sunriseTime);
+	adjustTimeRange(&sunsetTime);
 
-	// TODO those are in hours and fractions UTC: convert to local timezone
+	time_t startOfToday = time_start_of_today();
+	struct tm * st = localtime(&startOfToday);
+	startOfToday += st->tm_gmtoff;
+	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "for sunrise calc: start of today %d:%02d offset %d", st->tm_hour, st->tm_min, st->tm_gmtoff);
 
+	// convert to hour and minute of the day, local time
 	if (sunriseTime) {
-		float intPart;
-		float fraction = modff(sunriseTime, &intPart);
-		sunriseHour = (uint8_t)intPart;
-		sunriseMinute = (uint8_t)(fraction * 60.0);
+		time_t tt = startOfToday + (sunriseTime * 60.0 * 60.0);
+		struct tm * t = localtime(&tt);
+		sunriseHour = (uint8_t)(t->tm_hour);
+		sunriseMinute = (uint8_t)(t->tm_min);
 	} else {
 		sunriseHour = 100;
 		sunriseMinute = 0;
 	}
 
 	if (sunsetTime) {
-		float intPart;
-		float fraction = modff(sunsetTime, &intPart);
-		sunsetHour = (uint8_t)intPart;
-		sunsetMinute = (uint8_t)(fraction * 60.0);
+		time_t tt = startOfToday + (sunsetTime * 60.0 * 60.0);
+		struct tm * t = localtime(&tt);
+		sunsetHour = (uint8_t)(t->tm_hour);
+		sunsetMinute = (uint8_t)(t->tm_min);
 	} else {
 		sunsetHour = 100;
 		sunsetMinute = 0;
 	}
 
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "computed sunrise %d:%02d sunset %d:%02d for lat %d lon %d", sunriseHour, sunriseMinute, sunsetHour, sunsetMinute, curLat, curLon);
+	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "computed sunrise %d:%02d sunset %d:%02d for lat %d lon %d", sunriseHour, sunriseMinute, sunsetHour, sunsetMinute, curLat, curLon);
 }
 
 static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
