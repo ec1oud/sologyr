@@ -1,6 +1,8 @@
+#include <math.h>
 #include <pebble.h>
 #include "common.h"
 #include "health.h"
+#include "suncalc.h"
 
 // from http://api.met.no/weatherapi/weathericon/1.1/documentation
 enum WeatherIcon {
@@ -151,6 +153,45 @@ void circleLayerUpdate()
 	layer_mark_dirty(circleLayer);
 }
 
+void adjustTimezone(float* time)
+{
+    while (*time > 24) *time -= 24;
+    while (*time < 0) *time += 24;
+}
+
+void updateSunriseSunset()
+{
+	float sunriseTime = calcSunRise(currentTime.tm_year, currentTime.tm_mon+1, currentTime.tm_mday, curLat / 1000.0, curLon / 1000.0, ZENITH_OFFICIAL);
+	float sunsetTime = calcSunSet(currentTime.tm_year, currentTime.tm_mon+1, currentTime.tm_mday, curLat / 1000.0, curLon / 1000.0, ZENITH_OFFICIAL);
+
+	adjustTimezone(&sunriseTime);
+	adjustTimezone(&sunsetTime);
+
+	// TODO those are in hours and fractions UTC: convert to local timezone
+
+	if (sunriseTime) {
+		float intPart;
+		float fraction = modff(sunriseTime, &intPart);
+		sunriseHour = (uint8_t)intPart;
+		sunriseMinute = (uint8_t)(fraction * 60.0);
+	} else {
+		sunriseHour = 100;
+		sunriseMinute = 0;
+	}
+
+	if (sunsetTime) {
+		float intPart;
+		float fraction = modff(sunsetTime, &intPart);
+		sunsetHour = (uint8_t)intPart;
+		sunsetMinute = (uint8_t)(fraction * 60.0);
+	} else {
+		sunsetHour = 100;
+		sunsetMinute = 0;
+	}
+
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "computed sunrise %d:%02d sunset %d:%02d for lat %d lon %d", sunriseHour, sunriseMinute, sunsetHour, sunsetMinute, curLat, curLon);
+}
+
 static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
 {
 	memcpy(&currentTime, tick_time, sizeof(struct tm));
@@ -163,6 +204,7 @@ static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
 #endif
 	}
 	if (units_changed & DAY_UNIT) {
+		updateSunriseSunset();
 		dateLayerUpdate();
 		layer_mark_dirty(window_get_root_layer(window));
 #ifdef PBL_HEALTH
@@ -631,9 +673,11 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 		switch (tuple->key) {
 		case KEY_LAT:
 			curLat = tuple->value->int32;
+			updateSunriseSunset();
 			break;
 		case KEY_LON:
 			curLon = tuple->value->int32;
+			updateSunriseSunset();
 			break;
 		case KEY_LOCATION_NAME:
 			strncpy(curLocationName, tuple->value->cstring, sizeof(curLocationName));
@@ -663,18 +707,6 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 				}
 			}
 			text_layer_set_text(temperatureLayer, currentTemperature);
-			break;
-		case KEY_SUNRISE_HOUR:
-			sunriseHour = tuple->value->int8;
-			break;
-		case KEY_SUNRISE_MINUTE:
-			sunriseMinute = tuple->value->int8;
-			break;
-		case KEY_SUNSET_HOUR:
-			sunsetHour = tuple->value->int8;
-			break;
-		case KEY_SUNSET_MINUTE:
-			sunsetMinute = tuple->value->int8;
 			break;
 		case KEY_NOWCAST_MINUTES:
 			nowcastReceivedTime = time(NULL);
@@ -920,6 +952,7 @@ static void window_init(void) {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "window_init: restored lat %d lon %d" , curLat, curLon);
 	// TODO read AppKeyLocationName; use GPS coords only if empty? OTOH this is a nice way to check what's stored
 	snprintf(curLocationName, sizeof(curLocationName), "%d.%d,%d.%d", curLat / 1000, curLat % 1000, curLon / 1000, curLon % 1000);
+	updateSunriseSunset();
 	window = window_create();
 	window_set_background_color(window, GColorBlack);
 	window_set_window_handlers(window, (WindowHandlers) {

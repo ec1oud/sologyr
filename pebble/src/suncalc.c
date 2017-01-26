@@ -4,16 +4,20 @@
  */
 #include "suncalc.h"
 #include "my_math.h"
+#include <pebble.h>
 
 float calcSun(int year, int month, int day, float latitude, float longitude, int sunset, float zenith)
 {
+
   int N1 = my_floor(275 * month / 9);
   int N2 = my_floor((month + 9) / 12);
   int N3 = (1 + my_floor((year - 4 * my_floor(year / 4) + 2) / 3));
   int N = N1 - (N2 * N3) + day - 30;
 
+	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "calcSun y %d m %d d %d n's %d %d %d %d lat %d", year, month, day, N1, N2, N3, N, (int)(latitude * 1000));
+
   float lngHour = longitude / 15;
-  
+
   float t;
   if (!sunset)
   {
@@ -55,7 +59,9 @@ float calcSun(int year, int month, int day, float latitude, float longitude, int
   //7a. calculate the Sun's local hour angle
   //cosH = (cos(zenith) - (sinDec * sin(latitude))) / (cosDec * cos(latitude))
   float cosH = (my_cos((M_PI/180.0f) * zenith) - (sinDec * my_sin((M_PI/180.0f) * latitude))) / (cosDec * my_cos((M_PI/180.0f) * latitude));
-  
+
+	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "sun lng %d RA %d dec %d %d cosH %d", (int)(L * 1000), (int)(RA * 1000), (int)(sinDec * 1000), (int)(cosDec * 1000), (int)(cosH * 1000));
+
   if (cosH >  1) {
     return 0;
   }
@@ -63,9 +69,9 @@ float calcSun(int year, int month, int day, float latitude, float longitude, int
   {
     return 0;
   }
-    
+
   //7b. finish calculating H and convert into hours
-  
+
   float H;
   if (!sunset)
   {
@@ -77,7 +83,7 @@ float calcSun(int year, int month, int day, float latitude, float longitude, int
     //if setting time is desired:
     H = (180.0f/M_PI) * my_acos(cosH);
   }
-  
+
   H = H / 15;
 
   //8. calculate local mean time of rising/setting
