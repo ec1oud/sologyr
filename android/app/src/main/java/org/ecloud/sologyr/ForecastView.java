@@ -130,11 +130,8 @@ public class ForecastView extends View /* implements WeatherListener */ {
 
         Log.d(TAG, contentWidth + " x " + contentHeight);
 
-        // Draw the text.
-        canvas.drawText(m_locationName,
-                (contentWidth - mTextWidth) / 2,
-                (contentHeight + mTextHeight) / 2 - 12,
-                mTextPaint);
+        canvas.drawARGB(128, 0, 0, 0);
+        canvas.drawText(m_locationName, (contentWidth - mTextWidth) / 2, (contentHeight + mTextHeight) / 2 - 12, mTextPaint);
 
         long now = System.currentTimeMillis();
         Calendar beginningOfDay = Calendar.getInstance();
@@ -221,7 +218,7 @@ public class ForecastView extends View /* implements WeatherListener */ {
             for (float t = (float)m_minForecastTemp; t <= m_maxForecastTemp; t += TEMPERATURE_RANGE_GRANULARITY) {
                 float y = (float)(zeroToPx - t * scale);
                 canvas.drawLine(0, y, 15, y, m_paint);
-                canvas.drawLine(contentWidth - 15, t, contentWidth, t, m_paint);
+                canvas.drawLine(contentWidth - 15, y, contentWidth, y, m_paint);
                 if (t == m_minForecastTemp)
                     canvas.drawText(String.valueOf((int)t) + "℃", 15, y, mTextPaint);
                 else if (t == m_maxForecastTemp) {
