@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Point;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Location;
@@ -82,6 +81,7 @@ public class WeatherService extends Service implements LocalityListener {
     int m_forecastUpdateCount = 0;
     int m_nowcastUpdateCount = 0;
     LinkedList<Forecast> m_forecast;
+    LinkedList<Forecast> m_nowcast;
     ForecastView m_forecastView = null;
 
     public WeatherService() { }
@@ -129,6 +129,7 @@ public class WeatherService extends Service implements LocalityListener {
     }
 
     public void setNowCast(LinkedList<Forecast> nowcast) {
+        m_nowcast = nowcast;
         for (WeatherListener el : m_listeners)
             el.updateNowCast(nowcast);
 //        for (Forecast f : nowcast)
@@ -191,8 +192,6 @@ public class WeatherService extends Service implements LocalityListener {
         // TODO can be called multiple times: pick the closest to present location
         Log.d(TAG, "we seem to find ourselves " + (int)distance + "m from " + name + ", " + country);
         if (curLocationDistance < 0 || curLocationDistance > distance) {
-            if (curLocationDistance < 0)
-                updateWeather(true); // immediately because we know the location has changed, probably substantially
             curLocationDistance = (int) Math.round(distance);
             curLocationName = name;
             for (WeatherListener l : m_listeners)
@@ -294,7 +293,8 @@ public class WeatherService extends Service implements LocalityListener {
     }
 
     public void setLocation(Location location) {
-        Log.d(TAG, "setLocation " + location);
+        double distance = Math.round(GeoUtils.distance(curlat, curlon, location.getLatitude(), location.getLongitude()));
+        Log.d(TAG, "setLocation " + location + " distance moved " + distance);
         curLocation = location;
         curlat = location.getLatitude();
         curlon = location.getLongitude();
@@ -321,6 +321,8 @@ public class WeatherService extends Service implements LocalityListener {
         }
         for (WeatherListener l : m_listeners)
             l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
+        if (curLocationDistance < 0 || distance > m_locationThreshold)
+            updateWeather(true); // immediately because we know the location has changed, substantially enough
         boolean locationNameFound = false;
         curLocationName = "";
         curLocationDistance = -1;
@@ -336,7 +338,7 @@ public class WeatherService extends Service implements LocalityListener {
             }
         }
         if (!locationNameFound) {
-            Log.d(TAG, "locality unknown, asking Gisgrahy");
+            Log.d(TAG, "locality unknown, asking Gisgraphy");
             geocoderTask = new GisgraphySearchTask(this) {
                 @Override
                 protected void onPostExecute(List<Address> addrs) {
@@ -381,6 +383,10 @@ public class WeatherService extends Service implements LocalityListener {
         l.updateSunriseSunset(sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
         l.updateCurrentWeather(m_temperature, m_cloudCover, m_weatherIcon, m_windSpeed, m_windBearing,
                 m_humidity, m_dewPoint, m_pressure, m_ozone, m_precipIntensity);
+        if (m_forecast != null && !m_forecast.isEmpty())
+            l.updateForecast(m_forecast);
+        if (m_nowcast != null && !m_nowcast.isEmpty())
+            l.updateNowCast(m_nowcast);
     }
 
     public void resetUpdateCounters() {

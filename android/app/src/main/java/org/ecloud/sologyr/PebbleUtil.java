@@ -135,9 +135,6 @@ public class PebbleUtil implements WeatherListener {
                     Log.i(TAG, "Pebble says hello");
                     m_weatherService.updateWeather(false);
                     m_weatherService.resendEverything(PebbleUtil.this);
-                    sendPrecipitation();
-                    sendNowCast();
-                    sendForecast();
                 } else if (data.contains(PebbleUtil.KEY_ACTIVE_INTERVAL)) {
                     Log.i(TAG, "Pebble says predicted activity level will be " + data.getUnsignedIntegerAsLong(KEY_ACTIVE_INTERVAL));
                     m_weatherService.updateWeather(false);
