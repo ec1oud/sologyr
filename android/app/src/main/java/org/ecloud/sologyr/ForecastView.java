@@ -37,6 +37,8 @@ public class ForecastView extends View /* implements WeatherListener */ {
     private float mTextWidth;
     private float mTextHeight;
     LinkedList<Forecast> m_forecast = null;
+    private double m_minForecastTemp = 1000;
+    private double m_maxForecastTemp = -1000;
 
     public ForecastView(Context context) {
         super(context);
@@ -94,9 +96,24 @@ public class ForecastView extends View /* implements WeatherListener */ {
     }
 
     public void updateForecast(String locationName, LinkedList<Forecast> forecast) {
-        Log.d(TAG, "updateForecast " + locationName);
         m_locationName = locationName;
         m_forecast = forecast;
+        m_minForecastTemp = 1000;
+        m_maxForecastTemp = -1000;
+        if (m_forecast != null)
+            for (Forecast fc : m_forecast) {
+                if (fc.getTemperature() == null)
+                    continue;
+                double t = fc.getTemperature().getTemperatureDouble();
+                if (t > m_maxForecastTemp)
+                    m_maxForecastTemp = t;
+                if (t < m_minForecastTemp)
+                    m_minForecastTemp = t;
+            }
+        Log.d(TAG, "updateForecast " + locationName + " temp min " + m_minForecastTemp + " max " + m_maxForecastTemp);
+        m_minForecastTemp = Math.floor(m_minForecastTemp / 5.0) * 5.0;
+        m_maxForecastTemp = Math.ceil(m_maxForecastTemp / 5.0) * 5.0;
+        Log.d(TAG, "rounded temp min " + m_minForecastTemp + " max " + m_maxForecastTemp);
         mTextWidth = mTextPaint.measureText(m_locationName);
         invalidate();
     }
@@ -108,7 +125,6 @@ public class ForecastView extends View /* implements WeatherListener */ {
         int contentWidth = canvas.getWidth();
         int contentHeight = canvas.getHeight();
         float pixelsPerMillisecond = contentWidth / m_millisecondsWidth;
-        float zeroToPx = contentHeight / 2;
 
         Log.d(TAG, contentWidth + " x " + contentHeight);
 
@@ -133,7 +149,6 @@ public class ForecastView extends View /* implements WeatherListener */ {
 //            Log.d(TAG, "day grid line @x" + x);
             canvas.drawLine(x, 0, x, contentHeight, m_paint);
         }
-        canvas.drawLine(0, zeroToPx, contentWidth, zeroToPx, m_paint);
 
         if (m_forecast != null) {
             long lastEndTime = -1;
@@ -188,11 +203,16 @@ public class ForecastView extends View /* implements WeatherListener */ {
             }
 
             // Temperature
-            // TODO scale the data to fit; draw grid lines; etc.
             float lastX = -1;
             float lastY = -1;
             double lastTemp = 0;
+            double scale = contentHeight / (m_maxForecastTemp - m_minForecastTemp);
+            float zeroToPx = (float)(scale * m_maxForecastTemp);
+            m_paint.setColor(m_gridColor);
+            // TODO draw grid lines and ticks
+            canvas.drawLine(0, zeroToPx, contentWidth, zeroToPx, m_paint);
             m_paint.setStrokeWidth(3);
+            Log.d(TAG, "temperature scale " + scale + " zeroToPx " + zeroToPx);
             for (Forecast fc : m_forecast) {
                 if (fc.getTemperature() != null) {
                     double temp = fc.getTemperature().getTemperatureDouble();
@@ -201,8 +221,8 @@ public class ForecastView extends View /* implements WeatherListener */ {
                     float x = endTime * pixelsPerMillisecond;
                     if (x < 0 || x == lastX)
                         continue;
-                    float y = (float)(zeroToPx - temp * 10);
-//                    Log.d(TAG, "temp is " + temp + " @ " + fc.getTimeFrom() + " " + lastX + ", " + lastY + " to " + x + ", " + y );
+                    float y = (float)(zeroToPx - temp * scale);
+//                    Log.d(TAG, "temperature is " + temp + " @ " + fc.getTimeFrom() + " " + lastX + ", " + lastY + " to " + x + ", " + y );
                     if (lastX >= 0) {
                         if (lastTemp >= 0 && temp >= 0) {
                             m_paint.setColor(m_colorPositiveTemperature);
