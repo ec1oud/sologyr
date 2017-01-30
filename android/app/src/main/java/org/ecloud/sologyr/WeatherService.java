@@ -29,6 +29,7 @@ import com.oleaarnseth.weathercast.Forecast;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.ConcurrentModificationException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -119,8 +120,15 @@ public class WeatherService extends Service implements LocalityListener {
         if (forecast == null)
             return;
         m_forecast = forecast;
-        for (WeatherListener el : m_listeners)
-            el.updateForecast(forecast);
+        try {
+            for (WeatherListener el : m_listeners)
+                el.updateForecast(forecast);
+        } catch (ConcurrentModificationException e) {
+            Log.w(TAG, "caught ConcurrentModificationException: changing listeners while notifying?");
+            try { Thread.sleep(10); } catch (InterruptedException ie) { return; }
+            setForecast(forecast);
+            return;
+        }
 //        for (Forecast f : forecast)
 //            Log.d(TAG, "forecast:" + f.toString());
         forecastTask = null;

@@ -51,6 +51,7 @@ public class PebbleUtil implements WeatherListener {
     int m_sendingTrans = -1;
     int m_nackCount = 0;
     boolean m_connected = false;
+    boolean m_updatedSinceConnected = false;
     WeatherService m_weatherService;
 
     LinkedList<Forecast> m_forecast = new LinkedList<>();
@@ -67,6 +68,7 @@ public class PebbleUtil implements WeatherListener {
             return;
         Log.i(TAG, "Pebble connected!");
         m_connected = true;
+        m_updatedSinceConnected = false;
         m_nackCount = 0;
         m_sendingTrans = 0;
         m_weatherService.addWeatherListener(PebbleUtil.this);
@@ -110,14 +112,10 @@ public class PebbleUtil implements WeatherListener {
         PebbleKit.PebbleNackReceiver pnrcvr = new PebbleKit.PebbleNackReceiver(PebbleUtil.WATCHAPP_UUID) {
             @Override
             public void receiveNack(Context context, int transactionId) {
-                if (++m_nackCount > 5) {
-                    m_connected = false;
-                    m_weatherService.removeWeatherListener(PebbleUtil.this);
-                }
                 if (transactionId != 255)
                     m_sendingTrans = transactionId;
                 Log.i(TAG, "Received nack " + m_nackCount + " for transaction " + transactionId +
-                        " was sending trans " + m_sendingTrans + " still assume connected? " + m_connected);
+                        " was sending trans " + m_sendingTrans);
                 // TODO retry?
             }
         };
@@ -138,11 +136,12 @@ public class PebbleUtil implements WeatherListener {
                 } else if (data.contains(PebbleUtil.KEY_ACTIVE_INTERVAL)) {
                     Log.i(TAG, "Pebble says predicted activity level will be " + data.getUnsignedIntegerAsLong(KEY_ACTIVE_INTERVAL));
                     m_weatherService.updateWeather(false);
-                    m_weatherService.resendEverything(PebbleUtil.this);
                 } else if (data.contains(PebbleUtil.KEY_TAP)) {
                     long axisDirn = data.getInteger(KEY_TAP);
                     Log.i(TAG, "Pebble reports tap: axis " + (axisDirn & 0x0F) + " direction " + (axisDirn >> 4));
-                    m_weatherService.resendEverything(PebbleUtil.this);
+                    m_weatherService.updateWeather(false);
+                    if (!m_updatedSinceConnected)
+                        m_weatherService.resendEverything(PebbleUtil.this);
                 }
             }
         };
@@ -181,6 +180,7 @@ public class PebbleUtil implements WeatherListener {
     public void updateCurrentWeather(double temperature, double cloudCover, WeatherIcon icon,
                                      double windSpeed, double windBearing, double humidity, double dewPoint,
                                      double pressure, double ozone, double precipIntensity) {
+        m_updatedSinceConnected = true;
         // TODO send more to the pebble
         String tempStr = Math.round(temperature) + "°";
         if (icon == null)
@@ -208,6 +208,8 @@ public class PebbleUtil implements WeatherListener {
         int utcOffset = TimeZone.getDefault().getRawOffset();
         long startOfToday = getStartOfDay().getTime();
         for (Forecast f : m_precipitation) {
+            if (m_nackCount > 5)
+                return;
             long minInFuture = (f.getTimeFrom().getTime() - startOfToday + utcOffset) / 60000;
             if (minInFuture < 4500) { // 144px, 1 px per half-hour period = 4320 minutes = 3 days
                 PebbleDictionary out = new PebbleDictionary();
@@ -226,6 +228,8 @@ public class PebbleUtil implements WeatherListener {
         int utcOffset = TimeZone.getDefault().getRawOffset();
         long startOfToday = getStartOfDay().getTime();
         for (Forecast f : m_forecast) {
+            if (m_nackCount > 5)
+                return;
             long minInFuture = (f.getTimeFrom().getTime() - startOfToday + utcOffset) / 60000;
             if (minInFuture < 4500 && f.getTemperature() != null) { // 144px, 1 px per half-hour period = 4320 minutes = 3 days
                 PebbleDictionary out = new PebbleDictionary();
@@ -241,6 +245,7 @@ public class PebbleUtil implements WeatherListener {
     {
         if (fs == null)
             return;
+        m_updatedSinceConnected = true;
         // Some Forecast objects have both times and precipitation;
         // others have everything else and only timeFrom.
         m_forecast = new LinkedList<>();
@@ -273,6 +278,8 @@ public class PebbleUtil implements WeatherListener {
         byte[] minutesInFuture = new byte[len];
         int i = 0;
         for (Forecast f : m_nowcast) {
+            if (m_nackCount > 5)
+                return;
             precipitation[i] = (byte) Math.round(f.getPrecipitation().getPrecipitation() * 10);
             minutesInFuture[i] = (byte)((f.getTimeFrom().getTime() - now + utcOffset) / 60000);
             Log.d(TAG, "nowcast " + f.getTimeFrom() + " (" + minutesInFuture[i] + " min from now)" + ": " + f.getPrecipitation());
@@ -287,16 +294,9 @@ public class PebbleUtil implements WeatherListener {
     {
         m_nowcast = nowcast;
         if (m_nowcast != null)
+            m_updatedSinceConnected = true;
             sendNowCast();
     }
 
-    public void updateSunriseSunset(int sunriseHour, int sunriseMinute, int sunsetHour, int sunsetMinute) {
-        Log.d(TAG, "updateSunriseSunset " + sunriseHour + ":" + sunriseMinute + ", " + sunsetHour + ":" + sunsetMinute);
-        PebbleDictionary out = new PebbleDictionary();
-        out.addInt8(KEY_SUNRISE_HOUR, (byte)sunriseHour);
-        out.addInt8(KEY_SUNRISE_MINUTE, (byte)sunriseMinute);
-        out.addInt8(KEY_SUNSET_HOUR, (byte)sunsetHour);
-        out.addInt8(KEY_SUNSET_MINUTE, (byte)sunsetMinute);
-        PebbleKit.sendDataToPebble(m_weatherService, WATCHAPP_UUID, out);
-    }
+    public void updateSunriseSunset(int sunriseHour, int sunriseMinute, int sunsetHour, int sunsetMinute) { }
 }

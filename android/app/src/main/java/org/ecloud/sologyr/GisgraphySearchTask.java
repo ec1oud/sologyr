@@ -73,7 +73,7 @@ public class GisgraphySearchTask extends AsyncTask<Location, Void, List<Address>
                 }
             }
         } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
+            Log.e(TAG, e.toString());
         } finally {
             if (connection != null)
                 connection.disconnect();
