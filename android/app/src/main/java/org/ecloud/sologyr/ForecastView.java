@@ -15,12 +15,15 @@ import com.oleaarnseth.weathercast.Precipitation;
 
 import java.util.Calendar;
 import java.util.LinkedList;
+import java.util.Locale;
 
 /**
     A graph showing forecast temperature and precipitation.
  */
 public class ForecastView extends View /* implements WeatherListener */ {
     private final String TAG = this.getClass().getSimpleName();
+    private static final double TEMPERATURE_RANGE_GRANULARITY = 5.0;
+    private static final long MILLISECONDS_PER_DAY = 86400000;
     private int m_gridColor = Color.LTGRAY; // TODO: use a default from R.color...
     private int m_colorPrecipitationMax;
     private int m_colorPrecipitation;
@@ -28,7 +31,6 @@ public class ForecastView extends View /* implements WeatherListener */ {
     private int m_colorPositiveTemperature;
     private int m_colorNegativeTemperature;
     private float m_textSize = 24;
-    private static final long MILLISECONDS_PER_DAY = 86400000;
     private float m_millisecondsWidth = 432000000; // 5 days
     private float m_pixelsPerMmPrecipitation = 10;
     private String m_locationName = "";
@@ -111,8 +113,8 @@ public class ForecastView extends View /* implements WeatherListener */ {
                     m_minForecastTemp = t;
             }
         Log.d(TAG, "updateForecast " + locationName + " temp min " + m_minForecastTemp + " max " + m_maxForecastTemp);
-        m_minForecastTemp = Math.floor(m_minForecastTemp / 5.0) * 5.0;
-        m_maxForecastTemp = Math.ceil(m_maxForecastTemp / 5.0) * 5.0;
+        m_minForecastTemp = Math.floor(m_minForecastTemp / TEMPERATURE_RANGE_GRANULARITY) * TEMPERATURE_RANGE_GRANULARITY;
+        m_maxForecastTemp = Math.ceil(m_maxForecastTemp / TEMPERATURE_RANGE_GRANULARITY) * TEMPERATURE_RANGE_GRANULARITY;
         Log.d(TAG, "rounded temp min " + m_minForecastTemp + " max " + m_maxForecastTemp);
         mTextWidth = mTextPaint.measureText(m_locationName);
         invalidate();
@@ -135,19 +137,24 @@ public class ForecastView extends View /* implements WeatherListener */ {
                 mTextPaint);
 
         long now = System.currentTimeMillis();
-        Calendar beginningOfToday = Calendar.getInstance();
-        beginningOfToday.set(Calendar.HOUR_OF_DAY, 0);
-        beginningOfToday.set(Calendar.MINUTE, 0);
-        beginningOfToday.set(Calendar.SECOND, 0);
-        beginningOfToday.set(Calendar.MILLISECOND, 0);
-        long tomorrow = beginningOfToday.getTime().getTime() + MILLISECONDS_PER_DAY;
+        Calendar beginningOfDay = Calendar.getInstance();
+        beginningOfDay.set(Calendar.HOUR_OF_DAY, 0);
+        beginningOfDay.set(Calendar.MINUTE, 0);
+        beginningOfDay.set(Calendar.SECOND, 0);
+        beginningOfDay.set(Calendar.MILLISECOND, 0);
+        long tomorrow = beginningOfDay.getTime().getTime() + MILLISECONDS_PER_DAY;
+        beginningOfDay.add(Calendar.DAY_OF_MONTH, 1);
         m_paint.setColor(m_gridColor);
-        Log.d(TAG, "pixelsPerMillisecond "  + pixelsPerMillisecond + " forecast? " + (m_forecast == null ? 0 : m_forecast.size()));
+        m_paint.setStrokeWidth(1);
+        boolean spaceForTopAxisLabel = (tomorrow - now) * pixelsPerMillisecond > 80;
+        Log.d(TAG, "pixelsPerMillisecond "  + pixelsPerMillisecond + " forecast? " + (m_forecast == null ? 0 : m_forecast.size()) + " text height " + mTextHeight);
         for (float x = (tomorrow - now) * pixelsPerMillisecond;
                 x < contentWidth;
                 x += MILLISECONDS_PER_DAY * pixelsPerMillisecond) {
-//            Log.d(TAG, "day grid line @x" + x);
+            Log.d(TAG, "day grid line @x" + x);
             canvas.drawLine(x, 0, x, contentHeight, m_paint);
+            canvas.drawText(beginningOfDay.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.SHORT, Locale.getDefault()), x + 2, m_textSize, mTextPaint);
+            beginningOfDay.add(Calendar.DAY_OF_MONTH, 1);
         }
 
         if (m_forecast != null) {
@@ -206,11 +213,31 @@ public class ForecastView extends View /* implements WeatherListener */ {
             float lastX = -1;
             float lastY = -1;
             double lastTemp = 0;
-            double scale = contentHeight / (m_maxForecastTemp - m_minForecastTemp);
+            double scale = contentHeight / (m_maxForecastTemp - m_minForecastTemp); // pixels per degree
             float zeroToPx = (float)(scale * m_maxForecastTemp);
             m_paint.setColor(m_gridColor);
-            // TODO draw grid lines and ticks
             canvas.drawLine(0, zeroToPx, contentWidth, zeroToPx, m_paint);
+            m_paint.setStrokeWidth(2);
+            for (float t = (float)m_minForecastTemp; t <= m_maxForecastTemp; t += TEMPERATURE_RANGE_GRANULARITY) {
+                float y = (float)(zeroToPx - t * scale);
+                canvas.drawLine(0, y, 15, y, m_paint);
+                canvas.drawLine(contentWidth - 15, t, contentWidth, t, m_paint);
+                if (t == m_minForecastTemp)
+                    canvas.drawText(String.valueOf((int)t) + "℃", 15, y, mTextPaint);
+                else if (t == m_maxForecastTemp) {
+                    if (spaceForTopAxisLabel)
+                        canvas.drawText(String.valueOf((int) t) + "℃", 15, y + m_textSize, mTextPaint);
+                } else if (t != 0)
+                    canvas.drawText(String.valueOf((int)t), 15, y + m_textSize / 2, mTextPaint);
+//                Log.d(TAG, "big tick " + t + " " + y);
+                if (scale >= 3.0)
+                    for (float t2 = t + 1; t2 < m_maxForecastTemp && t2 < t + TEMPERATURE_RANGE_GRANULARITY; ++t2) {
+                        float y2 = (float)(zeroToPx - t2 * scale);
+                        canvas.drawLine(0, y2, 5, y2, m_paint);
+                        canvas.drawLine(contentWidth - 5, y2, contentWidth, y2, m_paint);
+//                        Log.d(TAG, "little tick " + t2 + " " + y2);
+                    }
+            }
             m_paint.setStrokeWidth(3);
             Log.d(TAG, "temperature scale " + scale + " zeroToPx " + zeroToPx);
             for (Forecast fc : m_forecast) {
