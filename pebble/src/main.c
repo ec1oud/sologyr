@@ -94,6 +94,7 @@ static time_t nowcastReceivedTime;
 static int8_t nowcastTimes[NOWCAST_MAX_INTERVALS]; // minutes in the future from nowcastReceivedTime (in the past if negative)
 static uint8_t nowcastPrecipitation[NOWCAST_MAX_INTERVALS]; // tenths of mm
 static int8_t nowcastLength;
+static uint8_t forecastUpdating = 0;
 static int16_t forecastPrecipitationTimes[FORECAST_MAX_INTERVALS]; // minutes from the beginning of today
 static uint8_t forecastPrecipitation[FORECAST_MAX_INTERVALS]; // tenths of mm
 static uint8_t forecastPrecipitationMin[FORECAST_MAX_INTERVALS]; // tenths of mm
@@ -368,7 +369,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	// render the forecast precipitation assuming that it's pre-sorted by time (the phone's responsibility)
 	// and assuming that each interval in which precipitation is predicted is one hour long.
 	if (forecastPrecipitationLength > 0) {
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip len %d", forecastPrecipitationLength);
+		if (DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "forecast precip len %d", forecastPrecipitationLength);
 		graphics_context_set_fill_color(ctx, COLOR_PRECIPITATION_MAX);
 		for (int i = 0; i < (int)forecastPrecipitationLength && i < FORECAST_MAX_INTERVALS; ++i) {
 			if (forecastPrecipitationMax[i] > 0) {
@@ -544,6 +545,8 @@ static void updateBatteryGraphLayer(Layer *layer, GContext* ctx)
 static void revert_page(void *data);
 
 static void show_page(int page) {
+	if (forecastUpdating)
+		page = 0;
 	//	APP_LOG(APP_LOG_LEVEL_DEBUG, "show page %d", page);
 	switch(page){
 		case 0:
@@ -569,12 +572,12 @@ static void handle_tap(AccelAxisType axis, int32_t direction)
 	DictionaryIterator *iter;
 	app_message_outbox_begin(&iter);
 	if (iter == NULL) {
-		APP_LOG(APP_LOG_LEVEL_WARNING, "tap %d %d: null iterator", (int)axis, (int)direction);
+		if (DEBUG) APP_LOG(APP_LOG_LEVEL_WARNING, "tap %d %d: null iterator", (int)axis, (int)direction);
 		return;
 	}
 	DictionaryResult ret;
 	if ((ret = dict_write_int8(iter, KEY_TAP, combined))) {
-		APP_LOG(APP_LOG_LEVEL_WARNING, "tap %d %d: can't write axis/direction", (int)axis, (int)direction);
+		if (DEBUG) APP_LOG(APP_LOG_LEVEL_WARNING, "tap %d %d: can't write axis/direction", (int)axis, (int)direction);
 		return;
 	}
 	dict_write_end(iter);
@@ -661,7 +664,7 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 	int16_t currentForecastTime = 0;
 	int16_t currentForecastTemperature = 0; // tenths of degrees
 	while (tuple) {
-#ifdef DEBUG_MSG
+#if DEBUG
 		switch (tuple->type) {
 		case TUPLE_CSTRING:
 			APP_LOG(APP_LOG_LEVEL_DEBUG, "key %d value %s" , (int)tuple->key, tuple->value->cstring);
@@ -731,15 +734,19 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 			//~ for (int i = 0; i < tuple->length; ++i)
 				//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "nowcast %d %d", (int)nowcastTimes[i], nowcastPrecipitation[i]);
 			break;
-		case KEY_FORECAST_BEGIN:
-			forecastPrecipitationLength = 0;
-			memset(forecastPrecipitationTimes, 0, sizeof(forecastPrecipitationTimes));
-			memset(forecastPrecipitation, 0, sizeof(forecastPrecipitation));
-			forecastLength = 0;
-			minForecastTemperature = 8000;
-			maxForecastTemperature = -8000;
-			memset(forecastTimes, 0, sizeof(forecastTimes));
-			memset(forecastTemperature, 0, sizeof(forecastTemperature));
+		case KEY_FORECAST_TRANSACTION:
+			forecastUpdating = tuple->value->uint8;
+			if (forecastUpdating) {
+				show_page(0);
+				forecastPrecipitationLength = 0;
+				memset(forecastPrecipitationTimes, 0, sizeof(forecastPrecipitationTimes));
+				memset(forecastPrecipitation, 0, sizeof(forecastPrecipitation));
+				forecastLength = 0;
+				minForecastTemperature = 8000;
+				maxForecastTemperature = -8000;
+				memset(forecastTimes, 0, sizeof(forecastTimes));
+				memset(forecastTemperature, 0, sizeof(forecastTemperature));
+			}
 			break;
 		case KEY_PRECIPITATION_MINUTES:
 			currentForecastPrecipitationTime = tuple->value->int16;
@@ -773,7 +780,7 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 			weatherUpdateFrequency = tuple->value->int16;
 			break;
 		default:
-			APP_LOG(APP_LOG_LEVEL_WARNING, "unexpected key %d", (int)tuple->key);
+			if (DEBUG) APP_LOG(APP_LOG_LEVEL_WARNING, "unexpected key %d", (int)tuple->key);
 		}
 		tuple = dict_read_next(iter);
 	}
@@ -802,11 +809,12 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 
 static void in_dropped_handler(AppMessageResult reason, void *context)
 {
-	APP_LOG(APP_LOG_LEVEL_WARNING, "App Message Dropped!");
+	if (DEBUG) APP_LOG(APP_LOG_LEVEL_WARNING, "App Message Dropped!");
 }
 
 static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context)
 {
+#if DEBUG
 	if (reason == APP_MSG_SEND_REJECTED)
 		return; // nacks seem to happen all the time... not sure why
 	switch (reason) {
@@ -826,6 +834,7 @@ static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reas
 			APP_LOG(APP_LOG_LEVEL_WARNING, "failed to send: %d", reason);
 			break;
 	}
+#endif
 }
 
 static void window_load(Window *window) {
@@ -954,7 +963,7 @@ static void window_init(void) {
 	memcpy(&currentTime, localtime(&tt), sizeof(struct tm));
 	curLat = persist_read_int(AppKeyLat);
 	curLon = persist_read_int(AppKeyLon);
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "window_init: restored lat %d lon %d" , curLat, curLon);
+	if (DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "window_init: restored lat %d lon %d" , curLat, curLon);
 	// TODO read AppKeyLocationName; use GPS coords only if empty? OTOH this is a nice way to check what's stored
 	snprintf(curLocationName, sizeof(curLocationName), "%d.%d,%d.%d", curLat / 1000, curLat % 1000, curLon / 1000, curLon % 1000);
 	updateSunriseSunset();
@@ -969,7 +978,7 @@ static void window_init(void) {
 	const bool animated = true;
 	window_stack_push(window, animated);
 
-#ifdef DEBUG_MSG
+#if DEBUG
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "max mailboxen %d %d", (int)app_message_inbox_size_maximum(), (int)app_message_outbox_size_maximum());
 #endif
 	app_message_register_inbox_received(in_received_handler);

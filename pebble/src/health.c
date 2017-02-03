@@ -203,7 +203,7 @@ static void load_health_data(void *context)
 				}
 			s_steps_per_interval[i] = stepAcc;
 			s_vmc_per_interval[i] = vmcAcc;
-			APP_LOG(APP_LOG_LEVEL_DEBUG, "interval %d steps (from service) %d vmc %d", (int)i, (int)stepAcc, (int)vmcAcc);
+			if (DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "interval %d steps (from service) %d vmc %d", (int)i, (int)stepAcc, (int)vmcAcc);
 		}
 		s_last_interval_load_time = time(NULL);
 		persist_write_data(AppKeyStepIntervals, s_steps_per_interval, sizeof(s_steps_per_interval));
@@ -211,7 +211,7 @@ static void load_health_data(void *context)
 		persist_write_int(AppKeyLastIntervalLoad, s_last_interval_load_time);
 	} else if (DEBUG) {
 		for (int i = 0; i < HEALTH_INTERVAL_COUNT; ++i)
-			if (s_steps_per_interval[i] > 0)
+			if (DEBUG && s_steps_per_interval[i] > 0)
 				APP_LOG(APP_LOG_LEVEL_DEBUG, "interval %d steps %d", i, (int)(s_steps_per_interval[i]));
 	}
 

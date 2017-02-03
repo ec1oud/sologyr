@@ -359,7 +359,7 @@ public class WeatherService extends Service implements LocalityListener {
         ++m_locationUpdateCount;
     }
 
-    public void updateWeather(boolean immediately) {
+    public boolean updateWeather(boolean immediately) {
         if (curLocation != null && (immediately || (m_updateInterval > 0 &&
                 System.currentTimeMillis() - lastUpdateTime > m_updateInterval))) {
             forecastTask = new ForecastTask(this);
@@ -368,7 +368,9 @@ public class WeatherService extends Service implements LocalityListener {
             nowCastTask.start(curLocation);
             darkSkyCurrentTask = new DarkSkyCurrentTask(this);
             darkSkyCurrentTask.execute(curLocation);
+            return true;
         }
+        return false;
     }
 
     public void addWeatherListener(WeatherListener l) {

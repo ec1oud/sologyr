@@ -60,7 +60,7 @@ enum DictKey {
 	KEY_TEMPERATURE = 20,
 	KEY_WEATHER_ICON = 21,
 	KEY_CLOUD_COVER = 22,
-	KEY_FORECAST_BEGIN = 39,
+	KEY_FORECAST_TRANSACTION = 39, // begin with 1, end with 0
 	KEY_NOWCAST_MINUTES = 40, // how far in the future
 	KEY_NOWCAST_PRECIPITATION = 41,
 	KEY_PRECIPITATION_MINUTES = 42, // minutes after last midnight (beginning of today)
