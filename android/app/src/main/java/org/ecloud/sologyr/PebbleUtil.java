@@ -215,9 +215,9 @@ public class PebbleUtil implements WeatherListener {
             if (m_nackCount > 5)
                 return;
             long minInFuture = (f.getTimeFrom().getTime() - startOfToday + utcOffset) / 60000;
-            // 144px, 1 px per half-hour period = 4320 minutes = 3 days; but
-            // minInFuture is from startOfToday so we usually need to go higher than 4320
-            if (minInFuture - minutesSinceStartOfToday < 4500) {
+            // 172px, 1 px per half-hour period = 5160 minutes; but
+            // minInFuture is from startOfToday so we usually need to go higher than 5160
+            if (minInFuture - minutesSinceStartOfToday < 5200) {
                 PebbleDictionary out = new PebbleDictionary();
                 out.addInt16(KEY_PRECIPITATION_MINUTES, (short)minInFuture);
                 out.addUint8(KEY_FORECAST_PRECIPITATION, (byte) Math.round(f.getPrecipitation().getPrecipitation() * 10));
@@ -243,9 +243,9 @@ public class PebbleUtil implements WeatherListener {
             if (m_nackCount > 5)
                 return;
             long minInFuture = (f.getTimeFrom().getTime() - startOfToday + utcOffset) / 60000;
-            // 144px, 1 px per half-hour period = 4320 minutes = 3 days; but
-            // minInFuture is from startOfToday so we usually need to go higher than 4320
-            if (minInFuture - minutesSinceStartOfToday < 4500 && f.getTemperature() != null) {
+            // 172px, 1 px per half-hour period = 5160 minutes; but
+            // minInFuture is from startOfToday so we usually need to go higher than 5160
+            if (minInFuture - minutesSinceStartOfToday < 5200 && f.getTemperature() != null) {
                 PebbleDictionary out = new PebbleDictionary();
                 out.addInt16(KEY_FORECAST_MINUTES, (short)minInFuture);
                 out.addInt16(KEY_FORECAST_TEMPERATURE, (short)Math.round(f.getTemperature().getTemperatureDouble() * 10));

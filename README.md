@@ -31,6 +31,7 @@ What's working:
 - [x] weather radar in the Android app (main activity)
 - [x] show name of the current location
 - [x] Android widget with forecast temperature and precipitation (3 days)
+- [x] looks good on Pebble Time, Pebble Time Round and classic Pebble
 
 In progress:
 - [ ] learning the user's active periods of day, so as to ask the phone to fetch weather updates during that time only.  That plus a frequency limit should keep API calls to a minimum.
@@ -46,5 +47,4 @@ Not started yet:
 - [ ] Android: show time since weather update, expected active periods today (or even all week)
 - [ ] get real-time weather from some other source, preferably an open source where users' weather station data is contributed
 - [ ] help screen on Android
-- [ ] port and test on Pebble Time Round and classic Pebble
 

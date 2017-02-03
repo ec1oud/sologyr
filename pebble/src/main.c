@@ -60,20 +60,20 @@ enum WeatherIcon {
 	Wind = 200
 };
 
-static Window *window;
-static Layer *main_layer;
-static Layer *tap_layer;
-static TextLayer *tapTimeLayer;
-static TextLayer *tapLocationLayer;
-static TextLayer *stepsLayer;
-static TextLayer *dateLayer;
-static TextLayer *temperatureLayer;
-static BitmapLayer *bluetooth_layer;
-static BitmapLayer *charging_layer;
-static BitmapLayer *weather_icon_layer;
-static Layer *batteryGraphLayer;
-static Layer *circleLayer;
-static Layer *weatherPlotLayer;
+static Window *window = NULL;
+static Layer *main_layer = NULL;
+static Layer *tap_layer = NULL;
+static TextLayer *tapTimeLayer = NULL;
+static TextLayer *tapLocationLayer = NULL;
+static TextLayer *stepsLayer = NULL;
+static TextLayer *dateLayer = NULL;
+static TextLayer *temperatureLayer = NULL;
+static BitmapLayer *bluetooth_layer = NULL;
+static BitmapLayer *charging_layer = NULL;
+static BitmapLayer *weather_icon_layer = NULL;
+static Layer *batteryGraphLayer = NULL;
+static Layer *circleLayer = NULL;
+static Layer *weatherPlotLayer = NULL;
 static int batteryPct = 0;
 struct tm currentTime;
 static char currentTimeText[] = "00:00";
@@ -351,9 +351,12 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 	GRect layerBounds = layer_get_bounds(layer);
 	GRect fillCircle = grect_crop(layerBounds, 4);
 	graphics_context_set_stroke_color(ctx, COLOR_CLOCK_RING);
+#ifndef PBL_ROUND
 	graphics_draw_circle(ctx, grect_center_point(&fillCircle), layerBounds.size.w / 2 - 2);
+#endif
 	time_t now = time(NULL);
 	time_t startOfToday = time_start_of_today();
+	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "paintCircleLayer bounds %d %d %d %d", fillCircle.origin.x, fillCircle.origin.y, fillCircle.size.w, fillCircle.size.h);
 
 	// render the period of the day with sunlight
 	int sunriseAngle = (sunriseHour * 60 + sunriseMinute) * 360 / MINUTES_PER_DAY - 180;
@@ -362,7 +365,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 		send_hello();
 	} else {
 		graphics_context_set_fill_color(ctx, COLOR_SUN);
-		graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 3 + 3,
+		graphics_fill_radial(ctx, fillCircle, GCornerNone, fillCircle.size.w / 3,
 			DEG_TO_TRIGANGLE(sunriseAngle),  DEG_TO_TRIGANGLE(sunsetAngle));
 	}
 
@@ -847,44 +850,64 @@ static void window_load(Window *window) {
 	tap_layer = layer_create(bounds);
 	layer_add_child(window_layer, tap_layer);
 
-	bluetooth_layer = bitmap_layer_create(GRect(0, bounds.size.h - 14, 14, 14));
-	layer_add_child(main_layer, bitmap_layer_get_layer(bluetooth_layer));
-	bluetooth_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH);
-	handle_bluetooth(bluetooth_connection_service_peek());
-
-	batteryGraphLayer = layer_create(GRect(110, bounds.size.h - 14, 32, 14));
-	layer_set_update_proc(batteryGraphLayer, updateBatteryGraphLayer);
-	layer_add_child(main_layer, batteryGraphLayer);
-
-	charging_layer = bitmap_layer_create(GRect(117, 2, 14, 10));
-	bitmap_layer_set_background_color(charging_layer, GColorClear);
-	bitmap_layer_set_compositing_mode(charging_layer, GCompOpAssignInverted);
-	layer_add_child(main_layer, bitmap_layer_get_layer(charging_layer));
-	charging_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CHARGING);
-
-	temperatureLayer = text_layer_create(GRect(0, -6, 50, 24));
-	//~ temperatureLayer = text_layer_create(GRect(bounds.size.w - 50, -4, 50, 22));
-	text_layer_set_text_color(temperatureLayer, COLOR_TEMPERATURE);
-	text_layer_set_background_color(temperatureLayer, GColorClear);
-	text_layer_set_font(temperatureLayer, smallishFont);
-	layer_add_child(main_layer, text_layer_get_layer(temperatureLayer));
-
-	weather_icon_layer = bitmap_layer_create(GRect(bounds.size.w - 22, -1, 22, 22));
-	//~ weather_icon_layer = bitmap_layer_create(GRect(0, -1, 22, 22));
-	layer_add_child(main_layer, bitmap_layer_get_layer(weather_icon_layer));
-
+#ifdef PBL_ROUND
+	int diameter = min(bounds.size.w, bounds.size.h);
+#else
 	int diameter = min(bounds.size.w - 1, bounds.size.h - 16 - 1);
+#endif
 	circleLayer = layer_create(GRect(0, 0, diameter, diameter));
 	layer_set_update_proc(circleLayer, paintCircleLayer);
 	layer_add_child(main_layer, circleLayer);
 	circleLayerUpdate();
 
+	bluetooth_layer = bitmap_layer_create(GRect(0, bounds.size.h - 14, 14, 14));
+	layer_add_child(main_layer, bitmap_layer_get_layer(bluetooth_layer));
+	bluetooth_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH);
+	handle_bluetooth(bluetooth_connection_service_peek());
+
+#ifdef PBL_ROUND
+	GRect batteryGraphBounds = GRect((bounds.size.w - 32) / 2, bounds.size.h / 2 - 20, 32, 14);
+#else
+	GRect batteryGraphBounds = GRect(110, bounds.size.h - 14, 32, 14);
+#endif
+	batteryGraphLayer = layer_create(batteryGraphBounds);
+	layer_set_update_proc(batteryGraphLayer, updateBatteryGraphLayer);
+	layer_add_child(main_layer, batteryGraphLayer);
+
+	charging_layer = bitmap_layer_create(GRect(batteryGraphBounds.origin.x + (32 - 14) / 2, 2, 14, 10));
+	bitmap_layer_set_background_color(charging_layer, GColorClear);
+	bitmap_layer_set_compositing_mode(charging_layer, GCompOpAssignInverted);
+	layer_add_child(main_layer, bitmap_layer_get_layer(charging_layer));
+	charging_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_CHARGING);
+
+#ifdef PBL_ROUND
+	temperatureLayer = text_layer_create(GRect(bounds.size.w / 2 - 51, 0, 50, 24));
+	text_layer_set_text_alignment(temperatureLayer, GTextAlignmentRight);
+#else
+	temperatureLayer = text_layer_create(GRect(0, -6, 50, 24));
+#endif
+	text_layer_set_text_color(temperatureLayer, COLOR_TEMPERATURE);
+	text_layer_set_background_color(temperatureLayer, GColorClear);
+	text_layer_set_font(temperatureLayer, smallishFont);
+#ifdef PBL_ROUND
+	layer_add_child(tap_layer, text_layer_get_layer(temperatureLayer));
+#else
+	layer_add_child(main_layer, text_layer_get_layer(temperatureLayer));
+#endif
+
+#ifdef PBL_ROUND
+	weather_icon_layer = bitmap_layer_create(GRect(bounds.size.w / 2 + 1, 5, 22, 22));
+	layer_add_child(tap_layer, bitmap_layer_get_layer(weather_icon_layer));
+#else
+	weather_icon_layer = bitmap_layer_create(GRect(bounds.size.w - 22, -1, 22, 22));
+	layer_add_child(main_layer, bitmap_layer_get_layer(weather_icon_layer));
+#endif
+
 	GRect text_time_rect = GRect(0, 0, bounds.size.w, 50);
 	grect_align(&text_time_rect, &bounds, GAlignCenter, false);
 
 #ifdef PBL_HEALTH
-	text_time_rect.origin.y += 48;
-	stepsLayer = text_layer_create(text_time_rect);
+	stepsLayer = text_layer_create(GRect((bounds.size.w - 100) / 2, diameter - 38, 100, 22));
 	text_layer_set_text_color(stepsLayer, COLOR_STEPS);
 	text_layer_set_background_color(stepsLayer, GColorClear);
 	text_layer_set_font(stepsLayer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
@@ -892,7 +915,11 @@ static void window_load(Window *window) {
 	layer_add_child(main_layer, text_layer_get_layer(stepsLayer));
 #endif
 
+#ifdef PBL_ROUND
+	text_time_rect.origin.y = bounds.size.h * 2 / 3 - 8;
+#else
 	text_time_rect.origin.y = bounds.size.h / 2;
+#endif
 	tapTimeLayer = text_layer_create(text_time_rect);
 	text_layer_set_text_color(tapTimeLayer, COLOR_TIME);
 	text_layer_set_background_color(tapTimeLayer, GColorClear);
@@ -900,7 +927,7 @@ static void window_load(Window *window) {
 	text_layer_set_text_alignment(tapTimeLayer, GTextAlignmentCenter);
 	layer_add_child(tap_layer, text_layer_get_layer(tapTimeLayer));
 
-	text_time_rect.origin.y += 40;
+	text_time_rect.origin.y += 36;
 	tapLocationLayer = text_layer_create(text_time_rect);
 	text_layer_set_text_color(tapLocationLayer, COLOR_LOCATION);
 	text_layer_set_background_color(tapLocationLayer, GColorClear);
@@ -908,14 +935,22 @@ static void window_load(Window *window) {
 	text_layer_set_text_alignment(tapLocationLayer, GTextAlignmentCenter);
 	layer_add_child(tap_layer, text_layer_get_layer(tapLocationLayer));
 
+#ifdef PBL_ROUND
+	dateLayer = text_layer_create(GRect(0, diameter - 60, diameter, 24));
+#else
 	dateLayer = text_layer_create(GRect(14, bounds.size.h - 24, bounds.size.w - 32 - 14, 24));
+#endif
 	text_layer_set_text_alignment(dateLayer, GTextAlignmentCenter);
 	text_layer_set_text_color(dateLayer, COLOR_DATE);
 	text_layer_set_background_color(dateLayer, GColorClear);
 	text_layer_set_font(dateLayer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 	layer_add_child(main_layer, text_layer_get_layer(dateLayer));
 
+#ifdef PBL_ROUND
+	weatherPlotLayer = layer_create(GRect(0, bounds.size.h / 6, bounds.size.w, bounds.size.h / 2));
+#else
 	weatherPlotLayer = layer_create(GRect(0, 0, bounds.size.w, bounds.size.h / 2));
+#endif
 	layer_set_update_proc(weatherPlotLayer, paintWeatherPlot);
 	layer_add_child(tap_layer, weatherPlotLayer);
 
