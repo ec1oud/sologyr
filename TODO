@@ -1,3 +1,5 @@
+scale precip. acc. to a learned maximum
+pref. for n days of forecast
 figure out why forecast temperatures are only 2 days' worth
 come up with a way to store and recall widget size (as reported to onAppWidgetOptionsChanged)
 de-duplicate preference defaults
@@ -12,4 +14,5 @@ replace Example image for widget
 don't refresh radar too often
 weather icons on the main screen
 time (rendered red line) is initially wrong, until the minute changes?
+scale widget temperature graph acc. to n-day max, not total max
 

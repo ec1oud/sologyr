@@ -24,6 +24,7 @@ public class ForecastView extends View /* implements WeatherListener */ {
     private final String TAG = this.getClass().getSimpleName();
     private static final double TEMPERATURE_RANGE_GRANULARITY = 5.0;
     private static final long MILLISECONDS_PER_DAY = 86400000;
+    private static final float MAX_PRECIPITATION_PER_PERIOD = 5; // mm per 15 minutes; TODO learn local max and store in prefs?
     private int m_gridColor = Color.LTGRAY; // TODO: use a default from R.color...
     private int m_colorPrecipitationMax;
     private int m_colorPrecipitation;
@@ -32,7 +33,6 @@ public class ForecastView extends View /* implements WeatherListener */ {
     private int m_colorNegativeTemperature;
     private float m_textSize = 24;
     private float m_millisecondsWidth = 432000000; // 5 days
-    private float m_pixelsPerMmPrecipitation = 10;
     private String m_locationName = "";
     private Paint m_paint;
     private TextPaint mTextPaint;
@@ -102,9 +102,11 @@ public class ForecastView extends View /* implements WeatherListener */ {
         m_forecast = forecast;
         m_minForecastTemp = 1000;
         m_maxForecastTemp = -1000;
+        long now = System.currentTimeMillis();
+        // update min and max within the time period of interest
         if (m_forecast != null)
             for (Forecast fc : m_forecast) {
-                if (fc.getTemperature() == null)
+                if (fc.getTemperature() == null || fc.getTimeFrom().getTime() - now > m_millisecondsWidth)
                     continue;
                 double t = fc.getTemperature().getTemperatureDouble();
                 if (t > m_maxForecastTemp)
@@ -127,6 +129,7 @@ public class ForecastView extends View /* implements WeatherListener */ {
         int contentWidth = canvas.getWidth();
         int contentHeight = canvas.getHeight();
         float pixelsPerMillisecond = contentWidth / m_millisecondsWidth;
+        float pixelsPerMmPrecipitation = contentHeight / MAX_PRECIPITATION_PER_PERIOD;
 
         Log.d(TAG, contentWidth + " x " + contentHeight);
 
@@ -144,7 +147,8 @@ public class ForecastView extends View /* implements WeatherListener */ {
         m_paint.setColor(m_gridColor);
         m_paint.setStrokeWidth(1);
         boolean spaceForTopAxisLabel = (tomorrow - now) * pixelsPerMillisecond > 80;
-        Log.d(TAG, "pixelsPerMillisecond "  + pixelsPerMillisecond + " forecast? " + (m_forecast == null ? 0 : m_forecast.size()) + " text height " + mTextHeight);
+        Log.d(TAG, "pixelsPerMillisecond "  + pixelsPerMillisecond + " pixelsPerMmPrecipitation " + pixelsPerMmPrecipitation +
+                " forecast? " + (m_forecast == null ? 0 : m_forecast.size()) + " text height " + mTextHeight);
         for (float x = (tomorrow - now) * pixelsPerMillisecond;
                 x < contentWidth;
                 x += MILLISECONDS_PER_DAY * pixelsPerMillisecond) {
@@ -165,8 +169,9 @@ public class ForecastView extends View /* implements WeatherListener */ {
                     if (endTime < 0 || endTime == lastEndTime)
                         continue;
                     float precValue = (float)prec.getPrecipitationMax();
-                    float barHeight = Math.min(contentHeight, precValue * m_pixelsPerMmPrecipitation);
-//                    Log.d(TAG, "precipitation max " + precValue + " @ " + fc.getTimeFrom() + " " + startTime + " x " + (startTime * pixelsPerMillisecond) + " to x " + endTime * pixelsPerMillisecond + " barHeight " + barHeight);
+                    float barHeight = Math.min(contentHeight, precValue * pixelsPerMmPrecipitation);
+//                    Log.d(TAG, "precipitation max " + precValue + " @ " + fc.getTimeFrom() + " " + startTime +
+//                            " x " + (startTime * pixelsPerMillisecond) + " to x " + endTime * pixelsPerMillisecond + " barHeight " + barHeight);
                     if (precValue > 0)
                         canvas.drawRect(startTime * pixelsPerMillisecond, contentHeight - barHeight,
                                 endTime * pixelsPerMillisecond, contentHeight, m_paint);
@@ -182,7 +187,7 @@ public class ForecastView extends View /* implements WeatherListener */ {
                     if (endTime < 0 || endTime == lastEndTime)
                         continue;
                     float precValue = (float)prec.getPrecipitation();
-                    float barHeight = Math.min(contentHeight, precValue * m_pixelsPerMmPrecipitation);
+                    float barHeight = Math.min(contentHeight, precValue * pixelsPerMmPrecipitation);
                     if (precValue > 0)
                         canvas.drawRect(startTime * pixelsPerMillisecond, contentHeight - barHeight,
                                 endTime * pixelsPerMillisecond, contentHeight, m_paint);
@@ -198,7 +203,7 @@ public class ForecastView extends View /* implements WeatherListener */ {
                     if (endTime < 0 || endTime == lastEndTime)
                         continue;
                     float precValue = (float)prec.getPrecipitationMin();
-                    float barHeight = Math.min(contentHeight, precValue * m_pixelsPerMmPrecipitation);
+                    float barHeight = Math.min(contentHeight, precValue * pixelsPerMmPrecipitation);
                     if (precValue > 0)
                         canvas.drawRect(startTime * pixelsPerMillisecond, contentHeight - barHeight,
                                 endTime * pixelsPerMillisecond, contentHeight, m_paint);
