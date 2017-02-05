@@ -5,6 +5,8 @@
 // Used to turn off logging
 #define DEBUG false
 
+#define SEND_TAP false
+
 // Number of days the averaging mechanism takes into account
 #define PAST_DAYS_CONSIDERED 7
 

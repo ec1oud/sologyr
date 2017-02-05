@@ -198,12 +198,13 @@ void updateSunriseSunset()
 	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "computed sunrise %d:%02d sunset %d:%02d for lat %d lon %d", sunriseHour, sunriseMinute, sunsetHour, sunsetMinute, curLat, curLon);
 }
 
-static void handle_second_tick(struct tm *tick_time, TimeUnits units_changed)
+static void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed)
 {
 	memcpy(&currentTime, tick_time, sizeof(struct tm));
 	if (units_changed & MINUTE_UNIT) {
 		timeLayerUpdate();
-		circleLayerUpdate();
+		if (currentTime.tm_min % 5 == 0)
+			circleLayerUpdate();
 #ifdef PBL_HEALTH
 		stepsLayerUpdate();
 		health_update_steps_interval();
@@ -570,6 +571,7 @@ static void revert_page(void *data){
 
 static void handle_tap(AccelAxisType axis, int32_t direction)
 {
+#if SEND_TAP
 	int8_t combined = (((int8_t)direction << 4) | (int8_t)axis);
 	//~ APP_LOG(APP_LOG_LEVEL_DEBUG, "tap %d %d | %d", (int)axis, (int)direction, (int)combined);
 	DictionaryIterator *iter;
@@ -585,6 +587,7 @@ static void handle_tap(AccelAxisType axis, int32_t direction)
 	}
 	dict_write_end(iter);
 	app_message_outbox_send();
+#endif
 	show_page(1);
 }
 
@@ -962,7 +965,7 @@ static void window_load(Window *window) {
 	stepsLayerUpdate();
 #endif
 
-	tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
+	tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
 	bluetooth_connection_service_subscribe(&handle_bluetooth);
 	handle_battery(battery_state_service_peek());
 	battery_state_service_subscribe(&handle_battery);
