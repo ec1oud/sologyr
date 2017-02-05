@@ -1,7 +1,7 @@
 {
   "name": "SolOgYr",
   "author": "ecloud",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "keywords": ["pebble-app", "circadian", "surise", "sunset", "health", "steps", "weather"],
   "private": true,
   "dependencies": {},
