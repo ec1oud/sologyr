@@ -870,7 +870,11 @@ static void window_load(Window *window) {
 	layer_add_child(main_layer, circleLayer);
 	circleLayerUpdate();
 
+#ifdef PBL_ROUND
+	bluetooth_layer = bitmap_layer_create(GRect(20, bounds.size.h / 2 + 4, 14, 14));
+#else
 	bluetooth_layer = bitmap_layer_create(GRect(0, bounds.size.h - 14, 14, 14));
+#endif
 	layer_add_child(main_layer, bitmap_layer_get_layer(bluetooth_layer));
 	bluetooth_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BLUETOOTH);
 	handle_bluetooth(bluetooth_connection_service_peek());
