@@ -12,8 +12,9 @@ To install:
 - Download and install [the APK](https://github.com/ec1oud/sologyr/raw/master/android/app/sologyr-release.apk)
 - Select "Install Pebble watch face" from the menu
 
-Intended for use with [GadgetBridge](https://github.com/Freeyourgadget/Gadgetbridge),
+Can be used with [GadgetBridge](https://github.com/Freeyourgadget/Gadgetbridge),
 thus it has its own Android companion app rather than relying on Javascript.
+Can also be used with the official Pebble app on Android.  No iOS support yet.
 
 yr.no provides nice forecasts, but not real-time sensor readings, so using darksky.net for now.
 
@@ -50,4 +51,4 @@ Not started yet:
 - [ ] Android: show time since weather update, expected active periods today (or even all week)
 - [ ] get real-time weather from some other source, preferably an open source where users' weather station data is contributed
 - [ ] help screen on Android
-
+- [ ] work with either JS backend or native Android app? or at least use JS on iOS?
