@@ -3,8 +3,9 @@ with current weather from darksky.net and forecast from yr.no
 
 <img src="doc/screenshot-android.png"> <img src="doc/screenshot-pebble.png">
 <img src="doc/screenshot-pebble-tap-screen.png">
-<img src="doc/screenshot-pebble-time-round-tap-screen.png">
 <img src="doc/screenshot-pebble-time-round.png">
+<img src="doc/screenshot-pebble-time-round-tap-screen.png">
+<img src="doc/screenshot-pebble-classic.png">
 
 To install:
 
