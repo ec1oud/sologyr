@@ -60,6 +60,7 @@ enum WeatherIcon {
 	Wind = 200
 };
 
+// graphical elements
 static Window *window = NULL;
 static Layer *main_layer = NULL;
 static Layer *tap_layer = NULL;
@@ -74,27 +75,33 @@ static BitmapLayer *weather_icon_layer = NULL;
 static Layer *batteryGraphLayer = NULL;
 static Layer *circleLayer = NULL;
 static Layer *weatherPlotLayer = NULL;
+static GBitmap *bluetooth_bitmap = NULL;
+static GBitmap *charging_bitmap = NULL;
+static GBitmap *weather_bitmap = NULL;
+
+// runtime data
 static int batteryPct = 0;
 struct tm currentTime;
 static char currentTimeText[] = "00:00";
-static int curLat = 59913; // degrees * 1000
-static int curLon = 10739; // degrees * 1000
-static char curLocationName[32];
+static bool bluetoothConnected = 0;
+static uint8_t forecastUpdating = 0;
+static int16_t weatherUpdateFrequency; // how often we can request it, in minutes
 static uint8_t sunriseHour = 100;
 static uint8_t sunriseMinute = 0;
 static uint8_t sunsetHour = 0;
 static uint8_t sunsetMinute = 0;
+
+// persistent runtime data
+static int curLat = 59913; // degrees * 1000
+static int curLon = 10739; // degrees * 1000
+static char curLocationName[32];
 static uint8_t cloudCover = 0;
+static uint8_t weatherIcon = 0; // from WeatherIcon enum
 static char currentTemperature[12];
-static bool bluetoothConnected = 0;
-static GBitmap *bluetooth_bitmap = NULL;
-static GBitmap *charging_bitmap = NULL;
-static GBitmap *weather_bitmap = NULL;
 static time_t nowcastReceivedTime;
 static int8_t nowcastTimes[NOWCAST_MAX_INTERVALS]; // minutes in the future from nowcastReceivedTime (in the past if negative)
 static uint8_t nowcastPrecipitation[NOWCAST_MAX_INTERVALS]; // tenths of mm
 static int8_t nowcastLength;
-static uint8_t forecastUpdating = 0;
 static int16_t forecastPrecipitationTimes[FORECAST_MAX_INTERVALS]; // minutes from the beginning of today
 static uint8_t forecastPrecipitation[FORECAST_MAX_INTERVALS]; // tenths of mm
 static uint8_t forecastPrecipitationMin[FORECAST_MAX_INTERVALS]; // tenths of mm
@@ -105,7 +112,6 @@ static int16_t forecastTemperature[FORECAST_MAX_INTERVALS]; // tenths of degrees
 static uint8_t forecastLength;
 static int16_t minForecastTemperature;
 static int16_t maxForecastTemperature;
-static int16_t weatherUpdateFrequency; // how often we can request it, in minutes
 
 static void send_hello()
 {
@@ -457,7 +463,7 @@ static void paintCircleLayer(Layer *layer, GContext* ctx)
 
 #ifdef PBL_HEALTH
 	// render the activity record; TODO move it to another layer?(
-	GRect innerCircle = grect_crop(fillCircle, layerBounds.size.w / 3);
+	GRect innerCircle = grect_crop(fillCircle, fillCircle.size.w / 3);
 	graphics_context_set_stroke_width(ctx, 3);
 	int currentInterval = (now - startOfToday) / (MINUTES_PER_HEALTH_INTERVAL * SECONDS_PER_MINUTE);
 	for (int i = 0; i < HEALTH_INTERVAL_COUNT; ++i) {
@@ -702,7 +708,8 @@ static void in_received_handler(DictionaryIterator *iter, void *context)
 			cloudCover = tuple->value->uint8;
 			break;
 		case KEY_WEATHER_ICON:
-			handle_weather_icon(tuple->value->uint8);
+			weatherIcon = tuple->value->uint8;
+			handle_weather_icon(weatherIcon);
 			break;
 		case KEY_TEMPERATURE:
 			strncpy(currentTemperature, tuple->value->cstring, sizeof(currentTemperature));
@@ -1002,6 +1009,28 @@ static void window_init(void) {
 	curLat = persist_read_int(AppKeyLat);
 	curLon = persist_read_int(AppKeyLon);
 	if (DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "window_init: restored lat %d lon %d" , curLat, curLon);
+
+	persist_read_data(AppKeyForecastPrecipitationTimes, forecastPrecipitationTimes, sizeof(forecastPrecipitationTimes));
+	persist_read_data(AppKeyForecastPrecipitation, forecastPrecipitation, sizeof(forecastPrecipitation));
+	persist_read_data(AppKeyForecastPrecipitationMin, forecastPrecipitationMin, sizeof(forecastPrecipitationMin));
+	persist_read_data(AppKeyForecastPrecipitationMax, forecastPrecipitationMax, sizeof(forecastPrecipitationMax));
+	forecastPrecipitationLength = persist_read_int(AppKeyForecastPrecipitationLength);
+
+	persist_read_data(AppKeyForecastTimes, forecastTimes, sizeof(forecastTimes));
+	persist_read_data(AppKeyForecastTemperature, forecastTemperature, sizeof(forecastTemperature));
+	forecastLength = persist_read_int(AppKeyForecastLength);
+	minForecastTemperature = persist_read_int(AppKeyMinForecastTemperature);
+	maxForecastTemperature = persist_read_int(AppKeyMaxForecastTemperature);
+
+	persist_read_data(AppKeyNowcastReceivedTime, &nowcastReceivedTime, sizeof(nowcastReceivedTime));
+	persist_read_data(AppKeyNowcastTimes, nowcastTimes, sizeof(nowcastTimes));
+	persist_read_data(AppKeyNowcastPrecipitation, nowcastPrecipitation, sizeof(nowcastPrecipitation));
+	nowcastLength = persist_read_int(AppKeyNowcastLength);
+
+	persist_read_data(AppKeyTemperature, currentTemperature, sizeof(currentTemperature));
+	weatherIcon = persist_read_int(AppKeyWeatherIcon);
+	cloudCover = persist_read_int(AppKeyCloudCover);
+
 	// TODO read AppKeyLocationName; use GPS coords only if empty? OTOH this is a nice way to check what's stored
 	snprintf(curLocationName, sizeof(curLocationName), "%d.%d,%d.%d", curLat / 1000, curLat % 1000, curLon / 1000, curLon % 1000);
 	updateSunriseSunset();
@@ -1027,6 +1056,9 @@ static void window_init(void) {
 #ifdef PBL_HEALTH
 	health_init();
 #endif
+
+	text_layer_set_text(temperatureLayer, currentTemperature);
+	handle_weather_icon(weatherIcon);
 }
 
 static void window_deinit(void) {
@@ -1036,7 +1068,28 @@ static void window_deinit(void) {
 #endif
 	persist_write_int(AppKeyLat, curLat);
 	persist_write_int(AppKeyLon, curLon);
-	// TODO AppKeyLocationName ?
+	persist_write_data(AppKeyLocationName, curLocationName, sizeof(curLocationName));
+
+	persist_write_data(AppKeyForecastPrecipitationTimes, forecastPrecipitationTimes, sizeof(forecastPrecipitationTimes));
+	persist_write_data(AppKeyForecastPrecipitation, forecastPrecipitation, sizeof(forecastPrecipitation));
+	persist_write_data(AppKeyForecastPrecipitationMin, forecastPrecipitationMin, sizeof(forecastPrecipitationMin));
+	persist_write_data(AppKeyForecastPrecipitationMax, forecastPrecipitationMax, sizeof(forecastPrecipitationMax));
+	persist_write_int(AppKeyForecastPrecipitationLength, forecastPrecipitationLength);
+
+	persist_write_data(AppKeyForecastTimes, forecastTimes, sizeof(forecastTimes));
+	persist_write_data(AppKeyForecastTemperature, forecastTemperature, sizeof(forecastTemperature));
+	persist_write_int(AppKeyForecastLength, forecastLength);
+	persist_write_int(AppKeyMinForecastTemperature, minForecastTemperature);
+	persist_write_int(AppKeyMaxForecastTemperature, maxForecastTemperature);
+
+	persist_write_data(AppKeyNowcastReceivedTime, &nowcastReceivedTime, sizeof(nowcastReceivedTime));
+	persist_write_data(AppKeyNowcastTimes, nowcastTimes, sizeof(nowcastTimes));
+	persist_write_data(AppKeyNowcastPrecipitation, nowcastPrecipitation, sizeof(nowcastPrecipitation));
+	persist_write_int(AppKeyNowcastLength, nowcastLength);
+
+	persist_write_data(AppKeyTemperature, currentTemperature, sizeof(currentTemperature));
+	persist_write_int(AppKeyWeatherIcon, weatherIcon);
+	persist_write_int(AppKeyCloudCover, cloudCover);
 }
 
 int main(void) {

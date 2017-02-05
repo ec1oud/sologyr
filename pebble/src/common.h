@@ -44,7 +44,24 @@ typedef enum {
 	AppKeyVmcSaturday,
 	AppKeyLat,
 	AppKeyLon,
-	AppKeyLocationName
+	AppKeyLocationName,
+	AppKeyTemperature,
+	AppKeyWeatherIcon,
+	AppKeyCloudCover,
+	AppKeyForecastPrecipitationTimes,
+	AppKeyForecastPrecipitation,
+	AppKeyForecastPrecipitationMin,
+	AppKeyForecastPrecipitationMax,
+	AppKeyForecastPrecipitationLength,
+	AppKeyForecastTimes,
+	AppKeyForecastTemperature,
+	AppKeyForecastLength,
+	AppKeyMinForecastTemperature,
+	AppKeyMaxForecastTemperature,
+	AppKeyNowcastReceivedTime,
+	AppKeyNowcastTimes,
+	AppKeyNowcastPrecipitation,
+	AppKeyNowcastLength
 } AppKey;
 
 enum DictKey {

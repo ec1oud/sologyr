@@ -133,8 +133,7 @@ public class PebbleUtil implements WeatherListener {
                 PebbleKit.sendAckToPebble(context, transactionId);
                 if (data.contains(PebbleUtil.KEY_HELLO)) {
                     Log.i(TAG, "Pebble says hello");
-                    if (!m_weatherService.updateWeather(false))
-                        m_weatherService.resendEverything(PebbleUtil.this);
+                    m_weatherService.updateWeather(false);
                 } else if (data.contains(PebbleUtil.KEY_ACTIVE_INTERVAL)) {
                     Log.i(TAG, "Pebble says predicted activity level will be " + data.getUnsignedIntegerAsLong(KEY_ACTIVE_INTERVAL));
                     m_weatherService.updateWeather(false);
