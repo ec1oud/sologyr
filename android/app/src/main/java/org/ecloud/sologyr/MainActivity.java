@@ -179,7 +179,7 @@ public class MainActivity extends Activity implements WeatherListener {
         if (immediately || System.currentTimeMillis() - m_lastRadarTime > RADAR_REFRESH_AGE) {
             m_lastRadarTime = System.currentTimeMillis();
             FetchService.startActionFetchPreferredBitmapUrl(this, "radar_url",
-                    "http://api.met.no/weatherapi/radar/1.5/?radarsite=south_norway;type=reflectivity;content=animation;size=large",
+                    "https://api.met.no/weatherapi/radar/1.5/?radarsite=south_norway;type=reflectivity;content=animation;size=large",
                     new RadarReceiver(new Handler(Looper.getMainLooper())));
         }
     }

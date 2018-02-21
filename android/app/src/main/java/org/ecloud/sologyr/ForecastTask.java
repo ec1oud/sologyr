@@ -17,7 +17,7 @@ import java.util.LinkedList;
 public class ForecastTask extends AsyncTask<Location, Void, LinkedList<Forecast>>
 {
     private final String TAG = this.getClass().getSimpleName();
-    private static final String WEATHER_URL = "http://api.met.no/weatherapi/locationforecast/";
+    private static final String WEATHER_URL = "https://api.met.no/weatherapi/locationforecast/";
     private static final String WEATHER_VERSION = "1.9";
     private static final String WEATHER_ATTRIBUTE_LAT = "/?lat=";
     private static final String WEATHER_ATTRIBUTE_LON = ";lon=";

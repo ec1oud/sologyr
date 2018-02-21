@@ -22,7 +22,7 @@ import static java.net.HttpURLConnection.HTTP_OK;
 public class NowCastTask extends AsyncTask<Location, Void, LinkedList<Forecast>>
 {
     private final String TAG = this.getClass().getSimpleName();
-    private static final String WEATHER_URL = "http://api.met.no/weatherapi/nowcast/";
+    private static final String WEATHER_URL = "https://api.met.no/weatherapi/nowcast/";
     private static final String WEATHER_VERSION = "0.9";
     private static final String WEATHER_ATTRIBUTE_LAT = "/?lat=";
     private static final String WEATHER_ATTRIBUTE_LON = ";lon=";
